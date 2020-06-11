@@ -192,29 +192,17 @@
             $Response .= "   <b>Private ID:</b> <code>" . $user_client->PublicID . "</code>\n";
             $Response .= "   <b>User ID:</b> <code>" . $user_client->User->ID . "</code>\n";
 
-            if($user_client->User->FirstName == null)
-            {
-                $Response .= "   <b>First Name:</b> Empty\n";
-            }
-            else
+            if($user_client->User->FirstName !== null)
             {
                 $Response .= "   <b>First Name:</b> <code>" . $user_client->User->FirstName . "</code>\n";
             }
 
-            if($user_client->User->LastName == null)
-            {
-                $Response .= "   <b>Last Name:</b> Empty\n";
-            }
-            else
+            if($user_client->User->LastName !== null)
             {
                 $Response .= "   <b>Last Name:</b> <code>" . $user_client->User->LastName . "</code>\n";
             }
 
-            if($user_client->User->Username == null)
-            {
-                $Response .= "   <b>Username:</b> Empty\n";
-            }
-            else
+            if($user_client->User->Username !== null)
             {
                 $Response .= "   <b>Username:</b> <code>" . $user_client->User->Username . "</code> (@" . $user_client->User->Username . ")\n";
             }
