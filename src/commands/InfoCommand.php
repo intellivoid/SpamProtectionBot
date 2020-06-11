@@ -9,6 +9,9 @@
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\BlacklistFlag;
+    use SpamProtection\Exceptions\DatabaseException;
+    use SpamProtection\Exceptions\InvalidSearchMethod;
+    use SpamProtection\Exceptions\TelegramClientNotFoundException;
     use SpamProtection\Objects\TelegramClient;
     use SpamProtection\Objects\TelegramClient\Chat;
     use SpamProtection\Objects\TelegramClient\User;
@@ -53,6 +56,9 @@
          *
          * @return ServerResponse
          * @throws TelegramException
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          */
         public function execute()
         {
