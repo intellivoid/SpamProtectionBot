@@ -54,6 +54,9 @@
 
             try
             {
+                // Make sure duplicate usernames are not possible
+                $this->fixDuplicateUsername($chat, $user);
+
                 $ExistingClient = $this->getClient(TelegramClientSearchMethod::byPublicId, $PublicID);
 
                 $ExistingClient->LastActivityTimestamp = $CurrentTime;
@@ -83,8 +86,22 @@
             $SessionData = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($SessionData);
             $ChatID = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($chat->ID);
             $UserID = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($user->ID);
+            $Username = null;
             $LastActivity = $CurrentTime;
             $Created = $CurrentTime;
+
+            if((int)$ChatID == (int)$UserID)
+            {
+                if($user->Username !== null)
+                {
+                    $Username = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($user->Username);
+                }
+
+                if($chat->Username !== null)
+                {
+                    $Username = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($chat->Username);
+                }
+            }
 
             $Query = QueryBuilder::insert_into('telegram_clients', array(
                     'public_id' => $PublicID,
@@ -95,6 +112,7 @@
                     'session_data' => $SessionData,
                     'chat_id' => $ChatID,
                     'user_id' => $UserID,
+                    'username' => $Username,
                     'last_activity' => $LastActivity,
                     'created' => $Created
                 )
@@ -172,7 +190,14 @@
                     $value = (int)$value;
                     break;
 
+                case TelegramClientSearchMethod::byChatId:
+                case TelegramClientSearchMethod::byUserId:
+                    $search_method = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string("byPublicId");
+                    $value = Hashing::telegramClientPublicID((int)$value, (int)$value);
+                    break;
+
                 case TelegramClientSearchMethod::byPublicId:
+                case TelegramClientSearchMethod::byUsername:
                     $search_method = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($search_method);
                     $value = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($value);;
                     break;
@@ -191,6 +216,7 @@
                 'session_data',
                 'chat_id',
                 'user_id',
+                'username',
                 'last_activity',
                 'created'
             ], $search_method, $value);
@@ -236,7 +262,14 @@
             $session_data = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($session_data);
             $chat_id = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($telegramClient->Chat->ID);
             $user_id = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($telegramClient->User->ID);
+            $username = null;
             $last_activity = (int)time();
+
+            if($telegramClient->getUsername() !== null)
+            {
+                $username = $this->spamProtection->getDatabase("IVDatabase")->real_escape_string($telegramClient->getUsername());
+                $this->fixDuplicateUsername($telegramClient->Chat, $telegramClient->User);
+            }
 
             $Query = QueryBuilder::update('telegram_clients', array(
                 'available' => $available,
@@ -246,6 +279,7 @@
                 'session_data' => $session_data,
                 'chat_id' => $chat_id,
                 'user_id' => $user_id,
+                'username' => $username,
                 'last_activity' => $last_activity
             ), 'id', $id);
             $QueryResults = $this->spamProtection->getDatabase("IVDatabase")->query($Query);
@@ -258,5 +292,83 @@
             {
                 throw new DatabaseException($Query, $this->spamProtection->getDatabase("IVDatabase")->error);
             }
+        }
+
+        /**
+         * Returns a telegram client by username returns null if not found
+         *
+         * @param string $username
+         * @return TelegramClient|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         */
+        public function getClientByUsername(string $username)
+        {
+            try
+            {
+                return $this->getClient(TelegramClientSearchMethod::byUsername, $username);
+            }
+            catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+            {
+                return null;
+            }
+        }
+
+        /**
+         * Searches and overwrites old duplicate usernames
+         *
+         * @param Chat $chat
+         * @param User $user
+         * @return bool
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         */
+        public function fixDuplicateUsername(Chat $chat, User $user): bool
+        {
+            if((int)$user->ID == (int)$chat->ID)
+            {
+                $Username = null;
+
+                if($user->Username !== null)
+                {
+                    $Username = $user->Username;
+                }
+
+                if($chat->Username !== null)
+                {
+                    $Username = $chat->Username;
+                }
+
+                if($Username !== null)
+                {
+                    $ExistingClient = $this->getClientByUsername($Username);
+
+                    if($ExistingClient !== null)
+                    {
+                        $DuplicateUsername = false;
+
+                        if($ExistingClient->User->ID == $user->ID)
+                        {
+                            $DuplicateUsername = true;
+                        }
+
+                        if($ExistingClient->Chat->ID == $chat->ID)
+                        {
+                            $DuplicateUsername = true;
+                        }
+
+                        if($DuplicateUsername == true)
+                        {
+                            $ExistingClient->User->Username = null;
+                            $ExistingClient->Chat->Username = null;
+                            $this->updateClient($ExistingClient);
+
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
     }

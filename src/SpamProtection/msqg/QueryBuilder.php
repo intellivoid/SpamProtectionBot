@@ -201,14 +201,22 @@
                 {
                     $Keys .= $key;
 
-                    if(is_int($value))
+                    if($value !== null)
                     {
-                        $Values .= (int)$value;
+                        if(is_int($value))
+                        {
+                            $Values .= (int)$value;
+                        }
+                        else
+                        {
+                            $Values .= "'$value'";
+                        }
                     }
                     else
                     {
-                        $Values .= "'$value'";
+                        $Values .= "NULL";
                     }
+
 
                     $is_first = false;
                 }
@@ -216,14 +224,22 @@
                 {
                     $Keys .= ', ' . $key;
 
-                    if(is_int($value))
+                    if($value !== null)
                     {
-                        $Values .= ', ' . (int)$value;
+                        if(is_int($value))
+                        {
+                            $Values .= ', ' . (int)$value;
+                        }
+                        else
+                        {
+                            $Values .= ", '$value'";
+                        }
                     }
                     else
                     {
-                        $Values .= ", '$value'";
+                        $Values .= ", NULL";
                     }
+
                 }
             }
 
@@ -301,26 +317,40 @@
             {
                 if($first_value == true)
                 {
-                    if(is_int($value))
+                    if($value !== null)
                     {
-                        $Query .= $key . '=' . (int)$value;
+                        if(is_int($value))
+                        {
+                            $Query .= $key . '=' . (int)$value;
+                        }
+                        else
+                        {
+                            $Query .= $key . '=' . "'$value'";
+                        }
                     }
                     else
                     {
-                        $Query .= $key . '=' . "'$value'";
+                        $Query .= $key . '=NULL';
                     }
 
                     $first_value = false;
                 }
                 else
                 {
-                    if(is_int($value))
+                    if($value !== null)
                     {
-                        $Query .= ', ' . $key . '=' . (int)$value;
+                        if(is_int($value))
+                        {
+                            $Query .= ', ' . $key . '=' . (int)$value;
+                        }
+                        else
+                        {
+                            $Query .= ', ' . $key . '=' . "'$value'";
+                        }
                     }
                     else
                     {
-                        $Query .= ', ' . $key . '=' . "'$value'";
+                        $Query .= ', ' . $key . '=NULL';
                     }
                 }
             }
@@ -329,14 +359,22 @@
             {
                 if($where_value != null)
                 {
-                    if(is_int($where_value))
+                    if($where_value !== null)
                     {
-                        $Query .= " WHERE $where=" . (int)$where_value;
+                        if(is_int($where_value))
+                        {
+                            $Query .= " WHERE $where=" . (int)$where_value;
+                        }
+                        else
+                        {
+                            $Query .= " WHERE $where='$where_value'";
+                        }
                     }
                     else
                     {
-                        $Query .= " WHERE $where='$where_value'";
+                        $Query .= " WHERE $where=NULL";
                     }
+
                 }
             }
 

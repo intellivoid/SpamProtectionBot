@@ -115,6 +115,29 @@
         }
 
         /**
+         * Returns the chat username
+         *
+         * @return string|null
+         */
+        public function getUsername()
+        {
+            if((int)$this->User->ID == (int)$this->Chat->ID)
+            {
+                if($this->User->Username !== null)
+                {
+                    return $this->User->Username;
+                }
+
+                if($this->Chat->Username !== null)
+                {
+                    return $this->Chat->Username;
+                }
+            }
+
+            return null;
+        }
+
+        /**
          * Creates array from object
          *
          * @return array
