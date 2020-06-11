@@ -6,8 +6,12 @@
 
     require __DIR__ . '/vendor/autoload.php';
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'CoffeeHouse' . DIRECTORY_SEPARATOR . 'CoffeeHouse.php');
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'DeepAnalytics' . DIRECTORY_SEPARATOR . 'DeepAnalytics.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
+
+    if(class_exists('DeepAnalytics\DeepAnalytics') == false)
+    {
+        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'DeepAnalytics' . DIRECTORY_SEPARATOR . 'DeepAnalytics.php');
+    }
 
     $acm = new acm(__DIR__, 'SpamProtectionBot');
 

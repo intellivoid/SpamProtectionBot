@@ -37,12 +37,12 @@
          */
         public function getUserStatus(TelegramClient $telegramClient): UserStatus
         {
-            if(isset($telegramClient->SessionData["user_status"]) == false)
+            if(isset($telegramClient->SessionData->Data["user_status"]) == false)
             {
-                $telegramClient->SessionData["user_status"] = UserStatus::fromArray($telegramClient->User, array());
+                $telegramClient->SessionData->Data["user_status"] = UserStatus::fromArray($telegramClient->User, array())->toArray();
             }
 
-            return UserStatus::fromArray($telegramClient->User, $telegramClient->SessionData["user_status"]);
+            return UserStatus::fromArray($telegramClient->User, $telegramClient->SessionData->Data["user_status"]);
         }
 
         /**
@@ -54,7 +54,7 @@
          */
         public function updateUserStatus(TelegramClient $telegramClient, UserStatus $userStatus): TelegramClient
         {
-            $telegramClient->SessionData["user_status"] = $userStatus->toArray();
+            $telegramClient->SessionData->Data["user_status"] = $userStatus->toArray();
             return $telegramClient;
         }
 
@@ -66,12 +66,12 @@
          */
         public function getChatSettings(TelegramClient $telegramClient): ChatSettings
         {
-            if(isset($telegramClient->SessionData["chat_settings"]) == false)
+            if(isset($telegramClient->SessionData->Data["chat_settings"]) == false)
             {
-                $telegramClient->SessionData["chat_settings"] = UserStatus::fromArray($telegramClient->User, array());
+                $telegramClient->SessionData->Data["chat_settings"] = UserStatus::fromArray($telegramClient->User, array())->toArray();
             }
 
-            return ChatSettings::fromArray($telegramClient->Chat, $telegramClient->SessionData["chat_settings"]);
+            return ChatSettings::fromArray($telegramClient->Chat, $telegramClient->SessionData->Data["chat_settings"]);
         }
 
         /**
@@ -83,7 +83,7 @@
          */
         public function updateChatSettings(TelegramClient $telegramClient, ChatSettings $chatSettings): TelegramClient
         {
-            $telegramClient->SessionData["chat_settings"] = $chatSettings->toArray();
+            $telegramClient->SessionData->Data["chat_settings"] = $chatSettings->toArray();
             return $telegramClient;
         }
     }

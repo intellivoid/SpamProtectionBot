@@ -11,6 +11,7 @@
     use SpamProtection\Managers\TelegramClientManager;
     use SpamProtection\Objects\ChatSettings;
 
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'BlacklistFlag.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'DetectionAction.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'TelegramChatType.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'TelegramClientSearchMethod.php');
@@ -90,11 +91,6 @@
         private $TelegramClientManager;
 
         /**
-         * @var SettingsManager
-         */
-        private $ChatSettingsManager;
-
-        /**
          * @var MessageLogManager
          */
         private $MessageLogManager;
@@ -115,7 +111,6 @@
             $this->database = null;
             
             $this->TelegramClientManager = new TelegramClientManager($this);
-            $this->ChatSettingsManager = new SettingsManager($this);
             $this->MessageLogManager = new MessageLogManager($this);
             $this->SettingsManager = new SettingsManager($this);
         }
@@ -155,14 +150,6 @@
         public function getTelegramClientManager(): TelegramClientManager
         {
             return $this->TelegramClientManager;
-        }
-
-        /**
-         * @return SettingsManager
-         */
-        public function getChatSettingsManager(): SettingsManager
-        {
-            return $this->ChatSettingsManager;
         }
 
         /**
