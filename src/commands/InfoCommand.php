@@ -103,6 +103,23 @@
                 $TargetUser = User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
                 $TargetUserClient = $SpamProtection->getTelegramClientManager()->registerUser($TargetUser);
 
+                if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
+                {
+                    $ForwardUser = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                    $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUser);
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "text" =>
+                            self::generateUserInfoString($SpamProtection, $TargetUserClient, "User Information") .
+                            "\n\n" .
+                            self::generateUserInfoString($SpamProtection, $ForwardUserClient, "User of Forwarded Message Information")
+                    ]);
+
+                }
+
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "parse_mode" => "html",
@@ -132,7 +149,7 @@
         {
             $UserStatus = $spamProtection->getSettingsManager()->getUserStatus($user_client);
             $RequiresExtraNewline = false;
-            $Response = "User Information\n\n";
+            $Response = "<b>$title</b>\n\n";
 
             if($user_client->User->Username == "IntellivoidSupport")
             {
