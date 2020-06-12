@@ -1,6 +1,6 @@
 <?php
 
-    namespace Longman\TelegramBot\Commands\SystemCommands;
+    namespace Longman\TelegramBot\Commands\UserCommands;
 
     use DeepAnalytics\DeepAnalytics;
     use Exception;
@@ -30,12 +30,12 @@
         /**
          * @var string
          */
-        protected $name = 'info';
+        protected $name = 'User Information Command';
 
         /**
          * @var string
          */
-        protected $description = 'User Information Command';
+        protected $description = 'Resolves public information about the user or forwarded content';
 
         /**
          * @var string
@@ -78,8 +78,8 @@
                 {
                     $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
                     $ChatClient = $SpamProtection->getSettingsManager()->updateChatSettings($ChatClient, $ChatSettings);
-                    $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
                 }
+                $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
 
                 // Define and update user client
                 $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
@@ -87,8 +87,8 @@
                 {
                     $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
                     $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
-                    $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
                 }
+                $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
             }
             catch(Exception $e)
             {
@@ -102,7 +102,9 @@
 
             $DeepAnalytics = new DeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
+            $DeepAnalytics->tally('tg_spam_protection', 'info_command', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'info_command', (int)$TelegramClient->getChatId());
 
             if($this->getMessage()->getReplyToMessage() !== null)
             {

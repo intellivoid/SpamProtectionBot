@@ -161,12 +161,12 @@
         public function registerChat(Chat $chat): TelegramClient
         {
             $UserObject = new User();
-            $UserObject->ID = 991157148;
-            $UserObject->FirstName = "Intellivoid";
-            $UserObject->LastName = "Support";
+            $UserObject->ID = $chat->ID;
+            $UserObject->FirstName = $chat->Title;
+            $UserObject->LastName = null;
             $UserObject->LanguageCode = null;
-            $UserObject->IsBot = true;
-            $UserObject->Username = "IntellivoidSupport";
+            $UserObject->IsBot = false;
+            $UserObject->Username = $chat->Username;
 
             return $this->registerClient($chat, $UserObject);
         }

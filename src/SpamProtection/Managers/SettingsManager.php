@@ -39,7 +39,7 @@
         {
             if(isset($telegramClient->SessionData->Data["user_status"]) == false)
             {
-                $telegramClient->SessionData->Data["user_status"] = UserStatus::fromArray($telegramClient->User, array());
+                $telegramClient->SessionData->Data["user_status"] = UserStatus::fromArray($telegramClient->User, array())->toArray();
             }
 
             return UserStatus::fromArray($telegramClient->User, $telegramClient->SessionData->Data["user_status"]);
@@ -68,7 +68,7 @@
         {
             if(isset($telegramClient->SessionData->Data["chat_settings"]) == false)
             {
-                $telegramClient->SessionData->Data["chat_settings"] = UserStatus::fromArray($telegramClient->User, array());
+                $telegramClient->SessionData->Data["chat_settings"] = ChatSettings::fromArray($telegramClient->Chat, array())->toArray();
             }
 
             return ChatSettings::fromArray($telegramClient->Chat, $telegramClient->SessionData->Data["chat_settings"]);
