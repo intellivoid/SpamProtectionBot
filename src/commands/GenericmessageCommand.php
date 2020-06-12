@@ -205,6 +205,17 @@
                     return null;
                 }
 
+                if($MessageObject->isForwarded())
+                {
+                    if($MessageObject->getForwardedOriginalUser() !== null)
+                    {
+                        if($MessageObject->getForwardedOriginalUser()->Username == "SpamProtectionBot")
+                        {
+                            return null;
+                        }
+                    }
+                }
+
                 if($ChatSettings->ForwardProtectionEnabled)
                 {
                     if($MessageObject->isForwarded())
@@ -220,17 +231,6 @@
                                 $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
                             }
                             $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
-                        }
-                    }
-                }
-
-                if($MessageObject->isForwarded())
-                {
-                    if($MessageObject->getForwardedOriginalUser() !== null)
-                    {
-                        if($MessageObject->getForwardedOriginalUser()->Username == "SpamProtectionBot")
-                        {
-                            return null;
                         }
                     }
                 }
