@@ -372,24 +372,31 @@
                     ]);
                     if($Response->isOk())
                     {
-                        Request::sendMessage([
-                            "chat_id" => $message->Chat->ID,
-                            "parse_mode" => "html",
-                            "text" =>
-                                self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                                "The message has been deleted"
-                        ]);
+                        if($chatSettings->GeneralAlertsEnabled)
+                        {
+                            Request::sendMessage([
+                                "chat_id" => $message->Chat->ID,
+                                "parse_mode" => "html",
+                                "text" =>
+                                    self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                    "The message has been deleted"
+                            ]);
+                        }
                     }
                     else
                     {
-                        Request::sendMessage([
-                            "chat_id" => $message->Chat->ID,
-                            "reply_to_message_id" => $message->MessageID,
-                            "parse_mode" => "html",
-                            "text" =>
-                                self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                                "<b>The message cannot be deleted because of insufficient administrator privileges</b>"
-                        ]);
+                        if($chatSettings->GeneralAlertsEnabled)
+                        {
+                            Request::sendMessage([
+                                "chat_id" => $message->Chat->ID,
+                                "reply_to_message_id" => $message->MessageID,
+                                "parse_mode" => "html",
+                                "text" =>
+                                    self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                    "<b>The message cannot be deleted because of insufficient administrator privileges</b>"
+                            ]);
+                        }
+
                     }
                     break;
 
@@ -402,7 +409,7 @@
                     $KickResponse = Request::kickChatMember([
                         "chat_id" => $message->Chat->ID,
                         "user_id" => $userClient->User->ID,
-                        "until_date" => (int)time() + 60
+                        "until_date" => (int)time()
                     ]);
 
                     $Response = self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n";
@@ -417,17 +424,19 @@
                         $Response .= "<b>The user cannot be removed because of insufficient administrator privileges</b>\n\n";
                     }
 
-                    if($KickResponse == true && $DeleteResponse == true)
+                    if($KickResponse->isOk() == true && $DeleteResponse->isOk() == true)
                     {
                         $Response .= "The message was deleted and the offender was removed from the group";
                     }
 
-                    Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
-                        "reply_to_message_id" => $message->MessageID,
-                        "parse_mode" => "html",
-                        "text" => $Response
-                    ]);
+                    if($chatSettings->GeneralAlertsEnabled)
+                    {
+                        Request::sendMessage([
+                            "chat_id" => $message->Chat->ID,
+                            "parse_mode" => "html",
+                            "text" => $Response
+                        ]);
+                    }
 
                     break;
 
@@ -460,23 +469,29 @@
                         $Response .= "The message was deleted and the offender was banned from the group";
                     }
 
-                    Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
-                        "reply_to_message_id" => $message->MessageID,
-                        "parse_mode" => "html",
-                        "text" => $Response
-                    ]);
+                    if($chatSettings->GeneralAlertsEnabled)
+                    {
+                        Request::sendMessage([
+                            "chat_id" => $message->Chat->ID,
+                            "parse_mode" => "html",
+                            "text" => $Response
+                        ]);
+                    }
 
                     break;
 
                 default:
-                    Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
-                        "parse_mode" => "html",
-                        "text" =>
-                            self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                            "No action was taken because the detection action is not recognized"
-                    ]);
+                    if($chatSettings->GeneralAlertsEnabled)
+                    {
+                        Request::sendMessage([
+                            "chat_id" => $message->Chat->ID,
+                            "reply_to_message_id" => $message->MessageID,
+                            "parse_mode" => "html",
+                            "text" =>
+                                self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                "No action was taken because the detection action is not recognized"
+                        ]);
+                    }
             }
 
         }

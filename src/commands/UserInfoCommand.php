@@ -240,7 +240,7 @@
             if($user_client->AccountID !== 0)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{2705} This user's Telegram is verified by Intellivoid Accounts\n";
+                $Response .= "\u{2705} This user's Telegram account is verified by Intellivoid Accounts\n";
             }
 
             if($UserStatus->GeneralizedSpam > 0)
@@ -262,6 +262,12 @@
             {
                 $RequiresExtraNewline = true;
                 $Response .= "\u{1F46E} This user is an agent who actively reports spam automatically\n";
+            }
+
+            if($UserStatus->IsOperator)
+            {
+                $RequiresExtraNewline = true;
+                $Response .= "\u{1F46E} This user is an operator who can blacklist users\n";
             }
 
             if($RequiresExtraNewline)
@@ -368,6 +374,11 @@
             if($UserStatus->IsAgent)
             {
                 $Response .= "   <b>Spam Detection Agent:</b> <code>True</code>\n";
+            }
+
+            if($UserStatus->OperatorNote !== "None")
+            {
+                $Response .= "\n" . $UserStatus->OperatorNote . "\n";
             }
 
             return $Response;
