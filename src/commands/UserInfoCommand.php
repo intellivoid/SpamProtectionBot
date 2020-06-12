@@ -25,7 +25,7 @@
      * Allows the user to see the current information about requested user, either by
      * a reply to a message or by providing the private Telegram ID or Telegram ID
      */
-    class InfoCommand extends UserCommand
+    class UserInfoCommand extends UserCommand
     {
         /**
          * @var string
@@ -40,7 +40,7 @@
         /**
          * @var string
          */
-        protected $usage = '/info';
+        protected $usage = '/userinfo';
 
         /**
          * @var string
