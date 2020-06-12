@@ -85,6 +85,8 @@
             $DeepAnalytics->tally('tg_spam_protection', 'new_member', (int)$TelegramClient->getChatId());
 
             $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
+            $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
+
             if($ChatSettings->ActiveSpammerAlertEnabled)
             {
                 if($UserStatus->GeneralizedSpam > 0)
@@ -100,7 +102,6 @@
                     }
                 }
             }
-
 
             if($ChatSettings->BlacklistProtectionEnabled)
             {
