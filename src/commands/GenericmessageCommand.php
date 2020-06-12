@@ -409,7 +409,7 @@
                     $KickResponse = Request::kickChatMember([
                         "chat_id" => $message->Chat->ID,
                         "user_id" => $userClient->User->ID,
-                        "until_date" => (int)time()
+                        "until_date" => (int)time() + 60
                     ]);
 
                     $Response = self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n";
