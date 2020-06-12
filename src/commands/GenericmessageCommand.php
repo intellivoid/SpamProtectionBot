@@ -166,10 +166,6 @@
 
                 if($Results->SpamPrediction > $Results->HamPrediction)
                 {
-                    $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', 0);
-                    $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getChatId());
-                    $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getUserId());
-
                     if($ChatSettings->LogSpamPredictions)
                     {
                         self::logDetectedSpam($MessageObject, $MessageLogObject, $UserClient);
@@ -179,6 +175,10 @@
                         $MessageObject, $MessageLogObject,
                         $UserClient, $UserStatus,
                         $ChatClient, $ChatSettings, $Results);
+
+                    $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', 0);
+                    $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getChatId());
+                    $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getUserId());
 
                     return null;
                 }
