@@ -120,7 +120,6 @@
             $DeepAnalytics = new DeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-
             $CoffeeHouse = new CoffeeHouse();
 
             $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
@@ -139,75 +138,70 @@
                     if($BanResponse->isOk())
                     {
                         $Response = "This user has been banned because they've been blacklisted!\n\n";
+                        $Response .= "<b>Private Telegram ID:</b> <code>" . $UserClient->PublicID . "</code>\n";
+
+                        switch($UserStatus->BlacklistFlag)
+                        {
+                            case BlacklistFlag::None:
+                                $Response .= "<b>Blacklist Reason:</b> <code>None</code>\n";
+                                break;
+
+                            case BlacklistFlag::Spam:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion</code>\n";
+                                break;
+
+                            case BlacklistFlag::BanEvade:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
+                                $Response .= "<b>Original Private ID:</b> <code>" . $UserStatus->OriginalPrivateID . "</code>\n";
+                                break;
+
+                            case BlacklistFlag::ChildAbuse:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Child Pornography / Child Abuse</code>\n";
+                                break;
+
+                            case BlacklistFlag::Impersonator:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Malicious Impersonator</code>\n";
+                                break;
+
+                            case BlacklistFlag::PiracySpam:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam Pirated Content</code>\n";
+                                break;
+
+                            case BlacklistFlag::PornographicSpam:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam NSFW Content</code>\n";
+                                break;
+
+                            case BlacklistFlag::PrivateSpam:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion via a unsolicited private message</code>\n";
+                                break;
+
+                            case BlacklistFlag::Raid:
+                                $Response .= "<b>Blacklist Reason:</b> <code>RAID Initializer / Participator</code>\n";
+                                break;
+
+                            case BlacklistFlag::Scam:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Scamming</code>\n";
+                                break;
+
+                            case BlacklistFlag::Special:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Special Reason, consult @IntellivoidSupport</code>\n";
+                                break;
+
+                            default:
+                                $Response .= "<b>Blacklist Reason:</b> <code>Unknown</code>\n";
+                                break;
+                        }
+
+                        $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>\n\n";
+                        $Response .= "<i>If you think this is a mistake, let us know in @IntellivoidDiscussions</i>";
+
+                        Request::sendMessage([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            "text" => $Response
+                        ]);
                     }
-                    else
-                    {
-                        $Response = "This user is blacklisted! Spam Protection Bot has insufficient privileges to ban this user.\n\n";
-                    }
-
-                    $Response .= "<b>Private Telegram ID:</b> <code>" . $UserClient->PublicID . "</code>\n";
-
-                    switch($UserStatus->BlacklistFlag)
-                    {
-                        case BlacklistFlag::None:
-                            $Response .= "<b>Blacklist Reason:</b> <code>None</code>\n";
-                            break;
-
-                        case BlacklistFlag::Spam:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion</code>\n";
-                            break;
-
-                        case BlacklistFlag::BanEvade:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
-                            $Response .= "<b>Original Private ID:</b> <code>" . $UserStatus->OriginalPrivateID . "</code>\n";
-                            break;
-
-                        case BlacklistFlag::ChildAbuse:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Child Pornography / Child Abuse</code>\n";
-                            break;
-
-                        case BlacklistFlag::Impersonator:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Malicious Impersonator</code>\n";
-                            break;
-
-                        case BlacklistFlag::PiracySpam:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam Pirated Content</code>\n";
-                            break;
-
-                        case BlacklistFlag::PornographicSpam:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam NSFW Content</code>\n";
-                            break;
-
-                        case BlacklistFlag::PrivateSpam:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion via a unsolicited private message</code>\n";
-                            break;
-
-                        case BlacklistFlag::Raid:
-                            $Response .= "<b>Blacklist Reason:</b> <code>RAID Initializer / Participator</code>\n";
-                            break;
-
-                        case BlacklistFlag::Scam:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Scamming</code>\n";
-                            break;
-
-                        case BlacklistFlag::Special:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Special Reason, consult @IntellivoidSupport</code>\n";
-                            break;
-
-                        default:
-                            $Response .= "<b>Blacklist Reason:</b> <code>Unknown</code>\n";
-                            break;
-                    }
-
-                    $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>";
-
-
-                    Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => $Response
-                    ]);
                 }
             }
 
@@ -359,7 +353,7 @@
                         "reply_to_message_id" => $message->MessageID,
                         "parse_mode" => "html",
                         "text" =>
-                            self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                            self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                             "No action will be taken since this user is whitelisted"
                     ]);
                 }
@@ -377,7 +371,7 @@
                             "reply_to_message_id" => $message->MessageID,
                             "parse_mode" => "html",
                             "text" =>
-                                self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                 "No action will be taken since the the current detection rule in this group is to do nothing"
                         ]);
                     }
@@ -396,7 +390,7 @@
                                 "chat_id" => $message->Chat->ID,
                                 "parse_mode" => "html",
                                 "text" =>
-                                    self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                    self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                     "The message has been deleted"
                             ]);
                         }
@@ -410,7 +404,7 @@
                                 "reply_to_message_id" => $message->MessageID,
                                 "parse_mode" => "html",
                                 "text" =>
-                                    self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                    self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                     "<b>The message cannot be deleted because of insufficient administrator privileges</b>"
                             ]);
                         }
@@ -430,7 +424,7 @@
                         "until_date" => (int)time() + 60
                     ]);
 
-                    $Response = self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n";
+                    $Response = self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n";
 
                     if($DeleteResponse->isOk() == false)
                     {
@@ -470,7 +464,7 @@
                         "until_date" => 0
                     ]);
 
-                    $Response = self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n";
+                    $Response = self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n";
 
                     if($DeleteResponse->isOk() == false)
                     {
@@ -506,7 +500,7 @@
                             "reply_to_message_id" => $message->MessageID,
                             "parse_mode" => "html",
                             "text" =>
-                                self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                 "No action was taken because the detection action is not recognized"
                         ]);
                     }

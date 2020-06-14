@@ -197,7 +197,8 @@
                             break;
                     }
 
-                    $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>";
+                    $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>\n\n";
+                    $Response .= "<i>If you think this is a mistake, let us know in @IntellivoidDiscussions</i>";
 
 
                     Request::sendMessage([
