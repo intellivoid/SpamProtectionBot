@@ -1,5 +1,9 @@
 <?php
 
+    /** @noinspection PhpUndefinedClassInspection */
+    /** @noinspection PhpUnused */
+    /** @noinspection PhpIllegalPsrClassPathInspection */
+
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
     use DeepAnalytics\DeepAnalytics;
@@ -38,6 +42,7 @@
          *
          * @return ServerResponse
          * @throws TelegramException
+         * @noinspection DuplicatedCode
          */
         public function execute()
         {
@@ -52,7 +57,7 @@
 
                 // Define and update chat client
                 $ChatClient = $SpamProtection->getTelegramClientManager()->registerChat($ChatObject);
-                if(isset($UserClient->SessionData->Data['chat_settings']) == false)
+                if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
                 {
                     $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
                     $ChatClient = $SpamProtection->getSettingsManager()->updateChatSettings($ChatClient, $ChatSettings);
@@ -61,21 +66,37 @@
 
                 // Define and update user client
                 $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
-                if(isset($UserClient->SessionData->Data['user_status']) == false)
+                if(isset($UserClient->SessionData->Data["user_status"]) == false)
                 {
                     $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
                     $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
+
+                // Define and update the forwarder if available
+                if($this->getMessage()->getForwardFrom() !== null)
+                {
+                    $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
+                    $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUserObject);
+                    if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                    {
+                        $ForwardUserStatus = $SpamProtection->getSettingsManager()->getUserStatus($ForwardUserClient);
+                        $ForwardUserClient = $SpamProtection->getSettingsManager()->updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                    }
+                    $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
+                }
             }
             catch(Exception $e)
             {
-                $data = [
-                    'chat_id' => $this->getMessage()->getChat()->getId(),
-                    'text' =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDev"
-                ];
-                return Request::sendMessage($data);
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $e->getCode() . "</code>\n" .
+                        "Object: <code>Events/new_member.bin</code>"
+                ]);
             }
 
             $DeepAnalytics = new DeepAnalytics();

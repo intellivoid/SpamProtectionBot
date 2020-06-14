@@ -1,5 +1,9 @@
 <?php
 
+    /** @noinspection PhpUndefinedClassInspection */
+    /** @noinspection PhpUnused */
+    /** @noinspection PhpIllegalPsrClassPathInspection */
+
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
     use CoffeeHouse\CoffeeHouse;
@@ -58,12 +62,13 @@
          * Executes the generic message command
          *
          * @return ServerResponse|null
-         * @throws TelegramException
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws MessageLogNotFoundException
          * @throws TelegramClientNotFoundException
+         * @throws TelegramException
          * @throws UnsupportedMessageException
+         * @noinspection DuplicatedCode
          */
         public function execute()
         {
@@ -93,6 +98,19 @@
                     $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
+
+                // Define and update the forwarder if available
+                if($this->getMessage()->getForwardFrom() !== null)
+                {
+                    $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
+                    $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUserObject);
+                    if(isset($ForwardUserClient->SessionData->Data['user_status']) == false)
+                    {
+                        $ForwardUserStatus = $SpamProtection->getSettingsManager()->getUserStatus($ForwardUserClient);
+                        $ForwardUserClient = $SpamProtection->getSettingsManager()->updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                    }
+                    $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
+                }
             }
             catch(Exception $e)
             {
