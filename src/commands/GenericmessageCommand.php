@@ -340,7 +340,7 @@
                                 "reply_to_message_id" => $message->MessageID,
                                 "parse_mode" => "html",
                                 "text" =>
-                                    self::generateDetectionMessage($message, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                    self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                     "No action will be taken since this group has Forward Protection Enabled"
                             ]);
                         }
@@ -482,7 +482,7 @@
                         $Response .= "<b>The user cannot be banned because of insufficient administrator privileges</b>\n\n";
                     }
 
-                    if($BanResponse == true && $DeleteResponse == true)
+                    if($BanResponse->isOk() == true && $DeleteResponse->isOk() == true)
                     {
                         $Response .= "The message was deleted and the offender was banned from the group";
                     }
@@ -523,7 +523,7 @@
          * @param SpamPredictionResults $spamPredictionResults
          * @return string
          */
-        private static function generateDetectionMessage(Message $message, MessageLog $messageLog, TelegramClient $userClient, SpamPredictionResults $spamPredictionResults): string
+        private static function generateDetectionMessage(MessageLog $messageLog, TelegramClient $userClient, SpamPredictionResults $spamPredictionResults): string
         {
             $Response = "\u{26A0} <b>SPAM DETECTED</b> \u{26A0}\n\n";
             $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n";
