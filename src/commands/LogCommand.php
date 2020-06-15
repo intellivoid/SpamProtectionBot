@@ -319,6 +319,12 @@
             ]);
         }
 
+        /**
+         * Escapes problematic characters for HTML content
+         *
+         * @param string $input
+         * @return string
+         */
         private static function escapeHTML(string $input): string
         {
             $input = str_ireplace("<", "&lt;", $input);
