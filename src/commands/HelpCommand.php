@@ -215,7 +215,7 @@
                             "disable_web_page_preview" => true,
                             "parse_mode" => "html",
                             'text' =>
-                                "<b>Chat Settigns Command</b>\n\n".
+                                "<b>Chat Settings Command</b>\n\n".
                                 "This command will allow chat adminstrators to alter the spam protection settings for the given chat\n\n".
                                 "Usage Example:\n" .
                                 "   <code>/settings</code> [<code>Option</code>] [<code>Value</code>]\n".
