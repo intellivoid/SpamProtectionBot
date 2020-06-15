@@ -301,12 +301,12 @@
 
             if($user_client->User->FirstName !== null)
             {
-                $Response .= "   <b>First Name:</b> <code>" . $user_client->User->FirstName . "</code>\n";
+                $Response .= "   <b>First Name:</b> <code>" . self::escapeHTML($user_client->User->FirstName) . "</code>\n";
             }
 
             if($user_client->User->LastName !== null)
             {
-                $Response .= "   <b>Last Name:</b> <code>" . $user_client->User->LastName . "</code>\n";
+                $Response .= "   <b>Last Name:</b> <code>" . self::escapeHTML($user_client->User->LastName) . "</code>\n";
             }
 
             if($user_client->User->Username !== null)
@@ -399,9 +399,24 @@
 
             if($UserStatus->OperatorNote !== "None")
             {
-                $Response .= "\n" . $UserStatus->OperatorNote . "\n";
+                $Response .= "\n" . self::escapeHTML($UserStatus->OperatorNote) . "\n";
             }
 
             return $Response;
+        }
+
+        /**
+         * Escapes problematic characters for HTML content
+         *
+         * @param string $input
+         * @return string
+         */
+        private static function escapeHTML(string $input): string
+        {
+            $input = str_ireplace("<", "&lt;", $input);
+            $input = str_ireplace(">", "&gt;", $input);
+            $input = str_ireplace("&", "&amp;", $input);
+
+            return $input;
         }
     }
