@@ -154,16 +154,19 @@
                             $Response .= "   <b>Original Sender Private ID (Forwarded):</b> <code>" . $ForwardUserPrivateID . "</code>\n";
                         }
 
-                        $Response .= "   <b>Ham Prediction:</b> <code>" . $MessageLog->HamPrediction . "</code>\n";
-                        $Response .= "   <b>Spam Prediction:</b> <code>" . $MessageLog->SpamPrediction . "</code>\n";
+                        if($MessageLog->SpamPrediction > 0 && $MessageLog->HamPrediction > 0)
+                        {
+                            $Response .= "   <b>Ham Prediction:</b> <code>" . $MessageLog->HamPrediction . "</code>\n";
+                            $Response .= "   <b>Spam Prediction:</b> <code>" . $MessageLog->SpamPrediction . "</code>\n";
 
-                        if($MessageLog->SpamPrediction > $MessageLog->HamPrediction)
-                        {
-                            $Response .= "   <b>Is Spam:</b> <code>True</code>\n";
-                        }
-                        else
-                        {
-                            $Response .= "   <b>Is Spam:</b> <code>False</code>\n";
+                            if($MessageLog->SpamPrediction > $MessageLog->HamPrediction)
+                            {
+                                $Response .= "   <b>Is Spam:</b> <code>True</code>\n";
+                            }
+                            else
+                            {
+                                $Response .= "   <b>Is Spam:</b> <code>False</code>\n";
+                            }
                         }
 
                         return Request::sendMessage([
