@@ -46,7 +46,7 @@
         /**
          * @var string
          */
-        protected $description = 'Handles spam detection in a groupchatt';
+        protected $description = 'Handles spam detection in a groupchat';
 
         /**
          * @var bool
