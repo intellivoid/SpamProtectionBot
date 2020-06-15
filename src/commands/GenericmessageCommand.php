@@ -16,6 +16,7 @@
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\DetectionAction;
+    use SpamProtection\Abstracts\TelegramChatType;
     use SpamProtection\Exceptions\DatabaseException;
     use SpamProtection\Exceptions\InvalidSearchMethod;
     use SpamProtection\Exceptions\MessageLogNotFoundException;
@@ -120,6 +121,12 @@
             $DeepAnalytics = new DeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
+
+            if($ChatObject->Type == TelegramChatType::Private)
+            {
+                return null;
+            }
+
             $CoffeeHouse = new CoffeeHouse();
 
             $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
