@@ -311,7 +311,7 @@
             ]);
 
             return Request::sendMessage([
-                "chat_id" => "SpamProtectionLogs",
+                "chat_id" => "@SpamProtectionLogs",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",

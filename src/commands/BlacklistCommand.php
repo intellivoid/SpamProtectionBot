@@ -443,8 +443,7 @@
                 $LogMessage .= "\n<i>The previous blacklist flag</i> <code>$previous_flag</code> <i>has been lifted</i>";
             }
             elseif($update)
-            {
-                $LogMessage .= "<b>Previous Flag:</b> <code>" . $previous_flag . "</code> (" . self::blacklistFlagToReason($previous_flag) . ")\n";
+            {$LogMessage .= "<b>Previous Flag:</b> <code>" . $previous_flag . "</code> (" . self::blacklistFlagToReason($previous_flag) . ")\n";
                 $LogMessage .= "<b>New Flag:</b> <code>" . $TargetUserStatus->BlacklistFlag . "</code> (" . self::blacklistFlagToReason($TargetUserStatus->BlacklistFlag) . ")\n";
             }
             else
@@ -453,7 +452,7 @@
             }
 
             return Request::sendMessage([
-                "chat_id" => "SpamProtectionLogs",
+                "chat_id" => "@SpamProtectionLogs",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",
