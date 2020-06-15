@@ -119,7 +119,7 @@
             return Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "text" => "Hey there! Looking for help? send /help@SpamProtectionBot"
+                "text" => "Hey there! Looking for help? Send /help@SpamProtectionBot"
             ]);
 
         }
