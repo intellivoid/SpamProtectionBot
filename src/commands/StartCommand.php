@@ -117,8 +117,9 @@
             $DeepAnalytics->tally('tg_spam_protection', 'start_command', (int)$TelegramClient->getChatId());
 
             return Request::sendMessage([
-                'chat_id' => $this->getMessage()->getChat()->getId(),
-                'text' => "Working fine!"
+                "chat_id" => $this->getMessage()->getChat()->getId(),
+                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                "text" => "Hey there! Looking for help? send /help@SpamProtectionBot"
             ]);
 
         }
