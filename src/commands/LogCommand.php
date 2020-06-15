@@ -63,10 +63,12 @@
          * Command execute method
          *
          * @return ServerResponse
-         * @throws TelegramException
          * @throws DatabaseException
          * @throws InvalidSearchMethod
+         * @throws MessageLogNotFoundException
          * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         * @throws UnsupportedMessageException
          * @noinspection DuplicatedCode
          */
         public function execute()
