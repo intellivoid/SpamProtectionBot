@@ -13,9 +13,7 @@
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
-    use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\TelegramChatType;
-    use SpamProtection\Abstracts\TelegramClientSearchMethod;
     use SpamProtection\Exceptions\DatabaseException;
     use SpamProtection\Exceptions\InvalidSearchMethod;
     use SpamProtection\Exceptions\MessageLogNotFoundException;
@@ -25,7 +23,6 @@
     use SpamProtection\Objects\TelegramClient\Chat;
     use SpamProtection\Objects\TelegramClient\User;
     use SpamProtection\SpamProtection;
-    use SpamProtection\Utilities\Hashing;
 
     /**
      * Log message command
@@ -122,15 +119,15 @@
                     "text" =>
                         "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
                         "Error Code: <code>" . $e->getCode() . "</code>\n" .
-                        "Object: <code>Commands/blacklist.bin</code>"
+                        "Object: <code>Commands/log.bin</code>"
                 ]);
             }
 
             $DeepAnalytics = new DeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'blacklist_command', 0);
+            $DeepAnalytics->tally('tg_spam_protection', 'log_command', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'blacklist_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'log_command', (int)$TelegramClient->getChatId());
 
             $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
             if($UserStatus->IsOperator == false)
@@ -271,6 +268,19 @@
                     "reply_to_message_id" => $message->MessageID,
                     "text" => "You can't log a user who's whitelisted"
                 ]);
+            }
+
+            if($message->Text == null)
+            {
+                if($message->Caption == null)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $message->Chat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $message->MessageID,
+                        "text" => "This message type isn't supported yet, archive this message yourself if necessary"
+                    ]);
+                }
             }
 
             $MessageLogObject = $spamProtection->getMessageLogManager()->registerMessage($message, 0, 0);

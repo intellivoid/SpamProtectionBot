@@ -31,7 +31,7 @@
         /**
          * @var string
          */
-        protected $description = 'Start command';
+        protected $description = 'Gets executed when a user first starts using the bot.';
 
         /**
          * @var string
