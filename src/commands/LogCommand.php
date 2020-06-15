@@ -291,7 +291,7 @@
             $LogMessage .= "<b>Message Hash:</b> <code>" . $MessageLogObject->MessageHash . "</code>\n";
             $LogMessage .= "<b>Timestamp:</b> <code>" . $MessageLogObject->Timestamp . "</code>";
 
-            $LogMessageWithContent = $LogMessage . "\n\n<i>===== CONTENT =====</i>\n\n" . $message->getText();
+            $LogMessageWithContent = $LogMessage . "\n\n<i>===== CONTENT =====</i>\n\n" . self::escapeHTML($message->getText());
             if(strlen($LogMessageWithContent) > 4096)
             {
                 $LogMessage .= "\n\nThe content is too large to be shown\n";
@@ -317,7 +317,15 @@
                 "parse_mode" => "html",
                 "text" => $LogMessage
             ]);
+        }
 
+        private static function escapeHTML(string $input): string
+        {
+            $input = str_ireplace("<", "&lt;", $input);
+            $input = str_ireplace(">", "&gt;", $input);
+            $input = str_ireplace("&", "&amp;", $input);
+
+            return $input;
         }
 
     }
