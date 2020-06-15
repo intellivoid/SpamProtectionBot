@@ -149,7 +149,7 @@
                 'spam_prediction',
                 'ham_prediction',
                 'timestamp'
-            ), 'message_hash', $message_hash);
+            ), 'message_id', $message_hash);
 
             $QueryResults = $this->spamProtection->getDatabase("MainDatabase")->query($Query);
 
