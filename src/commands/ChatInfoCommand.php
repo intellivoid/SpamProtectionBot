@@ -279,14 +279,14 @@
                         break;
                 }
 
-                if($ChatSettings->LogSpamPredictions)
-                {
-                    $Response .= "   <b>Log Spam Detections:</b> <code>True</code>\n";
-                }
-                else
-                {
-                    $Response .= "   <b>Log Spam Detections:</b> <code>False</code>\n";
-                }
+                //if($ChatSettings->LogSpamPredictions)
+                //{
+                //    $Response .= "   <b>Log Spam Detections:</b> <code>True</code>\n";
+                //}
+                //else
+                //{
+                //    $Response .= "   <b>Log Spam Detections:</b> <code>False</code>\n";
+                //}
             }
             else
             {
