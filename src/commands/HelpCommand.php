@@ -237,6 +237,21 @@
                                 "   <code>/active_spammer_alert off</code>\n\n"
                         ]);
 
+                    case "blacklist":
+                        return Request::sendMessage([
+                            'chat_id' => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            "text" =>
+                                "Usage:\n" .
+                                "   <b>/blacklist</b> (In reply to target user) <code>[Blacklist Flag]</code>\n" .
+                                "   <b>/blacklist</b> (In reply to forwarded content) -f <code>[Blacklist Flag]</code>\n" .
+                                "   <b>/blacklist</b> <code>[Private Telegram ID]</code> <code>[Blacklist Flag]</code>\n" .
+                                "   <b>/blacklist</b> <code>[User ID]</code> <code>[Blacklist Flag]</code>\n" .
+                                "   <b>/blacklist</b> <code>[Username]</code> <code>[Blacklist Flag]</code>\n\n" .
+                                "For further instructions, refer to the operator manual"
+                        ]);
+
                     case "help":
                         return Request::sendMessage([
                             'chat_id' => $this->getMessage()->getChat()->getId(),
