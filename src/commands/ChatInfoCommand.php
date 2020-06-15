@@ -192,7 +192,7 @@
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "text" => "Unable to resolve the query '$TargetChatParameter'!"
+                        "text" => "Unable to resolve the query '" . self::escapeHTML($TargetChatParameter) . "'!"
                     ]);
                 }
             }
@@ -244,7 +244,7 @@
             $Response .= "   <b>Private ID:</b> <code>" . $chat_client->PublicID . "</code>\n";
             $Response .= "   <b>Chat ID:</b> <code>" . $chat_client->Chat->ID . "</code>\n";
             $Response .= "   <b>Chat Type:</b> <code>" . $chat_client->Chat->Type . "</code>\n";
-            $Response .= "   <b>Chat Title:</b> <code>" . $chat_client->Chat->Title . "</code>\n";
+            $Response .= "   <b>Chat Title:</b> <code>" . self::escapeHTML($chat_client->Chat->Title) . "</code>\n";
 
             if($chat_client->Chat->Username !== null)
             {
@@ -317,5 +317,20 @@
             }
 
             return $Response;
+        }
+
+        /**
+         * Escapes problematic characters for HTML content
+         *
+         * @param string $input
+         * @return string
+         */
+        private static function escapeHTML(string $input): string
+        {
+            $input = str_ireplace("<", "&lt;", $input);
+            $input = str_ireplace(">", "&gt;", $input);
+            $input = str_ireplace("&", "&amp;", $input);
+
+            return $input;
         }
     }
