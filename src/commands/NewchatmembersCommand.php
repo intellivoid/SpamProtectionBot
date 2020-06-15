@@ -105,8 +105,36 @@
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
             $DeepAnalytics->tally('tg_spam_protection', 'new_member', (int)$TelegramClient->getChatId());
 
+            if(isset($this->getMessage()->getNewChatMembers()[0]))
+            {
+                $UserObject = User::fromArray($this->getMessage()->getNewChatMembers()[0]->getRawData());
+                $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
+                if(isset($UserClient->SessionData->Data["user_status"]) == false)
+                {
+                    $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
+                    $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
+                }
+                $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
+            }
+
             $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
             $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
+
+            if($UserObject->Username == "SpamProtectionBot")
+            {
+                Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Thanks for adding me! Remember to give me the following permissions\n\n".
+                        " - <code>Delete Messages</code>\n".
+                        " - <code>Ban Users</code>\n\n".
+                        "If you need help with setting this up bot, send /help\n\n".
+                        "I will actively detect and remove spam and I will ban blacklisted users such as spammers, ".
+                        "scammers and raiders, if you need any help then feel free to reach out to us at @IntellivoidDiscussions"
+                ]);
+            }
 
             if($ChatSettings->ActiveSpammerAlertEnabled)
             {
