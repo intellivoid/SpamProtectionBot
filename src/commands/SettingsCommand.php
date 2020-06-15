@@ -134,6 +134,47 @@
                 }
             }
 
+            $UserChatMember = Request::getChatMember([
+                "user_id" => $UserObject->ID,
+                "chat_id" => $ChatObject->ID
+            ]);
+
+            if($UserChatMember->isOk() == false)
+            {
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" => "This command can only be used by chat administrators"
+                ]);
+            }
+
+            if($UserChatMember->getResult()->status !== "creator")
+            {
+                if($UserChatMember->getResult()->status !== "administrator")
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "This command can only be used by chat administrators"
+                    ]);
+                }
+            }
+
+            if($UserChatMember->getResult()->status !== "administrator")
+            {
+                if($UserChatMember->getResult()->status !== "creator")
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "This command can only be used by chat administrators"
+                    ]);
+                }
+            }
+
             if($this->getMessage()->getText(true) !== null)
             {
                 if (strlen($this->getMessage()->getText(true)) > 0)
