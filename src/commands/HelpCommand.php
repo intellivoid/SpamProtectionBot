@@ -12,6 +12,7 @@
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
+    use SpamProtection\Abstracts\TelegramChatType;
     use SpamProtection\Objects\TelegramClient\Chat;
     use SpamProtection\Objects\TelegramClient\User;
     use SpamProtection\SpamProtection;
@@ -115,6 +116,16 @@
             $DeepAnalytics->tally('tg_spam_protection', 'help_command', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
             $DeepAnalytics->tally('tg_spam_protection', 'help_command', (int)$TelegramClient->getChatId());
+
+            if($this->getMessage()->getChat()->getType() !== TelegramChatType::Private)
+            {
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" => "This command can only be used in private!"
+                ]);
+            }
 
             $CommandParameters = explode(" ", $this->getMessage()->getText(true));
             $CommandParameters = array_filter($CommandParameters, 'strlen');
@@ -224,6 +235,14 @@
                                 "   <code>/blacklists off</code>\n\n".
                                 "<i>How to I disable the active spammer alert?</i>\n".
                                 "   <code>/active_spammer_alert off</code>\n\n"
+                        ]);
+
+                    case "help":
+                        return Request::sendMessage([
+                            'chat_id' => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            'text' => "Need help with the help command? Maybe you are the one who needs help buddy."
                         ]);
 
                     default:
