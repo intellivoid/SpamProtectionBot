@@ -13,6 +13,10 @@
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\BlacklistFlag;
+    use SpamProtection\Exceptions\DatabaseException;
+    use SpamProtection\Exceptions\InvalidSearchMethod;
+    use SpamProtection\Exceptions\TelegramClientNotFoundException;
+    use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\TelegramClient\Chat;
     use SpamProtection\Objects\TelegramClient\User;
     use SpamProtection\SpamProtection;
@@ -42,6 +46,9 @@
          *
          * @return ServerResponse
          * @throws TelegramException
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
         public function execute()
@@ -59,8 +66,8 @@
                 $ChatClient = $SpamProtection->getTelegramClientManager()->registerChat($ChatObject);
                 if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
                 {
-                    $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
-                    $ChatClient = $SpamProtection->getSettingsManager()->updateChatSettings($ChatClient, $ChatSettings);
+                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
+                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
 
@@ -68,8 +75,8 @@
                 $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
                 if(isset($UserClient->SessionData->Data["user_status"]) == false)
                 {
-                    $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
-                    $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
+                    $UserStatus = SettingsManager::getUserStatus($UserClient);
+                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
 
@@ -80,14 +87,15 @@
                     $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
                     {
-                        $ForwardUserStatus = $SpamProtection->getSettingsManager()->getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = $SpamProtection->getSettingsManager()->updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
                     }
                     $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                 }
             }
             catch(Exception $e)
             {
+                $SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -111,18 +119,19 @@
                 $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
                 if(isset($UserClient->SessionData->Data["user_status"]) == false)
                 {
-                    $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
-                    $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
+                    $UserStatus = SettingsManager::getUserStatus($UserClient);
+                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
             }
 
-            $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
-            $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
+            $UserStatus = SettingsManager::getUserStatus($UserClient);
+            $ChatSettings = SettingsManager::getChatSettings($ChatClient);
 
             if($UserObject->Username == "SpamProtectionBot")
             {
-                Request::sendMessage([
+                $SpamProtection->getDatabase()->close();
+                return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
@@ -142,6 +151,7 @@
                 {
                     if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
                     {
+                        $SpamProtection->getDatabase()->close();
                         Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -228,8 +238,8 @@
                     $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>\n\n";
                     $Response .= "<i>If you think this is a mistake, let us know in @IntellivoidDiscussions</i>";
 
-
-                    Request::sendMessage([
+                    $SpamProtection->getDatabase()->close();
+                    return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
