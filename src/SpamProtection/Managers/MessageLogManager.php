@@ -119,6 +119,7 @@
                 throw new DatabaseException($Query, $this->spamProtection->getDatabase("MainDatabase")->error);
             }
 
+            $QueryResults->close();
             return $this->getMessage($message_hash);
         }
 
@@ -161,6 +162,7 @@
             {
                 if($QueryResults->num_rows !== 1)
                 {
+                    $QueryResults->close();
                     throw new MessageLogNotFoundException();
                 }
 
@@ -169,6 +171,7 @@
                 $Row['chat'] = ZiProto::decode($Row['chat']);
                 $Row['forward_from'] = ZiProto::decode($Row['forward_from']);
                 $Row['forward_from_chat'] = ZiProto::decode($Row['forward_from_chat']);
+                $QueryResults->close();
                 return MessageLog::fromArray($Row);
             }
         }

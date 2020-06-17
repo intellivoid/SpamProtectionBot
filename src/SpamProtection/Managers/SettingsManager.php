@@ -16,26 +16,12 @@
     class SettingsManager
     {
         /**
-         * @var SpamProtection
-         */
-        private $spamProtection;
-
-        /**
-         * ChatSettingsManager constructor.
-         * @param SpamProtection $spamProtection
-         */
-        public function __construct(SpamProtection $spamProtection)
-        {
-            $this->spamProtection = $spamProtection;
-        }
-
-        /**
          * Returns the user status of the telegram client
          *
          * @param TelegramClient $telegramClient
          * @return UserStatus
          */
-        public function getUserStatus(TelegramClient $telegramClient): UserStatus
+        public static function getUserStatus(TelegramClient $telegramClient): UserStatus
         {
             if(isset($telegramClient->SessionData->Data["user_status"]) == false)
             {
@@ -52,7 +38,7 @@
          * @param UserStatus $userStatus
          * @return TelegramClient
          */
-        public function updateUserStatus(TelegramClient $telegramClient, UserStatus $userStatus): TelegramClient
+        public static function updateUserStatus(TelegramClient $telegramClient, UserStatus $userStatus): TelegramClient
         {
             $telegramClient->SessionData->Data["user_status"] = $userStatus->toArray();
             return $telegramClient;
@@ -64,7 +50,7 @@
          * @param TelegramClient $telegramClient
          * @return ChatSettings
          */
-        public function getChatSettings(TelegramClient $telegramClient): ChatSettings
+        public static function getChatSettings(TelegramClient $telegramClient): ChatSettings
         {
             if(isset($telegramClient->SessionData->Data["chat_settings"]) == false)
             {
@@ -81,7 +67,7 @@
          * @param ChatSettings $chatSettings
          * @return TelegramClient
          */
-        public function updateChatSettings(TelegramClient $telegramClient, ChatSettings $chatSettings): TelegramClient
+        public static function updateChatSettings(TelegramClient $telegramClient, ChatSettings $chatSettings): TelegramClient
         {
             $telegramClient->SessionData->Data["chat_settings"] = $chatSettings->toArray();
             return $telegramClient;
