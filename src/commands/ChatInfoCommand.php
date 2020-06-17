@@ -210,7 +210,6 @@
                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                 "text" => self::generateChatInfoString($ChatClient)
             ]);
-
         }
 
         /**

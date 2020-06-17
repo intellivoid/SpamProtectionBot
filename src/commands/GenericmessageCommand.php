@@ -22,6 +22,7 @@
     use SpamProtection\Exceptions\MessageLogNotFoundException;
     use SpamProtection\Exceptions\TelegramClientNotFoundException;
     use SpamProtection\Exceptions\UnsupportedMessageException;
+    use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\ChatSettings;
     use SpamProtection\Objects\MessageLog;
     use SpamProtection\Objects\TelegramClient;
@@ -86,8 +87,8 @@
                 $ChatClient = $SpamProtection->getTelegramClientManager()->registerChat($ChatObject);
                 if(isset($UserClient->SessionData->Data['chat_settings']) == false)
                 {
-                    $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
-                    $ChatClient = $SpamProtection->getSettingsManager()->updateChatSettings($ChatClient, $ChatSettings);
+                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
+                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
 
@@ -95,8 +96,8 @@
                 $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
                 if(isset($UserClient->SessionData->Data['user_status']) == false)
                 {
-                    $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
-                    $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
+                    $UserStatus = SettingsManager::getUserStatus($UserClient);
+                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
 
@@ -107,14 +108,15 @@
                     $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data['user_status']) == false)
                     {
-                        $ForwardUserStatus = $SpamProtection->getSettingsManager()->getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = $SpamProtection->getSettingsManager()->updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
                     }
                     $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                 }
             }
             catch(Exception $e)
             {
+                $SpamProtection->getDatabase()->close();
                 return null;
             }
 
@@ -127,10 +129,8 @@
                 return null;
             }
 
-            $CoffeeHouse = new CoffeeHouse();
-
-            $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
-            $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
+            $UserStatus = SettingsManager::getUserStatus($UserClient);
+            $ChatSettings = SettingsManager::getChatSettings($ChatClient);
 
             if($ChatSettings->BlacklistProtectionEnabled)
             {
@@ -202,6 +202,7 @@
                         $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>\n\n";
                         $Response .= "<i>If you think this is a mistake, let us know in @IntellivoidDiscussions</i>";
 
+                        $SpamProtection->getDatabase()->close();
                         Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -217,10 +218,11 @@
             if($Message->getText() !== null)
             {
                 $MessageObject = Message::fromArray($this->getMessage()->getRawData());
-                $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
+                $ChatSettings = SettingsManager::getChatSettings($ChatClient);
 
                 if($ChatSettings->LogSpamPredictions == false)
                 {
+                    $SpamProtection->getDatabase()->close();
                     return null;
                 }
 
@@ -230,6 +232,7 @@
                     {
                         if($MessageObject->getForwardedOriginalUser()->Username == "SpamProtectionBot")
                         {
+                            $SpamProtection->getDatabase()->close();
                             return null;
                         }
                     }
@@ -246,8 +249,8 @@
                             $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
                             if(isset($UserClient->SessionData->Data['user_status']) == false)
                             {
-                                $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
-                                $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
+                                $UserStatus = SettingsManager::getUserStatus($UserClient);
+                                $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
                             }
                             $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
                         }
@@ -256,6 +259,8 @@
 
                 if($ChatSettings->DetectSpamEnabled)
                 {
+                    $CoffeeHouse = new CoffeeHouse();
+
                     try
                     {
                         if($UserStatus->GeneralizedID == null || $UserStatus->GeneralizedID == "None")
@@ -269,9 +274,13 @@
                     }
                     catch(Exception $exception)
                     {
+                        $CoffeeHouse->getDatabase()->close();
+                        $SpamProtection->getDatabase()->close();
                         unset($exception);
                         return null;
                     }
+
+                    $CoffeeHouse->getDatabase()->close();
 
                     $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage(
                         $MessageObject, $Results->SpamPrediction, $Results->HamPrediction
@@ -280,7 +289,7 @@
                     $UserStatus->GeneralizedSpam = $Results->GeneralizedSpam;
                     $UserStatus->GeneralizedHam = $Results->GeneralizedHam;
                     $UserStatus->GeneralizedID = $Results->GeneralizedID;
-                    $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
+                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
                     $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
 
                     if($Results->SpamPrediction > $Results->HamPrediction)
@@ -292,8 +301,7 @@
 
                         self::handleSpam(
                             $MessageObject, $MessageLogObject,
-                            $UserClient, $UserStatus,
-                            $ChatClient, $ChatSettings, $Results);
+                            $UserClient, $UserStatus, $ChatSettings, $Results);
 
                         $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', 0);
                         $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getChatId());
@@ -309,7 +317,7 @@
 
             }
 
-
+            $SpamProtection->getDatabase()->close();
             return null;
         }
 
@@ -320,7 +328,6 @@
          * @param MessageLog $messageLog
          * @param TelegramClient $userClient
          * @param UserStatus $userStatus
-         * @param TelegramClient $chatClient
          * @param ChatSettings $chatSettings
          * @param SpamPredictionResults $spamPredictionResults
          * @throws TelegramException
@@ -328,8 +335,7 @@
         private static function handleSpam(
             Message $message, MessageLog $messageLog,
             TelegramClient $userClient, UserStatus $userStatus,
-            TelegramClient $chatClient, ChatSettings $chatSettings,
-            SpamPredictionResults $spamPredictionResults
+            ChatSettings $chatSettings, SpamPredictionResults $spamPredictionResults
         )
         {
             if($chatSettings->ForwardProtectionEnabled)
@@ -522,7 +528,6 @@
         /**
          * Generates a generic spam detection message
          *
-         * @param Message $message
          * @param MessageLog $messageLog
          * @param TelegramClient $userClient
          * @param SpamPredictionResults $spamPredictionResults
@@ -545,6 +550,7 @@
          * @param MessageLog $messageLog
          * @param TelegramClient $userClient
          * @throws TelegramException
+         * @noinspection DuplicatedCode
          */
         private static function logDetectedSpam(Message $message,  MessageLog $messageLog, TelegramClient $userClient)
         {
