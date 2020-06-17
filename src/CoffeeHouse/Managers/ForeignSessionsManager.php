@@ -75,6 +75,7 @@
             $QueryResults = $this->coffeeHouse->getDatabase()->query($Query);
             if($QueryResults)
             {
+                $QueryResults->close();
                 return($this->getSession(ForeignSessionSearchMethod::bySessionId, $session_id));
             }
             else
@@ -123,7 +124,7 @@
                 'expires',
                 'last_updated',
                 'created'
-            ], $search_method, $value);
+            ], $search_method, $value, null, null, 1);
             $QueryResults = $this->coffeeHouse->getDatabase()->query($Query);
 
             if($QueryResults)
@@ -132,6 +133,7 @@
 
                 if ($Row == False)
                 {
+                    $QueryResults->close();
                     throw new ForeignSessionNotFoundException();
                 }
                 else
@@ -139,6 +141,7 @@
                     $Row['headers'] = ZiProto::decode($Row['headers']);
                     $Row['cookies'] = ZiProto::decode($Row['cookies']);
                     $Row['variables'] = ZiProto::decode($Row['variables']);
+                    $QueryResults->close();
                     return(ForeignSession::fromArray($Row));
                 }
             }
@@ -179,6 +182,7 @@
 
             if($QueryResults)
             {
+                $QueryResults->close();
                 return(True);
             }
             else

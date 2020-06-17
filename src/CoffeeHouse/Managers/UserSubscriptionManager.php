@@ -63,6 +63,7 @@
 
             if($QueryResults == true)
             {
+                $QueryResults->close();
                 return $this->getUserSubscription(UserSubscriptionSearchMethod::byAccountID, $account_id);
             }
             else
@@ -99,22 +100,24 @@
 
             $Query = QueryBuilder::select('user_subscriptions', [
                 'id', 'account_id', 'subscription_id', 'access_record_id', 'status', 'created_timestamp'
-            ], $search_method, $value);
+            ], $search_method, $value, null, null, 1);
             $QueryResults = $this->coffeeHouse->getDatabase()->query($Query);
 
             if($QueryResults == false)
             {
+                $QueryResults->close();
                 throw new DatabaseException($this->coffeeHouse->getDatabase()->error);
             }
             else
             {
                 if($QueryResults->num_rows !== 1)
                 {
+                    $QueryResults->close();
                     throw new UserSubscriptionNotFoundException();
                 }
 
                 $Row = $QueryResults->fetch_array(MYSQLI_ASSOC);
-
+                $QueryResults->close();
                 return UserSubscription::fromArray($Row);
             }
         }
@@ -135,7 +138,6 @@
             $id = (int)$userSubscription->ID;
             $account_id = (int)$userSubscription->AccountID;
             $subscription_id = (int)$userSubscription->SubscriptionID;
-            $access_record_id = (int)$userSubscription->AccessRecordID;
             $status = (int)$userSubscription->Status;
 
             $Query = QueryBuilder::update('user_subscriptions', array(
@@ -147,6 +149,7 @@
 
             if($QueryResults == true)
             {
+                $QueryResults->close();
                 return true;
             }
             else
