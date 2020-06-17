@@ -259,62 +259,64 @@
 
                 if($ChatSettings->DetectSpamEnabled)
                 {
-                    $CoffeeHouse = new CoffeeHouse();
-
-                    try
+                    if($UserStatus->IsWhitelisted == false)
                     {
-                        if($UserStatus->GeneralizedID == null || $UserStatus->GeneralizedID == "None")
+                        $CoffeeHouse = new CoffeeHouse();
+
+                        try
                         {
-                            $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), true);
+                            if($UserStatus->GeneralizedID == null || $UserStatus->GeneralizedID == "None")
+                            {
+                                $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), true);
+                            }
+                            else
+                            {
+                                $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), true, $UserStatus->GeneralizedID);
+                            }
+                        }
+                        catch(Exception $exception)
+                        {
+                            $CoffeeHouse->getDatabase()->close();
+                            $SpamProtection->getDatabase()->close();
+                            unset($exception);
+                            return null;
+                        }
+
+                        $CoffeeHouse->getDatabase()->close();
+
+                        $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage(
+                            $MessageObject, $Results->SpamPrediction, $Results->HamPrediction
+                        );
+
+                        $UserStatus->GeneralizedSpam = $Results->GeneralizedSpam;
+                        $UserStatus->GeneralizedHam = $Results->GeneralizedHam;
+                        $UserStatus->GeneralizedID = $Results->GeneralizedID;
+                        $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
+                        $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
+
+                        if($Results->SpamPrediction > $Results->HamPrediction)
+                        {
+                            if($ChatSettings->LogSpamPredictions)
+                            {
+                                self::logDetectedSpam($MessageObject, $MessageLogObject, $UserClient);
+                            }
+
+                            self::handleSpam(
+                                $MessageObject, $MessageLogObject,
+                                $UserClient, $UserStatus, $ChatSettings, $Results);
+
+                            $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', 0);
+                            $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getChatId());
+                            $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getUserId());
                         }
                         else
                         {
-                            $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), true, $UserStatus->GeneralizedID);
+                            $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', 0);
+                            $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', (int)$TelegramClient->getChatId());
+                            $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', (int)$TelegramClient->getUserId());
                         }
-                    }
-                    catch(Exception $exception)
-                    {
-                        $CoffeeHouse->getDatabase()->close();
-                        $SpamProtection->getDatabase()->close();
-                        unset($exception);
-                        return null;
-                    }
-
-                    $CoffeeHouse->getDatabase()->close();
-
-                    $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage(
-                        $MessageObject, $Results->SpamPrediction, $Results->HamPrediction
-                    );
-
-                    $UserStatus->GeneralizedSpam = $Results->GeneralizedSpam;
-                    $UserStatus->GeneralizedHam = $Results->GeneralizedHam;
-                    $UserStatus->GeneralizedID = $Results->GeneralizedID;
-                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
-
-                    if($Results->SpamPrediction > $Results->HamPrediction)
-                    {
-                        if($ChatSettings->LogSpamPredictions)
-                        {
-                            self::logDetectedSpam($MessageObject, $MessageLogObject, $UserClient);
-                        }
-
-                        self::handleSpam(
-                            $MessageObject, $MessageLogObject,
-                            $UserClient, $UserStatus, $ChatSettings, $Results);
-
-                        $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', 0);
-                        $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getChatId());
-                        $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getUserId());
-                    }
-                    else
-                    {
-                        $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', 0);
-                        $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', (int)$TelegramClient->getChatId());
-                        $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', (int)$TelegramClient->getUserId());
                     }
                 }
-
             }
 
             $SpamProtection->getDatabase()->close();
