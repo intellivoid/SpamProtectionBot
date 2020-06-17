@@ -418,7 +418,7 @@
                                     "chat_id" => $this->getMessage()->getChat()->getId(),
                                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                     "parse_mode" => "html",
-                                    "text" => "Success! General alerts will no longer be displayed in this chat"
+                                    "text" => "Success! General alerts will be displayed in this chat"
                                 ]);
                             }
                             else
@@ -427,7 +427,7 @@
                                     "chat_id" => $this->getMessage()->getChat()->getId(),
                                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                     "parse_mode" => "html",
-                                    "text" => "Success! General alerts will be displayed in this chat"
+                                    "text" => "Success! General alerts will no longer be displayed in this chat"
                                 ]);
                             }
                             break;
