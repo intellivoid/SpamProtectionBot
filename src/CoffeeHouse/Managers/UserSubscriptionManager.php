@@ -63,7 +63,6 @@
 
             if($QueryResults == true)
             {
-                $QueryResults->close();
                 return $this->getUserSubscription(UserSubscriptionSearchMethod::byAccountID, $account_id);
             }
             else
@@ -149,7 +148,6 @@
 
             if($QueryResults == true)
             {
-                $QueryResults->close();
                 return true;
             }
             else

@@ -67,7 +67,6 @@
             $QueryResults = $this->coffeeHouse->getDatabase()->query($Query);
             if($QueryResults)
             {
-                $QueryResults->close();
                 return($this->get(GeneralizedClassificationSearchMethod::byPublicID, $public_id));
             }
             else
@@ -167,7 +166,6 @@
 
             if($QueryResults)
             {
-                $QueryResults->close();
                 return true;
             }
             else

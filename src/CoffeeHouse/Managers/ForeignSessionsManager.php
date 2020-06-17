@@ -75,7 +75,6 @@
             $QueryResults = $this->coffeeHouse->getDatabase()->query($Query);
             if($QueryResults)
             {
-                $QueryResults->close();
                 return($this->getSession(ForeignSessionSearchMethod::bySessionId, $session_id));
             }
             else
@@ -182,7 +181,6 @@
 
             if($QueryResults)
             {
-                $QueryResults->close();
                 return(True);
             }
             else
