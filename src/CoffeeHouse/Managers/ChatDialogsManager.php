@@ -70,6 +70,7 @@
 
             if($QueryResults)
             {
+                $QueryResults->close();
                 return true;
             }
             else

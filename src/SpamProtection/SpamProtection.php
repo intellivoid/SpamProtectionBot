@@ -6,10 +6,8 @@
     use acm\acm;
     use Exception;
     use mysqli;
-    use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Managers\MessageLogManager;
     use SpamProtection\Managers\TelegramClientManager;
-    use SpamProtection\Objects\ChatSettings;
 
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'BlacklistFlag.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'DetectionAction.php');
@@ -96,11 +94,6 @@
         private $MessageLogManager;
 
         /**
-         * @var SettingsManager
-         */
-        private $SettingsManager;
-
-        /**
          * SpamProtection constructor.
          * @throws Exception
          */
@@ -112,7 +105,6 @@
             
             $this->TelegramClientManager = new TelegramClientManager($this);
             $this->MessageLogManager = new MessageLogManager($this);
-            $this->SettingsManager = new SettingsManager($this);
         }
 
         /**
@@ -146,6 +138,7 @@
 
         /**
          * @return TelegramClientManager
+         * @noinspection PhpUnused
          */
         public function getTelegramClientManager(): TelegramClientManager
         {
@@ -154,18 +147,11 @@
 
         /**
          * @return MessageLogManager
+         * @noinspection PhpUnused
          */
         public function getMessageLogManager(): MessageLogManager
         {
             return $this->MessageLogManager;
-        }
-
-        /**
-         * @return SettingsManager
-         */
-        public function getSettingsManager(): SettingsManager
-        {
-            return $this->SettingsManager;
         }
 
     }

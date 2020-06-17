@@ -124,6 +124,7 @@
                 throw new DatabaseException($Query, $this->spamProtection->getDatabase("IVDatabase")->error);
             }
 
+            $QueryResults->close();
             return $this->getClient(TelegramClientSearchMethod::byPublicId, $PublicID);
         }
 
@@ -231,6 +232,7 @@
             {
                 if($QueryResults->num_rows !== 1)
                 {
+                    $QueryResults->close();
                     throw new TelegramClientNotFoundException();
                 }
 
@@ -238,6 +240,7 @@
                 $Row['user'] = ZiProto::decode($Row['user']);
                 $Row['chat'] = ZiProto::decode($Row['chat']);
                 $Row['session_data'] = ZiProto::decode($Row['session_data']);
+                $QueryResults->close();
                 return TelegramClient::fromArray($Row);
             }
         }
@@ -287,6 +290,7 @@
 
             if($QueryResults == true)
             {
+                $QueryResults->close();
                 return true;
             }
             else

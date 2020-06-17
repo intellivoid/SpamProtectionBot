@@ -59,6 +59,7 @@
             $QueryResults = $this->coffeeHouse->getDatabase()->query($Query);
             if($QueryResults)
             {
+                $QueryResults->close();
                 return true;
             }
             else
@@ -86,12 +87,13 @@
                 'spam_calculation',
                 'last_updated',
                 'created'
-            ], 'hash', $hash);
+            ], 'hash', $hash, null, null, 1);
             $QueryResults = $this->coffeeHouse->getDatabase()->query($Query);
 
             if($QueryResults)
             {
                 $Row = $QueryResults->fetch_array(MYSQLI_ASSOC);
+                $QueryResults->close();
 
                 if ($Row == False)
                 {
@@ -132,6 +134,7 @@
 
             if($QueryResults)
             {
+                $QueryResults->close();
                 return(True);
             }
             else

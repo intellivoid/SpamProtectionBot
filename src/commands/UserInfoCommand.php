@@ -17,6 +17,7 @@
     use SpamProtection\Exceptions\DatabaseException;
     use SpamProtection\Exceptions\InvalidSearchMethod;
     use SpamProtection\Exceptions\TelegramClientNotFoundException;
+    use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\TelegramClient;
     use SpamProtection\Objects\TelegramClient\Chat;
     use SpamProtection\Objects\TelegramClient\User;
@@ -81,8 +82,8 @@
                 $ChatClient = $SpamProtection->getTelegramClientManager()->registerChat($ChatObject);
                 if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
                 {
-                    $ChatSettings = $SpamProtection->getSettingsManager()->getChatSettings($ChatClient);
-                    $ChatClient = $SpamProtection->getSettingsManager()->updateChatSettings($ChatClient, $ChatSettings);
+                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
+                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
 
@@ -90,8 +91,8 @@
                 $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
                 if(isset($UserClient->SessionData->Data["user_status"]) == false)
                 {
-                    $UserStatus = $SpamProtection->getSettingsManager()->getUserStatus($UserClient);
-                    $UserClient = $SpamProtection->getSettingsManager()->updateUserStatus($UserClient, $UserStatus);
+                    $UserStatus = SettingsManager::getUserStatus($UserClient);
+                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
                 }
                 $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
 
@@ -102,14 +103,15 @@
                     $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
                     {
-                        $ForwardUserStatus = $SpamProtection->getSettingsManager()->getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = $SpamProtection->getSettingsManager()->updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
                     }
                     $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                 }
             }
             catch(Exception $e)
             {
+                $SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -123,9 +125,9 @@
 
             $DeepAnalytics = new DeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'info_command', 0);
+            $DeepAnalytics->tally('tg_spam_protection', 'userinfo_command', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'info_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'userinfo_command', (int)$TelegramClient->getChatId());
 
             if($this->getMessage()->getReplyToMessage() !== null)
             {
@@ -137,23 +139,25 @@
                     $ForwardUser = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
                     $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUser);
 
+                    $SpamProtection->getDatabase()->close();
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "parse_mode" => "html",
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "text" =>
-                            self::generateUserInfoString($SpamProtection, $TargetUserClient, "User Information") .
+                            self::generateUserInfoString($TargetUserClient, "User Information") .
                             "\n\n" .
-                            self::generateUserInfoString($SpamProtection, $ForwardUserClient, "User of Forwarded Message Information")
+                            self::generateUserInfoString($ForwardUserClient, "User of Forwarded Message Information")
                     ]);
 
                 }
 
+                $SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "parse_mode" => "html",
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "text" => self::generateUserInfoString($SpamProtection, $TargetUserClient)
+                    "text" => self::generateUserInfoString($TargetUserClient)
                 ]);
             }
 
@@ -162,6 +166,7 @@
                 if(strlen($this->getMessage()->getText(true)) > 0)
                 {
                     $CommandParameters = explode(" ", $this->getMessage()->getText(true));
+                    $CommandParameters = array_filter($CommandParameters, 'strlen');
 
                     $TargetUserParameter = $CommandParameters[0];
                     $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetUserParameter, (int)$TargetUserParameter);
@@ -170,12 +175,13 @@
                     {
                         $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
                         $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                        $SpamProtection->getDatabase()->close();
 
                         return Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "parse_mode" => "html",
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "text" => self::generateUserInfoString($SpamProtection, $TargetUserClient, "Resolved User ID")
+                            "text" => self::generateUserInfoString($TargetUserClient, "Resolved User ID")
                         ]);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
@@ -187,19 +193,19 @@
                     {
                         $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
                         $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                        $SpamProtection->getDatabase()->close();
 
                         return Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "parse_mode" => "html",
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "text" => self::generateUserInfoString($SpamProtection, $TargetUserClient, "Resolved User Private ID")
+                            "text" => self::generateUserInfoString($TargetUserClient, "Resolved User Private ID")
                         ]);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
                     {
                         unset($telegramClientNotFoundException);
                     }
-
 
                     try
                     {
@@ -207,12 +213,13 @@
                             TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetUserParameter)
                         );
                         $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                        $SpamProtection->getDatabase()->close();
 
                         return Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "parse_mode" => "html",
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "text" => self::generateUserInfoString($SpamProtection, $TargetUserClient, "Resolved Username")
+                            "text" => self::generateUserInfoString($TargetUserClient, "Resolved Username")
                         ]);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
@@ -220,6 +227,7 @@
                         unset($telegramClientNotFoundException);
                     }
 
+                    $SpamProtection->getDatabase()->close();
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -228,12 +236,12 @@
                 }
             }
 
-
+            $SpamProtection->getDatabase()->close();
             return Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "parse_mode" => "html",
                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "text" => self::generateUserInfoString($SpamProtection, $UserClient)
+                "text" => self::generateUserInfoString($UserClient)
             ]);
 
         }
@@ -241,14 +249,13 @@
         /**
          * Generates a user information string
          *
-         * @param SpamProtection $spamProtection
          * @param TelegramClient $user_client
          * @param string $title
          * @return string
          */
-        private static function generateUserInfoString(SpamProtection $spamProtection, TelegramClient $user_client, string $title="User Information"): string
+        private static function generateUserInfoString(TelegramClient $user_client, string $title="User Information"): string
         {
-            $UserStatus = $spamProtection->getSettingsManager()->getUserStatus($user_client);
+            $UserStatus = SettingsManager::getUserStatus($user_client);
             $RequiresExtraNewline = false;
             $Response = "<b>$title</b>\n\n";
 
