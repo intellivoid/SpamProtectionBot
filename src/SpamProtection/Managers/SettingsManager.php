@@ -7,7 +7,6 @@
     use SpamProtection\Objects\ChatSettings;
     use SpamProtection\Objects\TelegramClient;
     use SpamProtection\Objects\UserStatus;
-    use SpamProtection\SpamProtection;
 
     /**
      * Class ChatSettingsManager
@@ -20,6 +19,7 @@
          *
          * @param TelegramClient $telegramClient
          * @return UserStatus
+         * @noinspection PhpUnused
          */
         public static function getUserStatus(TelegramClient $telegramClient): UserStatus
         {
@@ -37,6 +37,7 @@
          * @param TelegramClient $telegramClient
          * @param UserStatus $userStatus
          * @return TelegramClient
+         * @noinspection PhpUnused
          */
         public static function updateUserStatus(TelegramClient $telegramClient, UserStatus $userStatus): TelegramClient
         {
@@ -49,6 +50,7 @@
          *
          * @param TelegramClient $telegramClient
          * @return ChatSettings
+         * @noinspection PhpUnused
          */
         public static function getChatSettings(TelegramClient $telegramClient): ChatSettings
         {
@@ -66,6 +68,7 @@
          * @param TelegramClient $telegramClient
          * @param ChatSettings $chatSettings
          * @return TelegramClient
+         * @noinspection PhpUnused
          */
         public static function updateChatSettings(TelegramClient $telegramClient, ChatSettings $chatSettings): TelegramClient
         {

@@ -124,7 +124,6 @@
                 throw new DatabaseException($Query, $this->spamProtection->getDatabase("IVDatabase")->error);
             }
 
-            $QueryResults->close();
             return $this->getClient(TelegramClientSearchMethod::byPublicId, $PublicID);
         }
 
@@ -288,9 +287,8 @@
             ), 'id', $id);
             $QueryResults = $this->spamProtection->getDatabase("IVDatabase")->query($Query);
 
-            if($QueryResults == true)
+            if($QueryResults)
             {
-                $QueryResults->close();
                 return true;
             }
             else

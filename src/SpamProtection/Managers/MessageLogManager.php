@@ -119,7 +119,6 @@
                 throw new DatabaseException($Query, $this->spamProtection->getDatabase("MainDatabase")->error);
             }
 
-            $QueryResults->close();
             return $this->getMessage($message_hash);
         }
 

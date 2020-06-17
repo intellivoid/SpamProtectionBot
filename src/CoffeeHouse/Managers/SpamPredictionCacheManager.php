@@ -59,7 +59,6 @@
             $QueryResults = $this->coffeeHouse->getDatabase()->query($Query);
             if($QueryResults)
             {
-                $QueryResults->close();
                 return true;
             }
             else
@@ -134,7 +133,6 @@
 
             if($QueryResults)
             {
-                $QueryResults->close();
                 return(True);
             }
             else
