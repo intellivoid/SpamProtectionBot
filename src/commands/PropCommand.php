@@ -139,6 +139,7 @@
             }
 
             $CommandParameters = explode(" ", $this->getMessage()->getText(true));
+            $CommandParameters = array_filter($CommandParameters, 'strlen');
 
             if(count($CommandParameters) == 0)
             {

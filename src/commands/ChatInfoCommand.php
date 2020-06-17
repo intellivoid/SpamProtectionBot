@@ -134,6 +134,7 @@
                 if(strlen($this->getMessage()->getText(true)) > 0)
                 {
                     $CommandParameters = explode(" ", $this->getMessage()->getText(true));
+                    $CommandParameters = array_filter($CommandParameters, 'strlen');
 
                     $TargetChatParameter = $CommandParameters[0];
                     $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetChatParameter, (int)$TargetChatParameter);
