@@ -216,7 +216,6 @@
         /**
          * Generates a user information string
          *
-         * @param SpamProtection $spamProtection
          * @param TelegramClient $chat_client
          * @param string $title
          * @return string
