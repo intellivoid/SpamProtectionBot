@@ -231,7 +231,6 @@
             {
                 if($QueryResults->num_rows !== 1)
                 {
-                    $QueryResults->close();
                     throw new TelegramClientNotFoundException();
                 }
 
@@ -239,7 +238,7 @@
                 $Row['user'] = ZiProto::decode($Row['user']);
                 $Row['chat'] = ZiProto::decode($Row['chat']);
                 $Row['session_data'] = ZiProto::decode($Row['session_data']);
-                $QueryResults->close();
+
                 return TelegramClient::fromArray($Row);
             }
         }
