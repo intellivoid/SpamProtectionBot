@@ -132,7 +132,6 @@
 
                 if ($Row == False)
                 {
-                    $QueryResults->close();
                     throw new ForeignSessionNotFoundException();
                 }
                 else
@@ -140,7 +139,7 @@
                     $Row['headers'] = ZiProto::decode($Row['headers']);
                     $Row['cookies'] = ZiProto::decode($Row['cookies']);
                     $Row['variables'] = ZiProto::decode($Row['variables']);
-                    $QueryResults->close();
+
                     return(ForeignSession::fromArray($Row));
                 }
             }

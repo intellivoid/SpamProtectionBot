@@ -92,7 +92,6 @@
             if($QueryResults)
             {
                 $Row = $QueryResults->fetch_array(MYSQLI_ASSOC);
-                $QueryResults->close();
 
                 if ($Row == False)
                 {

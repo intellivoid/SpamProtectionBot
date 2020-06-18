@@ -122,13 +122,11 @@
 
                 if ($Row == False)
                 {
-                    $QueryResults->close();
                     throw new GeneralizedClassificationNotFoundException();
                 }
                 else
                 {
                     $Row['data'] = ZiProto::decode($Row['data']);
-                    $QueryResults->close();
                     return(GeneralizedClassification::fromArray($Row));
                 }
             }

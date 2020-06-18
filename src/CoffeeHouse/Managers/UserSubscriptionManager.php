@@ -104,19 +104,17 @@
 
             if($QueryResults == false)
             {
-                $QueryResults->close();
+
                 throw new DatabaseException($this->coffeeHouse->getDatabase()->error);
             }
             else
             {
                 if($QueryResults->num_rows !== 1)
                 {
-                    $QueryResults->close();
                     throw new UserSubscriptionNotFoundException();
                 }
 
                 $Row = $QueryResults->fetch_array(MYSQLI_ASSOC);
-                $QueryResults->close();
                 return UserSubscription::fromArray($Row);
             }
         }
