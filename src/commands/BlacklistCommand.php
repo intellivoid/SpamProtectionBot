@@ -86,8 +86,8 @@
                 {
                     $ChatSettings = SettingsManager::getChatSettings($ChatClient);
                     $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
+                    $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
                 }
-                $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
 
                 // Define and update user client
                 $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
@@ -95,8 +95,8 @@
                 {
                     $UserStatus = SettingsManager::getUserStatus($UserClient);
                     $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
+                    $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
                 }
-                $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
 
                 // Define and update the forwarder if available
                 if($this->getMessage()->getForwardFrom() !== null)
@@ -107,13 +107,12 @@
                     {
                         $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
                         $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                        $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                     }
-                    $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                 }
             }
             catch(Exception $e)
             {
-                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -320,7 +319,6 @@
                         unset($telegramClientNotFoundException);
                     }
 
-                    //$SpamProtection->getDatabase()->close();
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -329,7 +327,6 @@
                 }
             }
 
-            //$SpamProtection->getDatabase()->close();
             return self::displayUsage($this->getMessage(), "Missing user parameter");
         }
 
@@ -478,7 +475,6 @@
         {
             if($targetUserClient->Chat->Type !== TelegramChatType::Private)
             {
-                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->getChat()->getId(),
                     "parse_mode" => "html",
@@ -492,7 +488,6 @@
 
             if($UserStatus->IsOperator)
             {
-                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->getChat()->getId(),
                     "parse_mode" => "html",
@@ -503,7 +498,6 @@
 
             if($UserStatus->IsAgent)
             {
-                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->getChat()->getId(),
                     "parse_mode" => "html",
@@ -514,7 +508,6 @@
 
             if($UserStatus->IsWhitelisted)
             {
-                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->getChat()->getId(),
                     "parse_mode" => "html",
@@ -528,7 +521,7 @@
                 case BlacklistFlag::Special:
                     if($operatorClient->User->Username !== "IntellivoidSupport")
                     {
-                        //$SpamProtection->getDatabase()->close();
+
                         return Request::sendMessage([
                             "chat_id" => $message->getChat()->getId(),
                             "parse_mode" => "html",
@@ -611,7 +604,7 @@
                 case BlacklistFlag::BanEvade:
                     if($originalPrivateID == null)
                     {
-                        //$SpamProtection->getDatabase()->close();
+
                         return Request::sendMessage([
                             "chat_id" => $message->getChat()->getId(),
                             "parse_mode" => "html",
@@ -627,7 +620,6 @@
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
                     {
                         unset($telegramClientNotFoundException);
-                        //$SpamProtection->getDatabase()->close();
                         return Request::sendMessage([
                             "chat_id" => $message->getChat()->getId(),
                             "parse_mode" => "html",
@@ -652,7 +644,6 @@
                     break;
 
                 default:
-                    //$SpamProtection->getDatabase()->close();
                     return Request::sendMessage([
                         "chat_id" => $message->getChat()->getId(),
                         "parse_mode" => "html",
@@ -661,7 +652,7 @@
                     ]);
             }
 
-            //$SpamProtection->getDatabase()->close();
+
             if($UserStatus->BlacklistFlag == BlacklistFlag::None)
             {
                 Request::sendMessage([
@@ -671,7 +662,6 @@
                     "text" =>
                         "The user <code>" . $targetUserClient->PublicID . "</code> blacklist flag has been removed"
                 ]);
-
                 return self::logAction(
                     $targetUserClient, $operatorClient,
                     true, false, $OriginalUserStatus->BlacklistFlag
@@ -689,7 +679,6 @@
                         "<code>" . str_ireplace('X', 'x', strtoupper($OriginalUserStatus->BlacklistFlag)) . "</code> to ".
                         "<code>" . str_ireplace('X', 'x', strtoupper($UserStatus->BlacklistFlag)) . "</code>"
                 ]);
-
                 return self::logAction(
                     $targetUserClient, $operatorClient,
                     false, true, $OriginalUserStatus->BlacklistFlag
@@ -705,7 +694,6 @@
                         "The user <code>" . $targetUserClient->PublicID . "</code> has been blacklisted with the flag " .
                         "<code>" . str_ireplace('X', 'x', strtoupper($UserStatus->BlacklistFlag)) . "</code>"
                 ]);
-
                 return self::logAction(
                     $targetUserClient, $operatorClient,
                     false, false

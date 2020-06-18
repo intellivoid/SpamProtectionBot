@@ -101,7 +101,7 @@
             }
             catch(Exception $e)
             {
-                //$SpamProtection->getDatabase()->close();
+
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -113,7 +113,7 @@
                 ]);
             }
 
-            //$SpamProtection->getDatabase()->close();
+
             $DeepAnalytics = new DeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'help_command', 0);

@@ -111,7 +111,7 @@
             }
             catch(Exception $e)
             {
-                //$SpamProtection->getDatabase()->close();
+
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -139,7 +139,7 @@
                     $ForwardUser = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
                     $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUser);
 
-                    //$SpamProtection->getDatabase()->close();
+
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "parse_mode" => "html",
@@ -152,7 +152,7 @@
 
                 }
 
-                //$SpamProtection->getDatabase()->close();
+
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "parse_mode" => "html",
@@ -177,7 +177,7 @@
                         {
                             $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
                             $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -195,7 +195,7 @@
                         {
                             $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
                             $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -215,7 +215,7 @@
                                 TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetUserParameter)
                             );
                             $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -230,7 +230,7 @@
                         }
                     }
 
-                    //$SpamProtection->getDatabase()->close();
+
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -239,7 +239,7 @@
                 }
             }
 
-            //$SpamProtection->getDatabase()->close();
+
             return Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "parse_mode" => "html",

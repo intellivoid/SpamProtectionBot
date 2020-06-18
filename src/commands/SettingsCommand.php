@@ -107,7 +107,7 @@
             }
             catch(Exception $e)
             {
-                //$SpamProtection->getDatabase()->close();
+
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -129,7 +129,7 @@
             {
                 if($ChatObject->Type !== TelegramChatType::SuperGroup)
                 {
-                    //$SpamProtection->getDatabase()->close();
+
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -146,7 +146,7 @@
 
             if($UserChatMember->isOk() == false)
             {
-                //$SpamProtection->getDatabase()->close();
+
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -159,7 +159,7 @@
             {
                 if($UserChatMember->getResult()->status !== "administrator")
                 {
-                    //$SpamProtection->getDatabase()->close();
+
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -173,7 +173,7 @@
             {
                 if($UserChatMember->getResult()->status !== "creator")
                 {
-                    //$SpamProtection->getDatabase()->close();
+
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -192,7 +192,7 @@
 
                     if(count($CommandParameters) !== 2)
                     {
-                        //$SpamProtection->getDatabase()->close();
+
                         return self::displayUsage($this->getMessage(), "Missing parameter");
                     }
 
@@ -207,7 +207,7 @@
                             $ChatSettings->DetectSpamEnabled = self::isEnabledValue($TargetValueParameter);
                             $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
                             $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             if($ChatSettings->DetectSpamEnabled)
                             {
@@ -304,7 +304,7 @@
                             $ChatSettings->DetectSpamAction = self::actionFromString($TargetValueParameter);
                             $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
                             $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             if($ChatSettings->DetectSpamEnabled == false)
                             {
@@ -384,7 +384,7 @@
                             $ChatSettings->BlacklistProtectionEnabled = self::isEnabledValue($TargetValueParameter);
                             $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
                             $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             if($ChatSettings->BlacklistProtectionEnabled)
                             {
@@ -410,7 +410,7 @@
                             $ChatSettings->GeneralAlertsEnabled = self::isEnabledValue($TargetValueParameter);
                             $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
                             $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             if($ChatSettings->GeneralAlertsEnabled)
                             {
@@ -436,7 +436,7 @@
                             $ChatSettings->ActiveSpammerAlertEnabled = self::isEnabledValue($TargetValueParameter);
                             $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
                             $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             if($ChatSettings->ActiveSpammerAlertEnabled)
                             {
@@ -459,7 +459,7 @@
                             break;
 
                         default:
-                            //$SpamProtection->getDatabase()->close();
+
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -477,7 +477,7 @@
                 }
             }
 
-            //$SpamProtection->getDatabase()->close();
+
             return self::displayUsage($this->getMessage(), "Missing parameter");
         }
 

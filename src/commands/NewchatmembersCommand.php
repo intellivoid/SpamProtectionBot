@@ -68,8 +68,8 @@
                 {
                     $ChatSettings = SettingsManager::getChatSettings($ChatClient);
                     $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
+                    $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
                 }
-                $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
 
                 // Define and update user client
                 $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
@@ -77,8 +77,8 @@
                 {
                     $UserStatus = SettingsManager::getUserStatus($UserClient);
                     $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
+                    $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
                 }
-                $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
 
                 // Define and update the forwarder if available
                 if($this->getMessage()->getForwardFrom() !== null)
@@ -89,13 +89,12 @@
                     {
                         $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
                         $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                        $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                     }
-                    $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                 }
             }
             catch(Exception $e)
             {
-                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -130,7 +129,7 @@
 
             if($UserObject->Username == "SpamProtectionBot")
             {
-                //$SpamProtection->getDatabase()->close();
+
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -151,7 +150,7 @@
                 {
                     if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
                     {
-                        //$SpamProtection->getDatabase()->close();
+
                         Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -238,7 +237,7 @@
                     $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>\n\n";
                     $Response .= "<i>If you think this is a mistake, let us know in @IntellivoidDiscussions</i>";
 
-                    //$SpamProtection->getDatabase()->close();
+
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),

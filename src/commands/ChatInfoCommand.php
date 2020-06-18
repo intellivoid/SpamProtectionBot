@@ -110,7 +110,7 @@
             }
             catch(Exception $e)
             {
-                //$SpamProtection->getDatabase()->close();
+
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -145,7 +145,7 @@
                         {
                             $TargetChatClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
                             $SpamProtection->getTelegramClientManager()->updateClient($TargetChatClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -163,7 +163,7 @@
                         {
                             $TargetChatClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetChatParameter);
                             $SpamProtection->getTelegramClientManager()->updateClient($TargetChatClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -183,7 +183,7 @@
                                 TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetChatParameter)
                             );
                             $SpamProtection->getTelegramClientManager()->updateClient($TargetChatClient);
-                            //$SpamProtection->getDatabase()->close();
+
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -198,7 +198,7 @@
                         }
                     }
 
-                    //$SpamProtection->getDatabase()->close();
+
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -207,7 +207,7 @@
                 }
             }
 
-            //$SpamProtection->getDatabase()->close();
+
             return Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "parse_mode" => "html",
