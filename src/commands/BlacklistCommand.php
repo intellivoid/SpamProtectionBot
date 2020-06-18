@@ -113,7 +113,7 @@
             }
             catch(Exception $e)
             {
-                $SpamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -320,7 +320,7 @@
                         unset($telegramClientNotFoundException);
                     }
 
-                    $SpamProtection->getDatabase()->close();
+                    //$SpamProtection->getDatabase()->close();
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -329,7 +329,7 @@
                 }
             }
 
-            $SpamProtection->getDatabase()->close();
+            //$SpamProtection->getDatabase()->close();
             return self::displayUsage($this->getMessage(), "Missing user parameter");
         }
 
@@ -478,7 +478,7 @@
         {
             if($targetUserClient->Chat->Type !== TelegramChatType::Private)
             {
-                $spamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->getChat()->getId(),
                     "parse_mode" => "html",
@@ -492,7 +492,7 @@
 
             if($UserStatus->IsOperator)
             {
-                $spamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->getChat()->getId(),
                     "parse_mode" => "html",
@@ -503,7 +503,7 @@
 
             if($UserStatus->IsAgent)
             {
-                $spamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->getChat()->getId(),
                     "parse_mode" => "html",
@@ -514,7 +514,7 @@
 
             if($UserStatus->IsWhitelisted)
             {
-                $spamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->getChat()->getId(),
                     "parse_mode" => "html",
@@ -528,7 +528,7 @@
                 case BlacklistFlag::Special:
                     if($operatorClient->User->Username !== "IntellivoidSupport")
                     {
-                        $spamProtection->getDatabase()->close();
+                        //$SpamProtection->getDatabase()->close();
                         return Request::sendMessage([
                             "chat_id" => $message->getChat()->getId(),
                             "parse_mode" => "html",
@@ -611,7 +611,7 @@
                 case BlacklistFlag::BanEvade:
                     if($originalPrivateID == null)
                     {
-                        $spamProtection->getDatabase()->close();
+                        //$SpamProtection->getDatabase()->close();
                         return Request::sendMessage([
                             "chat_id" => $message->getChat()->getId(),
                             "parse_mode" => "html",
@@ -627,7 +627,7 @@
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
                     {
                         unset($telegramClientNotFoundException);
-                        $spamProtection->getDatabase()->close();
+                        //$SpamProtection->getDatabase()->close();
                         return Request::sendMessage([
                             "chat_id" => $message->getChat()->getId(),
                             "parse_mode" => "html",
@@ -652,7 +652,7 @@
                     break;
 
                 default:
-                    $spamProtection->getDatabase()->close();
+                    //$SpamProtection->getDatabase()->close();
                     return Request::sendMessage([
                         "chat_id" => $message->getChat()->getId(),
                         "parse_mode" => "html",
@@ -661,7 +661,7 @@
                     ]);
             }
 
-            $spamProtection->getDatabase()->close();
+            //$SpamProtection->getDatabase()->close();
             if($UserStatus->BlacklistFlag == BlacklistFlag::None)
             {
                 Request::sendMessage([

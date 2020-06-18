@@ -113,7 +113,7 @@
             }
             catch(Exception $e)
             {
-                $SpamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -160,7 +160,7 @@
                     {
                         if($this->getMessage()->getReplyToMessage()->getForwardFrom() == null)
                         {
-                            $SpamProtection->getDatabase()->close();
+                            //$SpamProtection->getDatabase()->close();
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -190,7 +190,7 @@
                 );
             }
 
-            $SpamProtection->getDatabase()->close();
+            //$SpamProtection->getDatabase()->close();
             return self::displayUsage($this->getMessage(), "Missing target message");
         }
 
@@ -235,7 +235,7 @@
         {
             if($targetUserClient->Chat->Type !== TelegramChatType::Private)
             {
-                $spamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->Chat->ID,
                     "parse_mode" => "html",
@@ -248,7 +248,7 @@
 
             if($UserStatus->IsOperator)
             {
-                $spamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->Chat->ID,
                     "parse_mode" => "html",
@@ -259,7 +259,7 @@
 
             if($UserStatus->IsAgent)
             {
-                $spamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->Chat->ID,
                     "parse_mode" => "html",
@@ -270,7 +270,7 @@
 
             if($UserStatus->IsWhitelisted)
             {
-                $spamProtection->getDatabase()->close();
+                //$SpamProtection->getDatabase()->close();
                 return Request::sendMessage([
                     "chat_id" => $message->Chat->ID,
                     "parse_mode" => "html",
@@ -283,7 +283,7 @@
             {
                 if($message->Caption == null)
                 {
-                    $spamProtection->getDatabase()->close();
+                    //$SpamProtection->getDatabase()->close();
                     return Request::sendMessage([
                         "chat_id" => $message->Chat->ID,
                         "parse_mode" => "html",
@@ -294,7 +294,7 @@
             }
 
             $MessageLogObject = $spamProtection->getMessageLogManager()->registerMessage($message, 0, 0);
-            $spamProtection->getDatabase()->close();
+            //$SpamProtection->getDatabase()->close();
 
             $LogMessage = "#spam\n\n";
             $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $targetUserClient->PublicID . "</code>\n";
