@@ -168,63 +168,66 @@
                     $CommandParameters = explode(" ", $this->getMessage()->getText(true));
                     $CommandParameters = array_filter($CommandParameters, 'strlen');
 
-                    $TargetUserParameter = $CommandParameters[0];
-                    $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetUserParameter, (int)$TargetUserParameter);
-
-                    try
+                    if(count($CommandParameters) > 0)
                     {
-                        $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
-                        $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
-                        $SpamProtection->getDatabase()->close();
+                        $TargetUserParameter = $CommandParameters[0];
+                        $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetUserParameter, (int)$TargetUserParameter);
 
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "parse_mode" => "html",
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "text" => self::generateUserInfoString($TargetUserClient, "Resolved User ID")
-                        ]);
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
-                    }
+                        try
+                        {
+                            $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
+                            $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                            $SpamProtection->getDatabase()->close();
 
-                    try
-                    {
-                        $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
-                        $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
-                        $SpamProtection->getDatabase()->close();
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "parse_mode" => "html",
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "text" => self::generateUserInfoString($TargetUserClient, "Resolved User ID")
+                            ]);
+                        }
+                        catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                        {
+                            unset($telegramClientNotFoundException);
+                        }
 
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "parse_mode" => "html",
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "text" => self::generateUserInfoString($TargetUserClient, "Resolved User Private ID")
-                        ]);
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
-                    }
+                        try
+                        {
+                            $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
+                            $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                            $SpamProtection->getDatabase()->close();
 
-                    try
-                    {
-                        $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(
-                            TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetUserParameter)
-                        );
-                        $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
-                        $SpamProtection->getDatabase()->close();
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "parse_mode" => "html",
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "text" => self::generateUserInfoString($TargetUserClient, "Resolved User Private ID")
+                            ]);
+                        }
+                        catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                        {
+                            unset($telegramClientNotFoundException);
+                        }
 
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "parse_mode" => "html",
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "text" => self::generateUserInfoString($TargetUserClient, "Resolved Username")
-                        ]);
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
+                        try
+                        {
+                            $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(
+                                TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetUserParameter)
+                            );
+                            $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                            $SpamProtection->getDatabase()->close();
+
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "parse_mode" => "html",
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "text" => self::generateUserInfoString($TargetUserClient, "Resolved Username")
+                            ]);
+                        }
+                        catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                        {
+                            unset($telegramClientNotFoundException);
+                        }
                     }
 
                     $SpamProtection->getDatabase()->close();

@@ -130,58 +130,61 @@
                     $CommandParameters = explode(" ", $this->getMessage()->getText(true));
                     $CommandParameters = array_filter($CommandParameters, 'strlen');
 
-                    $TargetMessageParameter = $CommandParameters[0];
-
-                    try
+                    if(count($CommandParameters) . 0)
                     {
-                        $MessageLog = $SpamProtection->getMessageLogManager()->getMessage($TargetMessageParameter);
+                        $TargetMessageParameter = $CommandParameters[0];
 
-                        $Response = "<b>Message Hash Lookup</b>\n\n";
-
-                        $UserPrivateID = Hashing::telegramClientPublicID($MessageLog->User->ID, $MessageLog->User->ID);
-                        $ChatPrivateID = Hashing::telegramClientPublicID($MessageLog->Chat->ID, $MessageLog->Chat->ID);
-                        $Response .= "   <b>Private User ID:</b> <code>" . $UserPrivateID . "</code>\n";
-                        $Response .= "   <b>Private Chat ID:</b> <code>" . $ChatPrivateID . "</code>\n";
-                        $Response .= "   <b>Message ID:</b> <code>" . $MessageLog->ID . "</code>\n";
-                        $Response .= "   <b>Content Hash:</b> <code>" . $MessageLog->ContentHash . "</code>\n";
-
-                        if($MessageLog->Chat->Username !== null)
+                        try
                         {
-                            $Response .= "   <b>Link:</b> <a href=\"https://t.me/" . $MessageLog->Chat->Username . "/" . $MessageLog->MessageID . "\">" . $MessageLog->Chat->Username . "/" . $MessageLog->MessageID . "</a>\n";
-                        }
+                            $MessageLog = $SpamProtection->getMessageLogManager()->getMessage($TargetMessageParameter);
 
-                        if($MessageLog->ForwardFrom->ID !== null)
-                        {
-                            $ForwardUserPrivateID = Hashing::telegramClientPublicID($MessageLog->ForwardFrom->ID, $MessageLog->ForwardFrom->ID);
-                            $Response .= "   <b>Original Sender Private ID (Forwarded):</b> <code>" . $ForwardUserPrivateID . "</code>\n";
-                        }
+                            $Response = "<b>Message Hash Lookup</b>\n\n";
 
-                        if($MessageLog->SpamPrediction > 0 && $MessageLog->HamPrediction > 0)
-                        {
-                            $Response .= "   <b>Ham Prediction:</b> <code>" . $MessageLog->HamPrediction . "</code>\n";
-                            $Response .= "   <b>Spam Prediction:</b> <code>" . $MessageLog->SpamPrediction . "</code>\n";
+                            $UserPrivateID = Hashing::telegramClientPublicID($MessageLog->User->ID, $MessageLog->User->ID);
+                            $ChatPrivateID = Hashing::telegramClientPublicID($MessageLog->Chat->ID, $MessageLog->Chat->ID);
+                            $Response .= "   <b>Private User ID:</b> <code>" . $UserPrivateID . "</code>\n";
+                            $Response .= "   <b>Private Chat ID:</b> <code>" . $ChatPrivateID . "</code>\n";
+                            $Response .= "   <b>Message ID:</b> <code>" . $MessageLog->ID . "</code>\n";
+                            $Response .= "   <b>Content Hash:</b> <code>" . $MessageLog->ContentHash . "</code>\n";
 
-                            if($MessageLog->SpamPrediction > $MessageLog->HamPrediction)
+                            if($MessageLog->Chat->Username !== null)
                             {
-                                $Response .= "   <b>Is Spam:</b> <code>True</code>\n";
+                                $Response .= "   <b>Link:</b> <a href=\"https://t.me/" . $MessageLog->Chat->Username . "/" . $MessageLog->MessageID . "\">" . $MessageLog->Chat->Username . "/" . $MessageLog->MessageID . "</a>\n";
                             }
-                            else
-                            {
-                                $Response .= "   <b>Is Spam:</b> <code>False</code>\n";
-                            }
-                        }
 
-                        $SpamProtection->getDatabase()->close();
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "parse_mode" => "html",
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "text" => $Response
-                        ]);
-                    }
-                    catch(MessageLogNotFoundException $messageLogNotFoundException)
-                    {
-                        unset($messageLogNotFoundException);
+                            if($MessageLog->ForwardFrom->ID !== null)
+                            {
+                                $ForwardUserPrivateID = Hashing::telegramClientPublicID($MessageLog->ForwardFrom->ID, $MessageLog->ForwardFrom->ID);
+                                $Response .= "   <b>Original Sender Private ID (Forwarded):</b> <code>" . $ForwardUserPrivateID . "</code>\n";
+                            }
+
+                            if($MessageLog->SpamPrediction > 0 && $MessageLog->HamPrediction > 0)
+                            {
+                                $Response .= "   <b>Ham Prediction:</b> <code>" . $MessageLog->HamPrediction . "</code>\n";
+                                $Response .= "   <b>Spam Prediction:</b> <code>" . $MessageLog->SpamPrediction . "</code>\n";
+
+                                if($MessageLog->SpamPrediction > $MessageLog->HamPrediction)
+                                {
+                                    $Response .= "   <b>Is Spam:</b> <code>True</code>\n";
+                                }
+                                else
+                                {
+                                    $Response .= "   <b>Is Spam:</b> <code>False</code>\n";
+                                }
+                            }
+
+                            $SpamProtection->getDatabase()->close();
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "parse_mode" => "html",
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "text" => $Response
+                            ]);
+                        }
+                        catch(MessageLogNotFoundException $messageLogNotFoundException)
+                        {
+                            unset($messageLogNotFoundException);
+                        }
                     }
 
                     $SpamProtection->getDatabase()->close();
