@@ -128,7 +128,7 @@
                 if(strlen($this->getMessage()->getText(true)) > 0)
                 {
                     $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-                    $CommandParameters = array_filter($CommandParameters, 'strlen');
+                    $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
 
                     if(count($CommandParameters) . 0)
                     {

@@ -148,7 +148,7 @@
                 $TargetUserClient = $SpamProtection->getTelegramClientManager()->registerUser($TargetUser);
 
                 $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-                $CommandParameters = array_filter($CommandParameters, 'strlen');
+                $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
 
                 if(count($CommandParameters) == 0)
                 {
@@ -222,7 +222,7 @@
                 if(strlen($this->getMessage()->getText(true)) > 0)
                 {
                     $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-                    $CommandParameters = array_filter($CommandParameters, 'strlen');
+                    $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
 
                     $TargetUserParameter = $CommandParameters[0];
                     $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetUserParameter, (int)$TargetUserParameter);
