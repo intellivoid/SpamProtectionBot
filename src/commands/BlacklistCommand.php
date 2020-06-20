@@ -15,9 +15,9 @@
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\TelegramChatType;
-    use SpamProtection\Abstracts\TelegramClientSearchMethod;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Utilities\Hashing;
+    use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;

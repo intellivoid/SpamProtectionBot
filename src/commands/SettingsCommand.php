@@ -15,6 +15,7 @@
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\DetectionAction;
     use SpamProtection\Managers\SettingsManager;
+    use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Objects\TelegramClient\Chat;

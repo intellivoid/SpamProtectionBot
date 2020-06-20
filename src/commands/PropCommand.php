@@ -15,6 +15,7 @@
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\ChatSettings;
     use SpamProtection\Objects\UserStatus;
+    use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
