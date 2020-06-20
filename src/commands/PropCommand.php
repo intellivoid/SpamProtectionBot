@@ -12,16 +12,13 @@
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
-    use SpamProtection\Abstracts\TelegramClientSearchMethod;
-    use SpamProtection\Exceptions\DatabaseException;
-    use SpamProtection\Exceptions\InvalidSearchMethod;
-    use SpamProtection\Exceptions\TelegramClientNotFoundException;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\ChatSettings;
-    use SpamProtection\Objects\TelegramClient\Chat;
-    use SpamProtection\Objects\TelegramClient\User;
     use SpamProtection\Objects\UserStatus;
-    use SpamProtection\SpamProtection;
+    use TelegramClientManager\Exceptions\DatabaseException;
+    use TelegramClientManager\Exceptions\InvalidSearchMethod;
+    use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
+    use TelegramClientManager\TelegramClientManager;
 
     /**
      * Property Editor command
@@ -48,7 +45,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.0';
+        protected $version = '1.0.1';
 
         /**
          * @var bool
@@ -59,57 +56,56 @@
          * Command execute method
          *
          * @return ServerResponse
+         * @throws TelegramException
          * @throws DatabaseException
          * @throws InvalidSearchMethod
-         * @throws TelegramException
          * @noinspection DuplicatedCode
          * @noinspection PhpComposerExtensionStubsInspection
          */
         public function execute()
         {
-            $SpamProtection = new SpamProtection();
+            $TelegramClientManager = new TelegramClientManager();
 
             $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
             $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
 
             try
             {
-                $TelegramClient = $SpamProtection->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
+                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
 
                 // Define and update chat client
-                $ChatClient = $SpamProtection->getTelegramClientManager()->registerChat($ChatObject);
+                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
                 if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
                 {
                     $ChatSettings = SettingsManager::getChatSettings($ChatClient);
                     $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
                 }
-                $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
 
                 // Define and update user client
-                $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
+                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
                 if(isset($UserClient->SessionData->Data["user_status"]) == false)
                 {
                     $UserStatus = SettingsManager::getUserStatus($UserClient);
                     $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
                 }
-                $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
 
                 // Define and update the forwarder if available
                 if($this->getMessage()->getForwardFrom() !== null)
                 {
                     $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUserObject);
+                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
                     {
                         $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
                         $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
                     }
-                    $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                 }
             }
             catch(Exception $e)
             {
-
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -129,7 +125,6 @@
 
             if($UserClient->User->Username !== "IntellivoidSupport")
             {
-
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -143,7 +138,6 @@
 
             if(count($CommandParameters) == 0)
             {
-
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -156,7 +150,6 @@
             {
                 if(count($CommandParameters) < 2)
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -167,13 +160,12 @@
 
                 try
                 {
-                    $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(
+                    $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
                         TelegramClientSearchMethod::byPublicId, $CommandParameters[1]
                     );
                 }
                 catch (TelegramClientNotFoundException $e)
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -217,7 +209,6 @@
 
                         if(isset($Results[$CommandParameters[2]]) == false)
                         {
-
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -229,8 +220,7 @@
                         $Results[$CommandParameters[2]] = $CommandParameters[3];
                         $TargetUserStatus = UserStatus::fromArray($TargetUserClient->User, $Results);
                         $TargetUserClient = SettingsManager::updateUserStatus($TargetUserClient, $TargetUserStatus);
-                        $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
-
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetUserClient);
 
                         return Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -242,7 +232,6 @@
                 }
                 else
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -256,7 +245,6 @@
             {
                 if(count($CommandParameters) < 2)
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -267,13 +255,12 @@
 
                 try
                 {
-                    $TargetChatClient = $SpamProtection->getTelegramClientManager()->getClient(
+                    $TargetChatClient = $TelegramClientManager->getTelegramClientManager()->getClient(
                         TelegramClientSearchMethod::byPublicId, $CommandParameters[1]
                     );
                 }
                 catch (TelegramClientNotFoundException $e)
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -289,7 +276,6 @@
                     if(count($CommandParameters) == 3)
                     {
                         $Results = $TargetChatSettings->toArray();
-
 
                         if(isset($Results[$CommandParameters[2]]))
                         {
@@ -329,8 +315,7 @@
                         $Results[$CommandParameters[2]] = $CommandParameters[3];
                         $TargetChatSettings = ChatSettings::fromArray($TargetChatClient->Chat, $Results);
                         $TargetChatClient = SettingsManager::updateChatSettings($TargetChatClient, $TargetChatSettings);
-                        $SpamProtection->getTelegramClientManager()->updateClient($TargetChatClient);
-
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetChatClient);
 
                         return Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -342,7 +327,6 @@
                 }
                 else
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -353,7 +337,6 @@
             }
             else
             {
-
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
