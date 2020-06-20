@@ -173,7 +173,6 @@
                                 }
                             }
 
-
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "parse_mode" => "html",
