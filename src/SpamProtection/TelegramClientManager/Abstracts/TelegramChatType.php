@@ -1,13 +1,9 @@
 <?php
 
 
-    namespace SpamProtection\Abstracts;
+    namespace TelegramClientManager\Abstracts;
 
 
-    /**
-     * Class TelegramChatType
-     * @package SpamProtection\Abstracts
-     */
     abstract class TelegramChatType
     {
         const Private = "private";

@@ -4,9 +4,8 @@
     namespace SpamProtection\Objects;
 
 
-    use SpamProtection\Objects\TelegramClient\Chat;
-    use SpamProtection\Objects\TelegramClient\User;
-    use ZiProto\ZiProto;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
+    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Class MessageLog

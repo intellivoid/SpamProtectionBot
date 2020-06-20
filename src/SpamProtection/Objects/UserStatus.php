@@ -5,7 +5,7 @@
 
 
     use SpamProtection\Abstracts\BlacklistFlag;
-    use SpamProtection\Objects\TelegramClient\User;
+    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Class UserStatus

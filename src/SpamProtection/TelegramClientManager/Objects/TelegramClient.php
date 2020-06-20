@@ -1,16 +1,15 @@
 <?php
 
 
-    namespace SpamProtection\Objects;
+    namespace TelegramClientManager\Objects;
 
-
-    use SpamProtection\Objects\TelegramClient\Chat;
-    use SpamProtection\Objects\TelegramClient\SessionData;
-    use SpamProtection\Objects\TelegramClient\User;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
+    use TelegramClientManager\Objects\TelegramClient\SessionData;
+    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Class TelegramClient
-     * @package SpamProtection\Objects
+     * @package TelegramClientManager\Objects
      */
     class TelegramClient
     {

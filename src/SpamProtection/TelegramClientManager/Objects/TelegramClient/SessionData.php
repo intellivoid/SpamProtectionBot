@@ -1,12 +1,11 @@
 <?php
 
 
-    namespace SpamProtection\Objects\TelegramClient;
-
+    namespace TelegramClientManager\Objects\TelegramClient;
 
     /**
      * Class SessionData
-     * @package IntellivoidAccounts\Objects\TelegramClient
+     * @package TelegramClientManager\Objects\TelegramClient
      */
     class SessionData
     {

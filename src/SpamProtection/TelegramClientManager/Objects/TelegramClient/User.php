@@ -1,12 +1,11 @@
 <?php
 
 
-    namespace SpamProtection\Objects\TelegramClient;
-
+    namespace TelegramClientManager\Objects\TelegramClient;
 
     /**
      * Class User
-     * @package SpamProtection\Objects\TelegramClient
+     * @package TelegramClientManager\Objects\TelegramClient
      */
     class User
     {
@@ -54,6 +53,63 @@
          * @var bool
          */
         public $LanguageCode;
+
+        /**
+         * Returns a unique hash of the chat object to represent the object as a whole
+         *
+         * @return string
+         * @noinspection DuplicatedCode
+         * @noinspection PhpUnused
+         */
+        public function getUniqueHash(): string
+        {
+            if($this->LastName == null)
+            {
+                $name_hash = hash('crc32', $this->FirstName);
+            }
+            else
+            {
+                $name_hash = hash('crc32', $this->FirstName . $this->LastName);
+            }
+
+            if($this->Username == null)
+            {
+                $username_hash = hash('crc32', "NONE");
+            }
+            else
+            {
+                $username_hash = hash('crc32', $this->Username);
+            }
+
+            if($this->IsBot == null)
+            {
+                $isbot_hash = hash('crc32', "NONE");
+            }
+            else
+            {
+                $isbot_hash = hash('crc32', (string)$this->IsBot);
+            }
+
+            if($this->LanguageCode == null)
+            {
+                $language_code_hash = hash('crc32', "NONE");
+            }
+            else
+            {
+                $language_code_hash = hash('crc32', $this->LanguageCode);
+            }
+
+            if($this->ID == null)
+            {
+                $id_hash = hash('crc32', "NONE");
+            }
+            else
+            {
+                $id_hash = hash('crc32', $this->ID);
+            }
+
+            return hash('sha256', $name_hash . $username_hash, $isbot_hash . $language_code_hash . $id_hash);
+        }
 
         /**
          * Returns an array that represents this object

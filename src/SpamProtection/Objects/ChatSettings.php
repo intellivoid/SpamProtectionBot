@@ -4,7 +4,7 @@
     namespace SpamProtection\Objects;
 
     use SpamProtection\Abstracts\DetectionAction;
-    use SpamProtection\Objects\TelegramClient\Chat;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
 
     /**
      * Class ChatSettings

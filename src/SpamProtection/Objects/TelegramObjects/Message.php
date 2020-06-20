@@ -3,9 +3,8 @@
 
     namespace SpamProtection\Objects\TelegramObjects;
 
-
-    use SpamProtection\Objects\TelegramClient\Chat;
-    use SpamProtection\Objects\TelegramClient\User;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
+    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Class Message
@@ -172,6 +171,7 @@
          * if the user is private or it's from a channel
          *
          * @return User|null
+         * @noinspection PhpUnused
          */
         public function getForwardedOriginalUser()
         {
@@ -189,7 +189,7 @@
         }
 
         /**
-         * Returns the array prespective of this object
+         * Returns the array perspective of this object
          *
          * @return array
          */

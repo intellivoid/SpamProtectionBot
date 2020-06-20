@@ -1,12 +1,11 @@
 <?php
 
 
-    namespace SpamProtection\Abstracts;
-
+    namespace TelegramClientManager\Abstracts\SearchMethods;
 
     /**
      * Class TelegramClientSearchMethod
-     * @package SpamProtection\Abstracts
+     * @package TelegramClientManager\Abstracts\SearchMethods
      */
     abstract class TelegramClientSearchMethod
     {

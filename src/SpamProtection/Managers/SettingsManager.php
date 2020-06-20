@@ -1,12 +1,14 @@
 <?php
 
+    /** @noinspection PhpUnused */
+
 
     namespace SpamProtection\Managers;
 
 
     use SpamProtection\Objects\ChatSettings;
-    use SpamProtection\Objects\TelegramClient;
     use SpamProtection\Objects\UserStatus;
+    use TelegramClientManager\Objects\TelegramClient;
 
     /**
      * Class ChatSettingsManager
