@@ -68,8 +68,8 @@
         {
             $TelegramClientManager = new TelegramClientManager();
 
-            $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
+            $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
+            $UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
 
             try
             {
@@ -96,7 +96,7 @@
                 // Define and update the forwarder if available
                 if($this->getMessage()->getForwardFrom() !== null)
                 {
-                    $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
+                    $ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
                     $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
                     {
@@ -127,12 +127,12 @@
 
             if($this->getMessage()->getReplyToMessage() !== null)
             {
-                $TargetUser = User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
+                $TargetUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
                 $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetUser);
 
                 if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
                 {
-                    $ForwardUser = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                    $ForwardUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
                     $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUser);
 
                     return Request::sendMessage([

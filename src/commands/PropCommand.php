@@ -18,6 +18,8 @@
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
+    use TelegramClientManager\Objects\TelegramClient\User;
     use TelegramClientManager\TelegramClientManager;
 
     /**

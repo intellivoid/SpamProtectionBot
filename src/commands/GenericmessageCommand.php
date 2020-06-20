@@ -75,8 +75,8 @@
         {
             $TelegramClientManager = new TelegramClientManager();
 
-            $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
+            $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
+            $UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
 
             try
             {
@@ -103,7 +103,7 @@
                 // Define and update the forwarder if available
                 if($this->getMessage()->getForwardFrom() !== null)
                 {
-                    $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
+                    $ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
                     $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
                     {
@@ -240,7 +240,7 @@
                         if($MessageObject->getForwardedOriginalUser() !== null)
                         {
                             // Define and update forwarder user client
-                            $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
+                            $UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
                             $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
                             if(isset($UserClient->SessionData->Data['user_status']) == false)
                             {

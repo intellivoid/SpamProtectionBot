@@ -18,6 +18,8 @@
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\SpamProtection;
     use SpamProtection\Utilities\Hashing;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
+    use TelegramClientManager\Objects\TelegramClient\User;
     use TelegramClientManager\TelegramClientManager;
 
     /**
