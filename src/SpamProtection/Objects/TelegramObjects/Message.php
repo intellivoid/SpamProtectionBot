@@ -276,7 +276,7 @@
 
             if(isset($data['from']))
             {
-                $MessageObject->From = TelegramClient\User::fromArray($data['from']);
+                $MessageObject->From = User::fromArray($data['from']);
             }
 
             if(isset($data['date']))
@@ -286,17 +286,17 @@
 
             if(isset($data['chat']))
             {
-                $MessageObject->Chat = TelegramClient\Chat::fromArray($data['chat']);
+                $MessageObject->Chat = Chat::fromArray($data['chat']);
             }
 
             if(isset($data['forward_from']))
             {
-                $MessageObject->ForwardFrom = TelegramClient\User::fromArray($data['forward_from']);
+                $MessageObject->ForwardFrom = User::fromArray($data['forward_from']);
             }
 
             if(isset($data['forward_from_chat']))
             {
-                $MessageObject->ForwardFromChat = TelegramClient\Chat::fromArray($data['forward_from_chat']);
+                $MessageObject->ForwardFromChat = Chat::fromArray($data['forward_from_chat']);
             }
 
             if(isset($data['forward_from_message_id']))

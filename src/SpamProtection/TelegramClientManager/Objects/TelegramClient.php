@@ -190,12 +190,12 @@
 
             if(isset($data['user']))
             {
-                $TelegramClientObject->User = TelegramClient\User::fromArray($data['user']);
+                $TelegramClientObject->User = User::fromArray($data['user']);
             }
 
             if(isset($data['chat']))
             {
-                $TelegramClientObject->Chat = TelegramClient\Chat::fromArray($data['chat']);
+                $TelegramClientObject->Chat = Chat::fromArray($data['chat']);
             }
 
             if(isset($data['session_data']))
