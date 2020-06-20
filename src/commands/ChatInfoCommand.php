@@ -13,12 +13,12 @@
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\DetectionAction;
-    use SpamProtection\Abstracts\TelegramChatType;
-    use SpamProtection\Abstracts\TelegramClientSearchMethod;
-    use SpamProtection\Exceptions\TelegramClientNotFoundException;
     use SpamProtection\Managers\SettingsManager;
-    use SpamProtection\SpamProtection;
     use SpamProtection\Utilities\Hashing;
+    use TelegramClientManager\Exceptions\DatabaseException;
+    use TelegramClientManager\Exceptions\InvalidSearchMethod;
+    use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
+    use TelegramClientManager\Objects\TelegramClient;
     use TelegramClientManager\TelegramClientManager;
 
     /**
@@ -130,6 +130,7 @@
                 {
                     $CommandParameters = explode(" ", $this->getMessage()->getText(true));
                     $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
+                    $TargetChatParameter = null;
 
                     if(count($CommandParameters) > 0)
                     {
@@ -154,9 +155,7 @@
 
                         try
                         {
-                            $TargetChatClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetChatParameter);
-                            $SpamProtection->getTelegramClientManager()->updateClient($TargetChatClient);
-
+                            $TargetChatClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetChatParameter);
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -172,11 +171,10 @@
 
                         try
                         {
-                            $TargetChatClient = $SpamProtection->getTelegramClientManager()->getClient(
-                                TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetChatParameter)
+                            $TargetChatClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                                TelegramClientSearchMethod::byUsername,
+                                str_ireplace("@", "", $TargetChatParameter)
                             );
-                            $SpamProtection->getTelegramClientManager()->updateClient($TargetChatClient);
-
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -191,6 +189,10 @@
                         }
                     }
 
+                    if($TargetChatParameter == null)
+                    {
+                        $TargetChatParameter = "No Input";
+                    }
 
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -199,7 +201,6 @@
                     ]);
                 }
             }
-
 
             return Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
