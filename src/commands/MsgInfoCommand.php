@@ -16,10 +16,9 @@
     use SpamProtection\Exceptions\DatabaseException;
     use SpamProtection\Exceptions\MessageLogNotFoundException;
     use SpamProtection\Managers\SettingsManager;
-    use SpamProtection\Objects\TelegramClient\Chat;
-    use SpamProtection\Objects\TelegramClient\User;
     use SpamProtection\SpamProtection;
     use SpamProtection\Utilities\Hashing;
+    use TelegramClientManager\TelegramClientManager;
 
     /**
      * Message Information command
@@ -57,55 +56,54 @@
          * Command execute method
          *
          * @return ServerResponse
-         * @throws DatabaseException
          * @throws TelegramException
+         * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
         public function execute()
         {
-            $SpamProtection = new SpamProtection();
+            $TelegramClientManager = new TelegramClientManager();
 
             $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
             $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
 
             try
             {
-                $TelegramClient = $SpamProtection->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
+                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
 
                 // Define and update chat client
-                $ChatClient = $SpamProtection->getTelegramClientManager()->registerChat($ChatObject);
+                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
                 if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
                 {
                     $ChatSettings = SettingsManager::getChatSettings($ChatClient);
                     $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
                 }
-                $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
 
                 // Define and update user client
-                $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
+                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
                 if(isset($UserClient->SessionData->Data["user_status"]) == false)
                 {
                     $UserStatus = SettingsManager::getUserStatus($UserClient);
                     $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
                 }
-                $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
 
                 // Define and update the forwarder if available
                 if($this->getMessage()->getForwardFrom() !== null)
                 {
                     $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUserObject);
+                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
                     {
                         $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
                         $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
                     }
-                    $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
                 }
             }
             catch(Exception $e)
             {
-
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -129,6 +127,7 @@
                 {
                     $CommandParameters = explode(" ", $this->getMessage()->getText(true));
                     $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
+                    $TargetMessageParameter = null;
 
                     if(count($CommandParameters) . 0)
                     {
@@ -136,6 +135,7 @@
 
                         try
                         {
+                            $SpamProtection = new SpamProtection();
                             $MessageLog = $SpamProtection->getMessageLogManager()->getMessage($TargetMessageParameter);
 
                             $Response = "<b>Message Hash Lookup</b>\n\n";
@@ -187,6 +187,10 @@
                         }
                     }
 
+                    if($TargetMessageParameter == null)
+                    {
+                        $TargetMessageParameter = "No Input";
+                    }
 
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
