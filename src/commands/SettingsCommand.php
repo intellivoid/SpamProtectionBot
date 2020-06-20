@@ -111,7 +111,7 @@
                     "text" =>
                         "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
                         "Error Code: <code>" . $e->getCode() . "</code>\n" .
-                        "Object: <code>Commands/prop.bin</code>"
+                        "Object: <code>Commands/settings.bin</code>"
                 ]);
             }
 
