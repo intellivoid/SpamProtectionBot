@@ -16,15 +16,13 @@
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\TelegramChatType;
     use SpamProtection\Abstracts\TelegramClientSearchMethod;
-    use SpamProtection\Exceptions\DatabaseException;
-    use SpamProtection\Exceptions\InvalidSearchMethod;
-    use SpamProtection\Exceptions\TelegramClientNotFoundException;
     use SpamProtection\Managers\SettingsManager;
-    use SpamProtection\Objects\TelegramClient;
-    use SpamProtection\Objects\TelegramClient\Chat;
-    use SpamProtection\Objects\TelegramClient\User;
-    use SpamProtection\SpamProtection;
     use SpamProtection\Utilities\Hashing;
+    use TelegramClientManager\Exceptions\DatabaseException;
+    use TelegramClientManager\Exceptions\InvalidSearchMethod;
+    use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
+    use TelegramClientManager\Objects\TelegramClient;
+    use TelegramClientManager\TelegramClientManager;
 
     /**
      * Blacklist user command
@@ -52,7 +50,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.0';
+        protected $version = '1.0.1';
 
         /**
          * @var bool
@@ -63,51 +61,51 @@
          * Command execute method
          *
          * @return ServerResponse
+         * @throws TelegramClientNotFoundException
          * @throws TelegramException
          * @throws DatabaseException
          * @throws InvalidSearchMethod
-         * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
         public function execute()
         {
-            $SpamProtection = new SpamProtection();
+            $TelegramClientManager = new TelegramClientManager();
 
             $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
             $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
 
             try
             {
-                $TelegramClient = $SpamProtection->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
+                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
 
                 // Define and update chat client
-                $ChatClient = $SpamProtection->getTelegramClientManager()->registerChat($ChatObject);
+                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
                 if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
                 {
                     $ChatSettings = SettingsManager::getChatSettings($ChatClient);
                     $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                    $SpamProtection->getTelegramClientManager()->updateClient($ChatClient);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
                 }
 
                 // Define and update user client
-                $UserClient = $SpamProtection->getTelegramClientManager()->registerUser($UserObject);
+                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
                 if(isset($UserClient->SessionData->Data["user_status"]) == false)
                 {
                     $UserStatus = SettingsManager::getUserStatus($UserClient);
                     $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $SpamProtection->getTelegramClientManager()->updateClient($UserClient);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
                 }
 
                 // Define and update the forwarder if available
                 if($this->getMessage()->getForwardFrom() !== null)
                 {
                     $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($ForwardUserObject);
+                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
                     {
                         $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
                         $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                        $SpamProtection->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
                     }
                 }
             }
@@ -144,7 +142,7 @@
             if($this->getMessage()->getReplyToMessage() !== null)
             {
                 $TargetUser = User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
-                $TargetUserClient = $SpamProtection->getTelegramClientManager()->registerUser($TargetUser);
+                $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetUser);
 
                 $CommandParameters = explode(" ", $this->getMessage()->getText(true));
                 $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
@@ -170,7 +168,7 @@
                         else
                         {
                             $TargetForwardUser = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                            $TargetForwardUserClient = $SpamProtection->getTelegramClientManager()->registerUser($TargetForwardUser);
+                            $TargetForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetForwardUser);
 
                             // If missing the blacklist parameter
                             if(count($CommandParameters) < 2)
@@ -182,14 +180,14 @@
                             if(count($CommandParameters) == 3)
                             {
                                 return self::blacklistUser(
-                                    $SpamProtection, $TargetForwardUserClient, $UserClient, $this->getMessage(),
+                                    $TelegramClientManager, $TargetForwardUserClient, $UserClient, $this->getMessage(),
                                     $CommandParameters[1], $CommandParameters[2]
                                 );
                             }
                             else
                             {
                                 return self::blacklistUser(
-                                    $SpamProtection, $TargetForwardUserClient, $UserClient, $this->getMessage(),
+                                    $TelegramClientManager, $TargetForwardUserClient, $UserClient, $this->getMessage(),
                                     $CommandParameters[1]
                                 );
                             }
@@ -201,14 +199,14 @@
                         if(count($CommandParameters) == 1)
                         {
                             return self::blacklistUser(
-                                $SpamProtection, $TargetUserClient, $UserClient, $this->getMessage(),
+                                $TelegramClientManager, $TargetUserClient, $UserClient, $this->getMessage(),
                                 $CommandParameters[0]
                             );
                         }
                         else
                         {
                             return self::blacklistUser(
-                                $SpamProtection, $TargetUserClient, $UserClient, $this->getMessage(),
+                                $TelegramClientManager, $TargetUserClient, $UserClient, $this->getMessage(),
                                 $CommandParameters[0], $CommandParameters[1]
                             );
                         }
@@ -228,8 +226,8 @@
 
                     try
                     {
-                        $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
-                        $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetUserClient);
 
                         // Target user via ID
                         if(count($CommandParameters) < 2)
@@ -239,14 +237,14 @@
                         elseif(count($CommandParameters) == 2)
                         {
                             return self::blacklistUser(
-                                $SpamProtection, $TargetUserClient, $UserClient, $this->getMessage(),
+                                $TelegramClientManager, $TargetUserClient, $UserClient, $this->getMessage(),
                                 $CommandParameters[1]
                             );
                         }
                         else
                         {
                             return self::blacklistUser(
-                                $SpamProtection, $TargetUserClient, $UserClient, $this->getMessage(),
+                                $TelegramClientManager, $TargetUserClient, $UserClient, $this->getMessage(),
                                 $CommandParameters[1], $CommandParameters[2]
                             );
                         }
@@ -258,8 +256,8 @@
 
                     try
                     {
-                        $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
-                        $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetUserClient);
 
                         // Target user via Private ID
                         if(count($CommandParameters) < 2)
@@ -269,14 +267,14 @@
                         elseif(count($CommandParameters) == 2)
                         {
                             return self::blacklistUser(
-                                $SpamProtection, $TargetUserClient, $UserClient, $this->getMessage(),
+                                $TelegramClientManager, $TargetUserClient, $UserClient, $this->getMessage(),
                                 $CommandParameters[1]
                             );
                         }
                         else
                         {
                             return self::blacklistUser(
-                                $SpamProtection, $TargetUserClient, $UserClient, $this->getMessage(),
+                                $TelegramClientManager, $TargetUserClient, $UserClient, $this->getMessage(),
                                 $CommandParameters[1], $CommandParameters[2]
                             );
                         }
@@ -289,10 +287,10 @@
 
                     try
                     {
-                        $TargetUserClient = $SpamProtection->getTelegramClientManager()->getClient(
+                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
                             TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetUserParameter)
                         );
-                        $SpamProtection->getTelegramClientManager()->updateClient($TargetUserClient);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetUserClient);
 
                         // Target user via Username
                         if(count($CommandParameters) < 2)
@@ -302,14 +300,14 @@
                         elseif(count($CommandParameters) == 2)
                         {
                             return self::blacklistUser(
-                                $SpamProtection, $TargetUserClient, $UserClient, $this->getMessage(),
+                                $TelegramClientManager, $TargetUserClient, $UserClient, $this->getMessage(),
                                 $CommandParameters[1]
                             );
                         }
                         else
                         {
                             return self::blacklistUser(
-                                $SpamProtection, $TargetUserClient, $UserClient, $this->getMessage(),
+                                $TelegramClientManager, $TargetUserClient, $UserClient, $this->getMessage(),
                                 $CommandParameters[1], $CommandParameters[2]
                             );
                         }
@@ -459,8 +457,8 @@
 
         /**
          * Blacklists a user
-         * 
-         * @param SpamProtection $spamProtection
+         *
+         * @param TelegramClientManager $telegramClientManager
          * @param TelegramClient $targetUserClient
          * @param TelegramClient $operatorClient
          * @param Message $message
@@ -471,7 +469,7 @@
          * @throws InvalidSearchMethod
          * @throws TelegramException
          */
-        public static function blacklistUser(SpamProtection $spamProtection, TelegramClient $targetUserClient, TelegramClient $operatorClient, Message $message, string $blacklistFlag, string $originalPrivateID=null)
+        public static function blacklistUser(TelegramClientManager $telegramClientManager, TelegramClient $targetUserClient, TelegramClient $operatorClient, Message $message, string $blacklistFlag, string $originalPrivateID=null)
         {
             if($targetUserClient->Chat->Type !== TelegramChatType::Private)
             {
@@ -534,7 +532,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::Special;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::Spam:
@@ -542,7 +540,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::Spam;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::Scam:
@@ -550,7 +548,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::Scam;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::Raid:
@@ -558,7 +556,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::Raid;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::PrivateSpam:
@@ -566,7 +564,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::PrivateSpam;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::PornographicSpam:
@@ -574,7 +572,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::PornographicSpam;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::PiracySpam:
@@ -582,7 +580,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::PiracySpam;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::Impersonator:
@@ -590,7 +588,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::Impersonator;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::ChildAbuse:
@@ -598,7 +596,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::ChildAbuse;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::BanEvade:
@@ -615,7 +613,7 @@
 
                     try
                     {
-                        $spamProtection->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $originalPrivateID);
+                        $telegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $originalPrivateID);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
                     {
@@ -632,7 +630,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::BanEvade;
                     $UserStatus->OriginalPrivateID = $originalPrivateID;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 case BlacklistFlag::None:
@@ -640,7 +638,7 @@
                     $UserStatus->BlacklistFlag = BlacklistFlag::None;
                     $UserStatus->OriginalPrivateID = null;
                     $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    $spamProtection->getTelegramClientManager()->updateClient($targetUserClient);
+                    $telegramClientManager->getTelegramClientManager()->updateClient($targetUserClient);
                     break;
 
                 default:
