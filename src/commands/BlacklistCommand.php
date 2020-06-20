@@ -76,7 +76,8 @@
 
             try
             {
-                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
+                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient(
+                    $ChatObject, $UserObject);
 
                 // Define and update chat client
                 $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
@@ -100,7 +101,8 @@
                 if($this->getMessage()->getForwardFrom() !== null)
                 {
                     $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
+                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser(
+                        $ForwardUserObject);
                     if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
                     {
                         $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
@@ -167,8 +169,10 @@
                         }
                         else
                         {
-                            $TargetForwardUser = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                            $TargetForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetForwardUser);
+                            $TargetForwardUser = User::fromArray(
+                                $this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                            $TargetForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser(
+                                $TargetForwardUser);
 
                             // If missing the blacklist parameter
                             if(count($CommandParameters) < 2)
@@ -222,12 +226,13 @@
                     $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
 
                     $TargetUserParameter = $CommandParameters[0];
-                    $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetUserParameter, (int)$TargetUserParameter);
+                    $EstimatedPrivateID = Hashing::telegramClientPublicID(
+                        (int)$TargetUserParameter, (int)$TargetUserParameter);
 
                     try
                     {
-                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetUserClient);
+                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                            TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
 
                         // Target user via ID
                         if(count($CommandParameters) < 2)
@@ -256,8 +261,8 @@
 
                     try
                     {
-                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetUserClient);
+                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                            TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
 
                         // Target user via Private ID
                         if(count($CommandParameters) < 2)
@@ -288,9 +293,9 @@
                     try
                     {
                         $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                            TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetUserParameter)
+                            TelegramClientSearchMethod::byUsername,
+                            str_ireplace("@", "", $TargetUserParameter)
                         );
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetUserClient);
 
                         // Target user via Username
                         if(count($CommandParameters) < 2)
