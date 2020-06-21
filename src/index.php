@@ -24,8 +24,16 @@
     $acm->defineSchema('TelegramService', $TelegramSchema);
 
     $DatabaseSchema = new Schema();
+    $DatabaseSchema->setDefinition('Host', '127.0.0.1');
+    $DatabaseSchema->setDefinition('Port', '3306');
+    $DatabaseSchema->setDefinition('Username', 'root');
+    $DatabaseSchema->setDefinition('Password', 'admin');
+    $DatabaseSchema->setDefinition('Database', 'telegram');
+    $acm->defineSchema('Database', $DatabaseSchema);
 
     $TelegramServiceConfiguration = $acm->getConfiguration('TelegramService');
+    $DatabaseConfiguration = $acm->getConfiguration('Database');
+
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName'], false);
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
@@ -91,6 +99,13 @@
     {
         try
         {
+            $telegram->enableMySql(array(
+                'host' => $DatabaseConfiguration['Host'],
+                'port' => $DatabaseConfiguration['Port'],
+                'user' => $DatabaseConfiguration['Username'],
+                'password' => $DatabaseConfiguration['Password'],
+                'database' => $DatabaseConfiguration['Database'],
+            ));
             $telegram->handle();
         }
         catch (TelegramException $e)
