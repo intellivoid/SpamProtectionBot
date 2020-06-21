@@ -73,7 +73,18 @@
             'password' => $DatabaseConfiguration['Password'],
             'database' => $DatabaseConfiguration['Database'],
         ));
-        $telegram->handleGetUpdates();
+        $server_response = $telegram->handleGetUpdates();
+
+        if ($server_response->isOk())
+        {
+            $update_count = count($server_response->getResult());
+            print(date('Y-m-d H:i:s', time()) . ' - Processed ' . $update_count . ' updates');
+        }
+        else
+        {
+            print(date('Y-m-d H:i:s', time()) . ' - Failed to fetch updates' . PHP_EOL);
+            print($server_response->printError());
+        }
     }
     catch (TelegramException $e)
     {
