@@ -20,7 +20,10 @@
     $TelegramSchema->setDefinition('BotToken', '<BOT TOKEN>');
     $TelegramSchema->setDefinition('BotEnabled', 'true');
     $TelegramSchema->setDefinition('WebHook', 'http://localhost');
+    $TelegramSchema->setDefinition('MaxConnections', '100');
     $acm->defineSchema('TelegramService', $TelegramSchema);
+
+    $DatabaseSchema = new Schema();
 
     $TelegramServiceConfiguration = $acm->getConfiguration('TelegramService');
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName'], false);
@@ -67,7 +70,10 @@
     {
         try
         {
-            $result = $telegram->setWebhook($TelegramServiceConfiguration['WebHook']);
+            $result = $telegram->setWebhook($TelegramServiceConfiguration['WebHook'], array(
+                'max_connections' => (int)$TelegramServiceConfiguration['MaxConnections'],
+                'allowed_updates' => []
+            ));
             if ($result->isOk())
             {
                 echo $result->getDescription();
