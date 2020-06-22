@@ -6,7 +6,6 @@
 
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
-    use DeepAnalytics\DeepAnalytics;
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -15,11 +14,11 @@
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Exceptions\TelegramClientNotFoundException;
     use SpamProtection\Managers\SettingsManager;
+    use SpamProtectionBot;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Objects\TelegramClient\Chat;
     use TelegramClientManager\Objects\TelegramClient\User;
-    use TelegramClientManager\TelegramClientManager;
 
     /**
      * New chat member command
@@ -53,7 +52,7 @@
          */
         public function execute()
         {
-            $TelegramClientManager = new TelegramClientManager();
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
 
             $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
             $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
@@ -106,7 +105,7 @@
                 ]);
             }
 
-            $DeepAnalytics = new DeepAnalytics();
+            $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'new_member', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());

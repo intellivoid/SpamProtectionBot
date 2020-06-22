@@ -6,7 +6,6 @@
 
     namespace Longman\TelegramBot\Commands\UserCommands;
 
-    use DeepAnalytics\DeepAnalytics;
     use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -15,13 +14,13 @@
     use SpamProtection\Abstracts\DetectionAction;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Utilities\Hashing;
+    use SpamProtectionBot;
     use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
-    use TelegramClientManager\TelegramClientManager;
 
     /**
      * Chat Info command
@@ -66,7 +65,7 @@
          */
         public function execute()
         {
-            $TelegramClientManager = new TelegramClientManager();
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
 
             $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
             $UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
@@ -120,7 +119,7 @@
             }
 
             /** @noinspection PhpUndefinedClassInspection */
-            $DeepAnalytics = new DeepAnalytics();
+            $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'chat_info_command', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());

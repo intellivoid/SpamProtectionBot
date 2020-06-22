@@ -6,9 +6,7 @@
 
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
-    use CoffeeHouse\CoffeeHouse;
     use CoffeeHouse\Objects\Results\SpamPredictionResults;
-    use DeepAnalytics\DeepAnalytics;
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -25,11 +23,11 @@
     use SpamProtection\Objects\TelegramObjects\Message;
     use SpamProtection\Objects\UserStatus;
     use SpamProtection\SpamProtection;
+    use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
-    use TelegramClientManager\TelegramClientManager;
 
     /**
      * Generic Command
@@ -74,7 +72,7 @@
          */
         public function execute()
         {
-            $TelegramClientManager = new TelegramClientManager();
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
 
             $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
             $UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
@@ -119,7 +117,7 @@
                 return null;
             }
 
-            $DeepAnalytics = new DeepAnalytics();
+            $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
 
@@ -257,7 +255,7 @@
                 {
                     if($UserStatus->IsWhitelisted == false)
                     {
-                        $CoffeeHouse = new CoffeeHouse();
+                        $CoffeeHouse = SpamProtectionBot::getCoffeeHouse();
 
                         try
                         {
