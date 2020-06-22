@@ -3,9 +3,13 @@
 
     use acm\acm;
     use acm\Objects\Schema;
-    use Longman\TelegramBot\Exception\TelegramException;
+use CoffeeHouse\CoffeeHouse;
+use DeepAnalytics\DeepAnalytics;
+use Longman\TelegramBot\Exception\TelegramException;
+use SpamProtection\SpamProtection;
+use TelegramClientManager\TelegramClientManager;
 
-    require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'CoffeeHouse' . DIRECTORY_SEPARATOR . 'CoffeeHouse.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
 
@@ -75,6 +79,11 @@
         print("Database Exception" . PHP_EOL);
         var_dump($e);
     }
+
+    SpamProtectionBot::$TelegramClientManager = new TelegramClientManager();
+    SpamProtectionBot::$SpamProtection = new SpamProtection();
+    SpamProtectionBot::$DeepAnalytics = new DeepAnalytics();
+    SpamProtectionBot::$CoffeeHouse = new CoffeeHouse();
 
     $LoggingConfiguration = array(
         "enabled" => true,
