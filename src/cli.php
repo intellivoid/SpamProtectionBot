@@ -76,6 +76,22 @@
         var_dump($e);
     }
 
+    $LoggingConfiguration = array(
+        "enabled" => true,
+        "directory" => "/var/log/telegram",
+        "file_name" => TELEGRAM_BOT_NAME . ".log"
+    );
+
+    if($LoggingConfiguration["enabled"])
+    {
+        if(file_exists($LoggingConfiguration["directory"]) == false)
+        {
+            mkdir($LoggingConfiguration["directory"]);
+        }
+    }
+
+    $LoggingConfiguration["path"] = $LoggingConfiguration["directory"] . DIRECTORY_SEPARATOR . $LoggingConfiguration["file_name"];
+
     while(true)
     {
         try
@@ -84,16 +100,32 @@
             $current_timestamp = date('[Y-m-d H:i:s]', time());
             if ($server_response->isOk())
             {
-                print($current_timestamp . ' - Processed ' . count($server_response->getResult()) . ' updates' . PHP_EOL);
+                $Event = $current_timestamp . ' - Processed ' . count($server_response->getResult()) . ' updates';
+                print($Event . PHP_EOL);
+                if($LoggingConfiguration["enabled"])
+                {
+                    file_put_contents($LoggingConfiguration["path"], $Event . PHP_EOL, FILE_APPEND);
+                }
             }
             else
             {
                 print($current_timestamp . ' - Failed to fetch updates' . PHP_EOL);
                 print($server_response->printError());
+
+                if($LoggingConfiguration["enabled"])
+                {
+                    file_put_contents($LoggingConfiguration["path"], $current_timestamp . ' - Failed to fetch updates' . PHP_EOL, FILE_APPEND);
+                    file_put_contents($LoggingConfiguration["path"], $server_response->printError() . PHP_EOL, FILE_APPEND);
+                }
             }
         }
         catch (TelegramException $e)
         {
+            if($LoggingConfiguration["enabled"])
+            {
+                file_put_contents($LoggingConfiguration["path"], "ERROR:" . $e->getMessage() . PHP_EOL, FILE_APPEND);
+            }
+
             print("Telegram Exception" . PHP_EOL);
             var_dump($e);
         }
