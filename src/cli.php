@@ -111,11 +111,14 @@
             $current_timestamp = date('[Y-m-d H:i:s]', time());
             if ($server_response->isOk())
             {
-                $Event = $current_timestamp . ' - Processed ' . count($server_response->getResult()) . ' updates';
-                print($Event . PHP_EOL);
-                if($LoggingConfiguration["enabled"])
+                if(count($server_response->getResult()) > 0)
                 {
-                    file_put_contents($LoggingConfiguration["path"], $Event . PHP_EOL, FILE_APPEND);
+                    $Event = $current_timestamp . ' - Processed ' . count($server_response->getResult()) . ' updates';
+                    print($Event . PHP_EOL);
+                    if($LoggingConfiguration["enabled"])
+                    {
+                        file_put_contents($LoggingConfiguration["path"], $Event . PHP_EOL, FILE_APPEND);
+                    }
                 }
             }
             else
