@@ -226,7 +226,7 @@
          */
         public static function logSpam(TelegramClient $targetUserClient, TelegramClient $operatorClient, \SpamProtection\Objects\TelegramObjects\Message $message)
         {
-            $SpamProtection = new SpamProtection();
+            $SpamProtection = SpamProtectionBot::getSpamProtection();
 
             if($targetUserClient->Chat->Type !== TelegramChatType::Private)
             {

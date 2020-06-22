@@ -15,7 +15,6 @@
     use SpamProtection\Exceptions\DatabaseException;
     use SpamProtection\Exceptions\MessageLogNotFoundException;
     use SpamProtection\Managers\SettingsManager;
-    use SpamProtection\SpamProtection;
     use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
     use TelegramClientManager\Objects\TelegramClient\Chat;
@@ -136,7 +135,7 @@
 
                         try
                         {
-                            $SpamProtection = new SpamProtection();
+                            $SpamProtection = \SpamProtectionBot::getSpamProtection();
                             $MessageLog = $SpamProtection->getMessageLogManager()->getMessage($TargetMessageParameter);
 
                             $Response = "<b>Message Hash Lookup</b>\n\n";

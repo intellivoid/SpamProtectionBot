@@ -22,7 +22,6 @@
     use SpamProtection\Objects\MessageLog;
     use SpamProtection\Objects\TelegramObjects\Message;
     use SpamProtection\Objects\UserStatus;
-    use SpamProtection\SpamProtection;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
@@ -274,7 +273,7 @@
                             return null;
                         }
 
-                        $SpamProtection = new SpamProtection();
+                        $SpamProtection = \SpamProtectionBot::getSpamProtection();
                         $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage(
                             $MessageObject, $Results->SpamPrediction, $Results->HamPrediction
                         );
