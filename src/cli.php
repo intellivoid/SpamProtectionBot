@@ -56,12 +56,8 @@
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {
+        print("Telegram Exception" . PHP_EOL);
         var_dump($e);
-        ?>
-        <h1>Error</h1>
-        <p>Something went wrong here, try again later</p>
-        <?php
-        exit(255);
     }
 
     try
@@ -73,21 +69,32 @@
             'password' => $DatabaseConfiguration['Password'],
             'database' => $DatabaseConfiguration['Database'],
         ));
-        $server_response = $telegram->handleGetUpdates();
-
-        if ($server_response->isOk())
-        {
-            $update_count = count($server_response->getResult());
-            print(date('Y-m-d H:i:s', time()) . ' - Processed ' . $update_count . ' updates');
-        }
-        else
-        {
-            print(date('Y-m-d H:i:s', time()) . ' - Failed to fetch updates' . PHP_EOL);
-            print($server_response->printError());
-        }
     }
-    catch (TelegramException $e)
+    catch(Exception $e)
     {
-        print("Telegram Exception" . PHP_EOL);
+        print("Database Exception" . PHP_EOL);
         var_dump($e);
+    }
+
+    while(true)
+    {
+        try
+        {
+            $server_response = $telegram->handleGetUpdates();
+            $current_timestamp = date('[Y-m-d H:i:s]', time());
+            if ($server_response->isOk())
+            {
+                print($current_timestamp . ' - Processed ' . count($server_response->getResult()) . ' updates' . PHP_EOL);
+            }
+            else
+            {
+                print($current_timestamp . ' - Failed to fetch updates' . PHP_EOL);
+                print($server_response->printError());
+            }
+        }
+        catch (TelegramException $e)
+        {
+            print("Telegram Exception" . PHP_EOL);
+            var_dump($e);
+        }
     }
