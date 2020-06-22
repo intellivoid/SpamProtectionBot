@@ -65,7 +65,6 @@
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {
-        var_dump($e);
         ?>
         <h1>Error</h1>
         <p>Something went wrong here, try again later</p>
