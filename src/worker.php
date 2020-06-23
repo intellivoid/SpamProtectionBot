@@ -126,7 +126,7 @@
     SpamProtectionBot::$TelegramClientManager = new TelegramClientManager();
     if(SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
             "Failed to initialize TelegramClientManager, " .
             SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error
         );
@@ -137,7 +137,7 @@
     SpamProtectionBot::$SpamProtection = new SpamProtection();
     if(SpamProtectionBot::$SpamProtection->getDatabase()->connect_error)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
             "Failed to initialize SpamProtection, " .
             SpamProtectionBot::$SpamProtection->getDatabase()->connect_error
         );
@@ -148,7 +148,7 @@
     SpamProtectionBot::$CoffeeHouse = new CoffeeHouse();
     if(SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
             "Failed to initialize CoffeeHouse, " .
             SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error
         );
@@ -166,19 +166,19 @@
     }
     catch(Exception $e)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
             "BackgroundWorker Exception Raised: " . $e->getMessage()
         );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
             "Line: " . $e->getLine()
         );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
             "File: " . $e->getFile()
         );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
             "Trace: " . json_encode($e->getTrace())
         );
-        TgFileLogging::writeLog(TgFileLogging::WARNING, TELEGRAM_BOT_NAME . "_main",
+        TgFileLogging::writeLog(TgFileLogging::WARNING, TELEGRAM_BOT_NAME . "_worker",
             "Make sure Gearman is running!"
         );
         exit(255);
