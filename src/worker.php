@@ -126,11 +126,33 @@
     SpamProtectionBot::$DeepAnalytics = new DeepAnalytics();
     SpamProtectionBot::$CoffeeHouse = new CoffeeHouse();
 
-    $BackgroundWorker = new BackgroundWorker();
-    $BackgroundWorker->getWorker()->addServer(
-        $BackgroundWorkerConfiguration["Host"],
-        (int)$BackgroundWorkerConfiguration["Port"]
-    );
+    try
+    {
+        $BackgroundWorker = new BackgroundWorker();
+        $BackgroundWorker->getWorker()->addServer(
+            $BackgroundWorkerConfiguration["Host"],
+            (int)$BackgroundWorkerConfiguration["Port"]
+        );
+    }
+    catch(Exception $e)
+    {
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "BackgroundWorker Exception Raised: " . $e->getMessage()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Line: " . $e->getLine()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "File: " . $e->getFile()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Trace: " . json_encode($e->getTrace())
+        );
+        TgFileLogging::writeLog(TgFileLogging::WARNING, TELEGRAM_BOT_NAME . "_main",
+            "Make sure Gearman is running!"
+        );
+        exit(255);
+    }
 
     // Define the function "process_batch" to process a batch of Updates from Telegram in the background
     $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction("process_batch", function(GearmanJob $job) use ($telegram)
