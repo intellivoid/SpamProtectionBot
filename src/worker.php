@@ -16,6 +16,8 @@
     use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
 
+    // Import all required auto loaders
+
     require __DIR__ . '/vendor/autoload.php';
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'CoffeeHouse' . DIRECTORY_SEPARATOR . 'CoffeeHouse.php');
@@ -36,6 +38,8 @@
         include_once(__DIR__ . DIRECTORY_SEPARATOR . 'TgFileLogging.php');
     }
 
+    // Load all required configurations
+
     /** @noinspection PhpUnhandledExceptionInspection */
     $TelegramServiceConfiguration = SpamProtectionBot::getTelegramConfiguration();
 
@@ -44,6 +48,8 @@
 
     /** @noinspection PhpUnhandledExceptionInspection */
     $BackgroundWorkerConfiguration = SpamProtectionBot::getBackgroundWorkerConfiguration();
+
+    // Define and create the Telegram Bot instance (SQL)
 
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName'], false);
 
@@ -93,9 +99,22 @@
     }
     catch(Exception $e)
     {
-        print("Database Exception" . PHP_EOL);
-        var_dump($e);
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+            "Telegram Database Exception Raised: " . $e->getMessage()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+            "Line: " . $e->getLine()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+            "File: " . $e->getFile()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+            "Trace: " . json_encode($e->getTrace())
+        );
+        exit(255);
     }
+
+    // Start the worker instance
 
     TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
         "Starting worker"
@@ -112,6 +131,8 @@
         $BackgroundWorkerConfiguration["Host"],
         (int)$BackgroundWorkerConfiguration["Port"]
     );
+
+    // Define the function "process_batch" to process a batch of Updates from Telegram in the background
     $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction("process_batch", function(GearmanJob $job) use ($telegram)
     {
         try
@@ -179,6 +200,8 @@
         }
 
     });
+
+    // Start working
 
     TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
         "Worker started successfully"

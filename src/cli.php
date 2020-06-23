@@ -14,15 +14,10 @@
     use BackgroundWorker\BackgroundWorker;
     use Longman\TelegramBot\Exception\TelegramException;
 
+    // Import all required auto loaders
+
     require __DIR__ . '/vendor/autoload.php';
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'CoffeeHouse' . DIRECTORY_SEPARATOR . 'CoffeeHouse.php');
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
-
-    if(class_exists('DeepAnalytics\DeepAnalytics') == false)
-    {
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'DeepAnalytics' . DIRECTORY_SEPARATOR . 'DeepAnalytics.php');
-    }
 
     if(class_exists("SpamProtectionBot") == false)
     {
@@ -34,6 +29,8 @@
         include_once(__DIR__ . DIRECTORY_SEPARATOR . 'TgFileLogging.php');
     }
 
+    // Load all configurations
+
     /** @noinspection PhpUnhandledExceptionInspection */
     $TelegramServiceConfiguration = SpamProtectionBot::getTelegramConfiguration();
 
@@ -42,6 +39,8 @@
 
     /** @noinspection PhpUnhandledExceptionInspection */
     $BackgroundWorkerConfiguration = SpamProtectionBot::getBackgroundWorkerConfiguration();
+
+    // Create the Telegram Bot instance (NO SQL)
 
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName'], false);
 
@@ -84,6 +83,8 @@
 
     $telegram->useGetUpdatesWithoutDatabase();
 
+    // Start the workers using the supervisor
+
     TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main",
         "Starting Supervisor"
     );
@@ -119,6 +120,8 @@
         );
         exit(255);
     }
+
+    // Start listening to updates
 
     while(true)
     {
