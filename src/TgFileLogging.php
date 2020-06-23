@@ -46,7 +46,7 @@
                 mkdir($main_logging_directory);
             }
 
-            $log_path = $main_logging_directory . DIRECTORY_SEPARATOR . $name . ".log";
+            $log_path = $main_logging_directory . DIRECTORY_SEPARATOR . strtolower($name) . ".log";
             $current_timestamp = date('Y-m-d H:i:s', time());
 
             file_put_contents($log_path,  "[$current_timestamp]::[$event_type] => $message\n", FILE_APPEND);
