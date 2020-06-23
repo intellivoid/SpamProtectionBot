@@ -87,7 +87,8 @@
     SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
     SpamProtectionBot::getBackgroundWorker()->getClient()->addServer();
     SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
-        __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME, 10
+        __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME,
+        $TelegramServiceConfiguration['MaxWorkers']
     );
 
     while(true)

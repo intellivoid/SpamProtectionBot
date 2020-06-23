@@ -53,6 +53,7 @@
             $TelegramSchema->setDefinition('BotEnabled', 'true');
             $TelegramSchema->setDefinition('WebHook', 'http://localhost');
             $TelegramSchema->setDefinition('MaxConnections', '100');
+            $TelegramSchema->setDefinition('MaxWorkers', '5');
             $acm->defineSchema('TelegramService', $TelegramSchema);
 
             $DatabaseSchema = new Schema();
