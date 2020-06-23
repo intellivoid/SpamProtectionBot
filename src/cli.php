@@ -17,6 +17,7 @@
     // Import all required auto loaders
 
     require __DIR__ . '/vendor/autoload.php';
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
 
     if(class_exists("SpamProtectionBot") == false)
