@@ -83,19 +83,19 @@
 
                 if($chat->getUniqueHash() !== $ExistingClient->Chat->getUniqueHash())
                 {
-                    $ExistingClient->Chat = $chat;
                     $UpdateRequired = true;
                 }
 
                 if($user->getUniqueHash() !== $ExistingClient->User->getUniqueHash())
                 {
-                    $ExistingClient->User = $user;
                     $UpdateRequired = true;
                 }
 
                 if($UpdateRequired)
                 {
                     $ExistingClient = $this->getClient(TelegramClientSearchMethod::byPublicId, $ExistingClient->PublicID);
+                    $ExistingClient->User = $user;
+                    $ExistingClient->Chat = $chat;
                     $ExistingClient->LastActivityTimestamp = $CurrentTime;
                     $ExistingClient->Available = true;
                     $this->updateClient($ExistingClient);
@@ -373,7 +373,6 @@
                 if($retry_duplication)
                 {
                     $this->fixDuplicateUsername($telegramClient->Chat, $telegramClient->User);
-                    $telegramClient = $this->getClient(TelegramClientSearchMethod::byPublicId, $telegramClient->PublicID);
                     return $this->updateClient($telegramClient, false);
                 }
 
@@ -459,26 +458,11 @@
 
                     if($ExistingClient !== null)
                     {
-                        $DuplicateUsername = false;
+                        $ExistingClient->User->Username = null;
+                        $ExistingClient->Chat->Username = null;
+                        $this->updateClient($ExistingClient);
 
-                        if($ExistingClient->User->ID == $user->ID)
-                        {
-                            $DuplicateUsername = true;
-                        }
-
-                        if($ExistingClient->Chat->ID == $chat->ID)
-                        {
-                            $DuplicateUsername = true;
-                        }
-
-                        if($DuplicateUsername == true)
-                        {
-                            $ExistingClient->User->Username = null;
-                            $ExistingClient->Chat->Username = null;
-                            $this->updateClient($ExistingClient);
-
-                            return true;
-                        }
+                        return true;
                     }
                 }
             }
