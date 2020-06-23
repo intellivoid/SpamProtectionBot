@@ -368,22 +368,29 @@ class Telegram
         if ($response->isOk()) {
             $results = $response->getResult();
 
-            //Process all updates
-            /** @var Update $result */
-            foreach ($results as $result) {
-                $this->processUpdate($result);
+            /** @var Update $latest_update */
+            if(count($results) > 0)
+            {
+                $latest_update = $results[(count($results) - 1)];
+                $this->last_update_id = $latest_update->getUpdateId();
             }
+            
+            print("Processing update " . $this->last_update_id . PHP_EOL);
+            \SpamProtectionBot::getBackgroundWorker()->getClient()->getGearmanClient()->doBackground(
+                "process_batch",  $response->toJson()
+            );
 
-            if (!DB::isDbConnected() && !$custom_input && $this->last_update_id !== null && $offset === 0) {
-                //Mark update(s) as read after handling
-                Request::getUpdates(
-                    [
-                        'offset'  => $this->last_update_id + 1,
-                        'limit'   => 1,
-                        'timeout' => $timeout,
-                    ]
-                );
-            }
+            print("Marked as read " . ($this->last_update_id + 1) . PHP_EOL);
+            Request::getUpdates(
+                [
+                    'offset'  => $this->last_update_id + 1,
+                    'limit'   => 1,
+                    'timeout' => $timeout,
+                ]
+            );
+
+            //if (!DB::isDbConnected() && !$custom_input && $this->last_update_id !== null && $offset === 0) {
+            //}
         }
 
         return $response;
