@@ -95,6 +95,7 @@
 
                 if($UpdateRequired)
                 {
+                    $ExistingClient = $this->getClient(TelegramClientSearchMethod::byPublicId, $ExistingClient->PublicID);
                     $ExistingClient->LastActivityTimestamp = $CurrentTime;
                     $ExistingClient->Available = true;
                     $this->updateClient($ExistingClient);
@@ -326,6 +327,7 @@
          * @return bool
          * @throws DatabaseException
          * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          */
         public function updateClient(TelegramClient $telegramClient, bool $retry_duplication=true): bool
         {
@@ -371,6 +373,7 @@
                 if($retry_duplication)
                 {
                     $this->fixDuplicateUsername($telegramClient->Chat, $telegramClient->User);
+                    $telegramClient = $this->getClient(TelegramClientSearchMethod::byPublicId, $telegramClient->PublicID);
                     return $this->updateClient($telegramClient, false);
                 }
 
