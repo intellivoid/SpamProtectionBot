@@ -1,5 +1,17 @@
 <?php
 
+    /** @noinspection DuplicatedCode */
+
+
+    /**
+     * cli.php is the main execution point for the bot to start polling, this method uses BackgroundWorker to
+     * instantly process a batch of updates in the background without waiting for the updates to be completed.
+     *
+     * In exchange for this performance upgrade, each worker will use up database connections, make sure
+     * the database can handle these connections without maxing out
+     */
+
+    use BackgroundWorker\BackgroundWorker;
     use Longman\TelegramBot\Exception\TelegramException;
 
     require __DIR__ . '/vendor/autoload.php';
@@ -50,18 +62,20 @@
 
     $telegram->useGetUpdatesWithoutDatabase();
 
-    SpamProtectionBot::$BackgroundWorker = new \BackgroundWorker\BackgroundWorker();
+    print("Starting Supervisor" . PHP_EOL);
+    SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
     SpamProtectionBot::getBackgroundWorker()->getClient()->addServer();
     SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
         __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME, 10
     );
+
 
     while(true)
     {
         try
         {
             print("Processing updates" . PHP_EOL);
-            $server_response = $telegram->handleGetUpdates();
+            $server_response = $telegram->handleBackgroundUpdates(SpamProtectionBot::getBackgroundWorker());
             $current_timestamp = date('[Y-m-d H:i:s]', time());
             if ($server_response->isOk())
             {

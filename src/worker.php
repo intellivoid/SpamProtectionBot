@@ -1,10 +1,19 @@
 <?php
 
+    /** @noinspection PhpUndefinedClassInspection */
+    /** @noinspection DuplicatedCode */
+
+    /**
+     * worker.php is the code that the worker will execute whenever a job passed on from the main
+     * bot. Starting the CLI will restart the workers that are already running in the background
+     */
+
     use BackgroundWorker\BackgroundWorker;
     use CoffeeHouse\CoffeeHouse;
     use DeepAnalytics\DeepAnalytics;
-use Longman\TelegramBot\Entities\Update;
-use SpamProtection\SpamProtection;
+    use Longman\TelegramBot\Entities\ServerResponse;
+    use Longman\TelegramBot\Entities\Update;
+    use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
 
     require __DIR__ . '/vendor/autoload.php';
@@ -78,17 +87,25 @@ use SpamProtection\SpamProtection;
     $BackgroundWorker = new BackgroundWorker();
     $BackgroundWorker->getWorker()->addServer("127.0.0.1", 4730);
     $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction("process_batch", function(GearmanJob $job) use ($telegram){
-        //print($job->workload());
-        $ServerResponse = new \Longman\TelegramBot\Entities\ServerResponse(
+        $ServerResponse = new ServerResponse(
             json_decode($job->workload(), true), TELEGRAM_BOT_NAME
         );
-        print("Got job" . PHP_EOL);
-        /** @var Update $result */
-        foreach ($ServerResponse->getResult() as $result)
+
+        if(count($ServerResponse->getResult()) > 0)
         {
-            $telegram->processUpdate($result);
+            /** @var Update $result */
+            foreach ($ServerResponse->getResult() as $result)
+            {
+                try
+                {
+                    $telegram->processUpdate($result);
+                }
+                catch(Exception $e)
+                {
+                    unset($e);
+                }
+            }
         }
-        print("Done" . PHP_EOL);
     });
 
     $BackgroundWorker->getWorker()->work();
