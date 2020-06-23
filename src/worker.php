@@ -109,8 +109,8 @@
 
     $BackgroundWorker = new BackgroundWorker();
     $BackgroundWorker->getWorker()->addServer(
-        $BackgroundWorkerConfiguration["host"],
-        (int)$BackgroundWorkerConfiguration["port"]
+        $BackgroundWorkerConfiguration["Host"],
+        (int)$BackgroundWorkerConfiguration["Port"]
     );
     $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction("process_batch", function(GearmanJob $job) use ($telegram)
     {

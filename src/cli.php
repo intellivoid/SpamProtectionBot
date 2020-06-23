@@ -92,12 +92,12 @@
     {
         SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
         SpamProtectionBot::getBackgroundWorker()->getClient()->addServer(
-            $BackgroundWorkerConfiguration["host"],
-            (int)$BackgroundWorkerConfiguration["port"]
+            $BackgroundWorkerConfiguration["Host"],
+            (int)$BackgroundWorkerConfiguration["Port"]
         );
         SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
             __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME,
-            $TelegramServiceConfiguration['MaxWorkers']
+            (int)$BackgroundWorkerConfiguration['MaxWorkers']
         );
     }
     catch(Exception $e)

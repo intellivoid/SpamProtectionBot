@@ -53,12 +53,12 @@
             $TelegramSchema->setDefinition('BotEnabled', 'true');
             $TelegramSchema->setDefinition('WebHook', 'http://localhost');
             $TelegramSchema->setDefinition('MaxConnections', '100');
-            $TelegramSchema->setDefinition('MaxWorkers', '5');
             $acm->defineSchema('TelegramService', $TelegramSchema);
 
             $BackgroundWorkerSchema = new Schema();
             $BackgroundWorkerSchema->setDefinition('Host', '127.0.0.1');
             $BackgroundWorkerSchema->setDefinition('Port', '4730');
+            $BackgroundWorkerSchema->setDefinition('MaxWorkers', '5');
             $acm->defineSchema('BackgroundWorker', $BackgroundWorkerSchema);
 
             $DatabaseSchema = new Schema();
