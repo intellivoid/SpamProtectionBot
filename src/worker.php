@@ -42,6 +42,9 @@
     /** @noinspection PhpUnhandledExceptionInspection */
     $DatabaseConfiguration = SpamProtectionBot::getDatabaseConfiguration();
 
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $BackgroundWorkerConfiguration = SpamProtectionBot::getBackgroundWorkerConfiguration();
+
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName'], false);
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
@@ -105,7 +108,10 @@
     SpamProtectionBot::$CoffeeHouse = new CoffeeHouse();
 
     $BackgroundWorker = new BackgroundWorker();
-    $BackgroundWorker->getWorker()->addServer("127.0.0.1", 4730);
+    $BackgroundWorker->getWorker()->addServer(
+        $BackgroundWorkerConfiguration["host"],
+        (int)$BackgroundWorkerConfiguration["port"]
+    );
     $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction("process_batch", function(GearmanJob $job) use ($telegram)
     {
         try

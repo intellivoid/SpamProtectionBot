@@ -56,6 +56,11 @@
             $TelegramSchema->setDefinition('MaxWorkers', '5');
             $acm->defineSchema('TelegramService', $TelegramSchema);
 
+            $BackgroundWorkerSchema = new Schema();
+            $BackgroundWorkerSchema->setDefinition('Host', '127.0.0.1');
+            $BackgroundWorkerSchema->setDefinition('Port', '4730');
+            $acm->defineSchema('BackgroundWorker', $BackgroundWorkerSchema);
+
             $DatabaseSchema = new Schema();
             $DatabaseSchema->setDefinition('Host', '127.0.0.1');
             $DatabaseSchema->setDefinition('Port', '3306');
@@ -87,6 +92,17 @@
         public static function getDatabaseConfiguration()
         {
             return self::autoConfig()->getConfiguration('Database');
+        }
+
+        /**
+         * Returns the background worker configuration
+         *
+         * @return mixed
+         * @throws Exception
+         */
+        public static function getBackgroundWorkerConfiguration()
+        {
+            return self::autoConfig()->getConfiguration('BackgroundWorker');
         }
 
         /**

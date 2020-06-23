@@ -40,6 +40,9 @@
     /** @noinspection PhpUnhandledExceptionInspection */
     $DatabaseConfiguration = SpamProtectionBot::getDatabaseConfiguration();
 
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $BackgroundWorkerConfiguration = SpamProtectionBot::getBackgroundWorkerConfiguration();
+
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName'], false);
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
@@ -88,7 +91,10 @@
     try
     {
         SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
-        SpamProtectionBot::getBackgroundWorker()->getClient()->addServer();
+        SpamProtectionBot::getBackgroundWorker()->getClient()->addServer(
+            $BackgroundWorkerConfiguration["host"],
+            (int)$BackgroundWorkerConfiguration["port"]
+        );
         SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
             __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME,
             $TelegramServiceConfiguration['MaxWorkers']
