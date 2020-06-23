@@ -29,6 +29,11 @@
         include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
     }
 
+    if(class_exists("TgFileLogging") == false)
+    {
+        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'TgFileLogging.php');
+    }
+
     /** @noinspection PhpUnhandledExceptionInspection */
     $TelegramServiceConfiguration = SpamProtectionBot::getTelegramConfiguration();
 
@@ -45,6 +50,10 @@
     {
         define("TELEGRAM_BOT_ENABLED", false);
     }
+
+    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main",
+        "Starting Service"
+    );
     
     try
     {
@@ -55,45 +64,81 @@
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {
-        print("Telegram Exception" . PHP_EOL);
-        var_dump($e);
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Telegram Exception Raised: " . $e->getMessage()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Line: " . $e->getLine()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "File: " . $e->getFile()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Trace: " . json_encode($e->getTrace())
+        );
         exit(255);
     }
 
     $telegram->useGetUpdatesWithoutDatabase();
 
-    print("Starting Supervisor" . PHP_EOL);
+    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main",
+        "Starting Supervisor"
+    );
     SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
     SpamProtectionBot::getBackgroundWorker()->getClient()->addServer();
     SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
         __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME, 10
     );
 
-
     while(true)
     {
         try
         {
-            print("Processing updates" . PHP_EOL);
+            TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main",
+                "Listening for updates"
+            );
             $server_response = $telegram->handleBackgroundUpdates(SpamProtectionBot::getBackgroundWorker());
-            $current_timestamp = date('[Y-m-d H:i:s]', time());
             if ($server_response->isOk())
             {
-                if(count($server_response->getResult()) > 0)
+                $update_count = count($server_response->getResult());
+                if($update_count > 0)
                 {
-                    $Event = $current_timestamp . ' - Processed ' . count($server_response->getResult()) . ' updates';
-                    print($Event . PHP_EOL);
+                    if($update_count == 1)
+                    {
+                        TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main",
+                            "Processed $update_count update"
+                        );
+                    }
+                    else
+                    {
+                        TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main",
+                            "Processed $update_count updates"
+                        );
+                    }
                 }
             }
             else
             {
-                print($current_timestamp . ' - Failed to fetch updates' . PHP_EOL);
-                print($server_response->printError());
+                TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+                    "Failed to fetch updates: " . $server_response->printError(true)
+                );
             }
         }
         catch (TelegramException $e)
         {
-            print("Telegram Exception" . PHP_EOL);
-            var_dump($e);
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+                "Telegram Exception Raised: " . $e->getMessage()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+                "Line: " . $e->getLine()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+                "File: " . $e->getFile()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+                "Trace: " . json_encode($e->getTrace())
+            );
+
+            exit(255);
         }
     }
