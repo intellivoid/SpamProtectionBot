@@ -120,11 +120,41 @@
         "Starting worker"
     );
 
+    SpamProtectionBot::$DeepAnalytics = new DeepAnalytics();
+
     // Create the database connections
     SpamProtectionBot::$TelegramClientManager = new TelegramClientManager();
+    if(SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error)
+    {
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Failed to initialize TelegramClientManager, " .
+            SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error
+        );
+
+        exit(255);
+    }
+
     SpamProtectionBot::$SpamProtection = new SpamProtection();
-    SpamProtectionBot::$DeepAnalytics = new DeepAnalytics();
+    if(SpamProtectionBot::$SpamProtection->getDatabase()->connect_error)
+    {
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Failed to initialize SpamProtection, " .
+            SpamProtectionBot::$SpamProtection->getDatabase()->connect_error
+        );
+
+        exit(255);
+    }
+
     SpamProtectionBot::$CoffeeHouse = new CoffeeHouse();
+    if(SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error)
+    {
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Failed to initialize CoffeeHouse, " .
+            SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error
+        );
+
+        exit(255);
+    }
 
     try
     {
