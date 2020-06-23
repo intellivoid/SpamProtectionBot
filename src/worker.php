@@ -178,4 +178,25 @@
         "Worker started successfully"
     );
 
-    $BackgroundWorker->getWorker()->work();
+    while(true)
+    {
+        try
+        {
+            $BackgroundWorker->getWorker()->work();
+        }
+        catch(Exception $e)
+        {
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                "Worker Exception Raised: " . $e->getMessage()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                "Line: " . $e->getLine()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                "File: " . $e->getFile()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                "Trace: " . json_encode($e->getTrace())
+            );
+        }
+    }
