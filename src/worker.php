@@ -108,51 +108,70 @@
     $BackgroundWorker->getWorker()->addServer("127.0.0.1", 4730);
     $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction("process_batch", function(GearmanJob $job) use ($telegram)
     {
-        $ServerResponse = new ServerResponse(json_decode($job->workload(), true), TELEGRAM_BOT_NAME);
-        $UpdateCount = count($ServerResponse->getResult());
-
-        if($UpdateCount > 0)
+        try
         {
-            if($UpdateCount == 1)
-            {
-                TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
-                    "Processing one update"
-                );
-            }
-            else
-            {
-                TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
-                    "Processing batch of $UpdateCount updates"
-                );
-            }
+            $ServerResponse = new ServerResponse(json_decode($job->workload(), true), TELEGRAM_BOT_NAME);
+            $UpdateCount = count($ServerResponse->getResult());
 
-            /** @var Update $result */
-            foreach ($ServerResponse->getResult() as $result)
+            if($UpdateCount > 0)
             {
-                try
+                if($UpdateCount == 1)
                 {
                     TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
-                        "Processing update " . $result->getUpdateId()
+                        "Processing one update"
                     );
-                    $telegram->processUpdate($result);
                 }
-                catch(Exception $e)
+                else
                 {
-                    TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                        "Telegram Exception Raised: " . $e->getMessage()
+                    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
+                        "Processing batch of $UpdateCount updates"
                     );
-                    TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                        "Line: " . $e->getLine()
-                    );
-                    TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                        "File: " . $e->getFile()
-                    );
-                    TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                        "Trace: " . json_encode($e->getTrace())
-                    );
+                }
+
+                /** @var Update $result */
+                foreach ($ServerResponse->getResult() as $result)
+                {
+                    try
+                    {
+                        TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
+                            "Processing update " . $result->getUpdateId()
+                        );
+                        $telegram->processUpdate($result);
+                    }
+                    catch(Exception $e)
+                    {
+                        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                            "Exception Raised: " . $e->getMessage()
+                        );
+                        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                            "Line: " . $e->getLine()
+                        );
+                        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                            "File: " . $e->getFile()
+                        );
+                        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                            "Trace: " . json_encode($e->getTrace())
+                        );
+                    }
                 }
             }
         }
+        catch(Exception $e)
+        {
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                "Worker Exception Raised: " . $e->getMessage()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                "Line: " . $e->getLine()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                "File: " . $e->getFile()
+            );
+            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
+                "Trace: " . json_encode($e->getTrace())
+            );
+        }
+
     });
 
     TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",

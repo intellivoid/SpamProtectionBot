@@ -138,7 +138,5 @@
             TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
                 "Trace: " . json_encode($e->getTrace())
             );
-
-            exit(255);
         }
     }
