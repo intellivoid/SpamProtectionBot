@@ -84,12 +84,35 @@
     TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main",
         "Starting Supervisor"
     );
-    SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
-    SpamProtectionBot::getBackgroundWorker()->getClient()->addServer();
-    SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
-        __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME,
-        $TelegramServiceConfiguration['MaxWorkers']
-    );
+
+    try
+    {
+        SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
+        SpamProtectionBot::getBackgroundWorker()->getClient()->addServer();
+        SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
+            __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME,
+            $TelegramServiceConfiguration['MaxWorkers']
+        );
+    }
+    catch(Exception $e)
+    {
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Supervisor Exception Raised: " . $e->getMessage()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Line: " . $e->getLine()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "File: " . $e->getFile()
+        );
+        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_main",
+            "Trace: " . json_encode($e->getTrace())
+        );
+        TgFileLogging::writeLog(TgFileLogging::WARNING, TELEGRAM_BOT_NAME . "_main",
+            "Make sure Gearman is running!"
+        );
+        exit(255);
+    }
 
     while(true)
     {
