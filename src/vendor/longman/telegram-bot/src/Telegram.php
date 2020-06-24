@@ -13,6 +13,7 @@ namespace Longman\TelegramBot;
 defined('TB_BASE_PATH') || define('TB_BASE_PATH', __DIR__);
 defined('TB_BASE_COMMANDS_PATH') || define('TB_BASE_COMMANDS_PATH', TB_BASE_PATH . '/Commands');
 
+use BackgroundWorker\BackgroundWorker;
 use Exception;
 use Longman\TelegramBot\Commands\Command;
 use Longman\TelegramBot\Entities\ServerResponse;
@@ -384,6 +385,71 @@ class Telegram
                     ]
                 );
             }
+        }
+
+        return $response;
+    }
+
+    /**
+     * Passes the updates to be processed in the background by the Background Worker
+     *
+     * @param BackgroundWorker $backgroundWorker
+     * @param null $limit
+     * @param null $timeout
+     * @return ServerResponse
+     * @throws TelegramException
+     */
+    public function handleBackgroundUpdates(BackgroundWorker $backgroundWorker, $limit = null, $timeout = null)
+    {
+        if (empty($this->bot_username)) {
+            throw new TelegramException('Bot Username is not defined!');
+        }
+
+        $offset = 0;
+
+        //Take custom input into account.
+        if ($custom_input = $this->getCustomInput())
+        {
+            $response = new ServerResponse(json_decode($custom_input, true), $this->bot_username);
+        }
+        else
+        {
+            if ($this->last_update_id !== null) {
+                $offset = $this->last_update_id + 1;    //As explained in the telegram bot API documentation
+            }
+
+            $response = Request::getUpdates(
+                [
+                    'offset'  => $offset,
+                    'limit'   => $limit,
+                    'timeout' => $timeout,
+                ]
+            );
+        }
+
+        if ($response->isOk()) {
+            $results = $response->getResult();
+
+            /** @var Update $latest_update */
+            if(count($results) > 0)
+            {
+                $latest_update = $results[(count($results) - 1)];
+                $this->last_update_id = $latest_update->getUpdateId();
+            }
+
+            // Send the updates to be processed in the background by a worker immedietaly
+            $backgroundWorker->getClient()->getGearmanClient()->doBackground(
+                "process_batch",  $response->toJson()
+            );
+
+            //Mark update(s) as read after handling
+            Request::getUpdates(
+                [
+                    'offset'  => $this->last_update_id + 1,
+                    'limit'   => 1,
+                    'timeout' => $timeout,
+                ]
+            );
         }
 
         return $response;
