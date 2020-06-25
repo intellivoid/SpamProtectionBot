@@ -441,15 +441,6 @@ class Telegram
             $backgroundWorker->getClient()->getGearmanClient()->doBackground(
                 "process_batch",  $response->toJson()
             );
-
-            //Mark update(s) as read after handling
-            Request::getUpdates(
-                [
-                    'offset'  => $this->last_update_id,
-                    'limit'   => 1,
-                    'timeout' => $timeout,
-                ]
-            );
         }
 
         return $response;
