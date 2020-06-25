@@ -445,7 +445,7 @@ class Telegram
             //Mark update(s) as read after handling
             Request::getUpdates(
                 [
-                    'offset'  => $this->last_update_id + 1,
+                    'offset'  => $this->last_update_id,
                     'limit'   => 1,
                     'timeout' => $timeout,
                 ]
