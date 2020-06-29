@@ -110,6 +110,6 @@
 
             file_put_contents($log_path, $DumpResultsJson);
 
-            return $exception_id;
+            return strtolower($name) . "_" . strtolower($identifier) . "_" . $exception_id;
         }
     }
