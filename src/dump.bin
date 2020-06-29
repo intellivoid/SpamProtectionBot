@@ -1,1 +1,0 @@
-SELECT id, public_id, available, account_id, user, chat, session_data, chat_id, user_id, username, last_activity, created FROM `telegram_clients` WHERE public_id='TEL-7bc4a85bfb3c2954e2fb03617c6d0412820d63dc32b15c8279ca9d1ef4246313-bf110369' LIMIT 1;
