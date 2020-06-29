@@ -53,4 +53,63 @@
             print($event . PHP_EOL);
             file_put_contents($log_path,  $event . "\n", FILE_APPEND);
         }
+
+        /**
+         * Dumps the full exception details into a JSON file
+         *
+         * @param Exception $exception
+         * @param string $name
+         * @param string $identifier
+         * @return string
+         */
+        public static function dumpException(Exception $exception, string $name, string $identifier): string
+        {
+            $DumpResults = array(
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'code' => $exception->getCode(),
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTrace(),
+                'trace_string' => $exception->getTraceAsString(),
+                'previous_exceptions' => []
+            );
+
+            $current_exception = $exception->getPrevious();
+            while(true)
+            {
+                if($current_exception == null)
+                {
+                    break;
+                }
+
+                $DumpResults['previous_exceptions'][] = array(
+                    'file' => $current_exception->getFile(),
+                    'line' => $current_exception->getLine(),
+                    'code' => $current_exception->getCode(),
+                    'message' => $current_exception->getMessage(),
+                    'trace' => $current_exception->getTrace(),
+                    'trace_string' => $current_exception->getTraceAsString()
+                );
+
+                $current_exception = $current_exception->getPrevious();
+            }
+
+            $DumpResultsJson = json_encode($DumpResults, JSON_PRETTY_PRINT);
+
+            $system_logging_directory = DIRECTORY_SEPARATOR . "var" . DIRECTORY_SEPARATOR . "log" . DIRECTORY_SEPARATOR;
+            $main_exception_directory = $system_logging_directory . "telegram_exceptions";
+
+            if(file_exists($main_exception_directory) == false)
+            {
+                mkdir($main_exception_directory);
+            }
+
+            $exception_id = hash('sha256', time() . $name . $identifier . $DumpResultsJson);
+            $file_name = strtolower($name) . "_" . strtolower($identifier) . "_" . $exception_id . ".json";
+            $log_path = $main_exception_directory . DIRECTORY_SEPARATOR . $file_name;
+
+            file_put_contents($log_path, $DumpResultsJson);
+
+            return $exception_id;
+        }
     }
