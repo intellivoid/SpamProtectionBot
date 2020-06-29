@@ -20,6 +20,7 @@
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
+    use TgFileLogging;
 
     /**
      * Info command
@@ -47,7 +48,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = '1.0.2';
 
         /**
          * @var bool
@@ -108,6 +109,7 @@
             }
             catch(Exception $e)
             {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, "user_info");
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -115,6 +117,7 @@
                     "text" =>
                         "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
                         "Error Code: <code>" . $e->getCode() . "</code>\n" .
+                        "Reference ID: <code>" . $ReferenceID . "</code>\n" .
                         "Object: <code>Commands/user_info.bin</code>"
                 ]);
             }
