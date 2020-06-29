@@ -112,4 +112,29 @@
 
             return strtolower($name) . "_" . strtolower($identifier) . "_" . $exception_id;
         }
+
+        /**
+         * Return the exception dump as a JSON format
+         *
+         * @param string $reference_code
+         * @return string
+         * @throws Exception
+         */
+        public static function getExceptionDump(string $reference_code): string
+        {
+            $system_logging_directory = DIRECTORY_SEPARATOR . "var" . DIRECTORY_SEPARATOR . "log" . DIRECTORY_SEPARATOR;
+            $main_exception_directory = $system_logging_directory . "telegram_exceptions";
+
+            if(file_exists($main_exception_directory) == false)
+            {
+                mkdir($main_exception_directory);
+            }
+
+            if(file_exists($main_exception_directory . DIRECTORY_SEPARATOR . $reference_code . ".json") == false)
+            {
+                throw new Exception("The exception dump '$reference_code' was not found.");
+            }
+
+            return file_get_contents($main_exception_directory . DIRECTORY_SEPARATOR . $reference_code . ".json");
+        }
     }
