@@ -158,6 +158,7 @@
                 )
             );
 
+            $this->fixDuplicateUsername($chat, $user);
             $QueryResults = $this->telegramClientManager->getDatabase()->query($Query);
 
             if($QueryResults == false)
@@ -427,6 +428,7 @@
 
             return $this->registerClient($chat, $UserObject, $return_public_id);
         }
+
         /**
          * Searches and overwrites old duplicate usernames
          *
@@ -435,6 +437,7 @@
          * @return bool
          * @throws DatabaseException
          * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          */
         public function fixDuplicateUsername(Chat $chat, User $user): bool
         {
