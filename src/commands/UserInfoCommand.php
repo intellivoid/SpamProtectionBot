@@ -16,6 +16,7 @@
     use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
+    use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
@@ -254,6 +255,16 @@
          */
         private static function generateUserInfoString(TelegramClient $user_client, string $title="User Information"): string
         {
+            if($user_client->Chat->Type == TelegramChatType::Private)
+            {
+                return "This command does not support users/private chats";
+            }
+
+            if($user_client->Chat->Type == TelegramChatType::Channel)
+            {
+                return "This command does not support channels";
+            }
+
             $UserStatus = SettingsManager::getUserStatus($user_client);
             $RequiresExtraNewline = false;
             $Response = "<b>$title</b>\n\n";
