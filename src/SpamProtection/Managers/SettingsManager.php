@@ -99,10 +99,10 @@
          * Updates the channel status in the Telegram Client
          *
          * @param TelegramClient $telegramClient
-         * @param ChatSettings $channelStatus
+         * @param ChannelStatus $channelStatus
          * @return TelegramClient
          */
-        public static function updateChannelStatus(TelegramClient $telegramClient, ChatSettings $channelStatus): TelegramClient
+        public static function updateChannelStatus(TelegramClient $telegramClient, ChannelStatus $channelStatus): TelegramClient
         {
             $telegramClient->SessionData->Data["channel_status"] = $channelStatus->toArray();
             return $telegramClient;
