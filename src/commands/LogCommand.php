@@ -45,7 +45,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = '1.2.0';
 
         /**
          * @var bool
