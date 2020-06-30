@@ -6,6 +6,7 @@
     namespace SpamProtection\Managers;
 
 
+    use SpamProtection\Objects\ChannelStatus;
     use SpamProtection\Objects\ChatSettings;
     use SpamProtection\Objects\UserStatus;
     use TelegramClientManager\Objects\TelegramClient;
@@ -75,6 +76,35 @@
         public static function updateChatSettings(TelegramClient $telegramClient, ChatSettings $chatSettings): TelegramClient
         {
             $telegramClient->SessionData->Data["chat_settings"] = $chatSettings->toArray();
+            return $telegramClient;
+        }
+
+        /**
+         * Returns the channel status of a Telegram Client
+         *
+         * @param TelegramClient $telegramClient
+         * @return ChannelStatus
+         */
+        public static function getChannelStatus(TelegramClient $telegramClient): ChannelStatus
+        {
+            if(isset($telegramClient->SessionData->Data["channel_status"]) == false)
+            {
+                $telegramClient->SessionData->Data["channel_status"] = ChannelStatus::fromArray($telegramClient->Chat, array())->toArray();
+            }
+
+            return ChannelStatus::fromArray($telegramClient->Chat, $telegramClient->SessionData->Data["channel_status"]);
+        }
+
+        /**
+         * Updates the channel status in the Telegram Client
+         *
+         * @param TelegramClient $telegramClient
+         * @param ChatSettings $channelStatus
+         * @return TelegramClient
+         */
+        public static function updateChannelStatus(TelegramClient $telegramClient, ChatSettings $channelStatus): TelegramClient
+        {
+            $telegramClient->SessionData->Data["channel_status"] = $channelStatus->toArray();
             return $telegramClient;
         }
     }

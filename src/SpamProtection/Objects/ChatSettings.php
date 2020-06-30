@@ -74,6 +74,13 @@
         public $GeneralAlertsEnabled;
 
         /**
+         * Indicates if this chat is verified by Intellivoid to be official
+         *
+         * @var bool
+         */
+        public $IsVerified;
+
+        /**
          * Constructs the configuration array for this object
          *
          * @return array
@@ -87,7 +94,8 @@
                 '0x003' => $this->DetectSpamAction,
                 '0x004' => (int)$this->BlacklistProtectionEnabled,
                 '0x005' => (int)$this->ActiveSpammerAlertEnabled,
-                '0x006' => (int)$this->GeneralAlertsEnabled
+                '0x006' => (int)$this->GeneralAlertsEnabled,
+                '0x007' => (int)$this->IsVerified
             );
         }
 
@@ -164,6 +172,15 @@
             else
             {
                 $ChatSettingsObject->GeneralAlertsEnabled = true;
+            }
+
+            if(isset($data['0x007']))
+            {
+                $ChatSettingsObject->IsVerified = (bool)$data['0x007'];
+            }
+            else
+            {
+                $ChatSettingsObject->IsVerified = false;
             }
 
             return $ChatSettingsObject;
