@@ -40,7 +40,7 @@
         /**
          * @var string
          */
-        protected $usage = '/log (-f if forwarded content) [Reply]';
+        protected $usage = '/log (-f if forwarded content) (-u if forwarded content is from channel, this option will also effect the user) [Reply]';
 
         /**
          * @var string
@@ -261,37 +261,26 @@
         {
             $SpamProtection = SpamProtectionBot::getSpamProtection();
 
-            //if($targetUserClient->Chat->Type !== TelegramChatType::Private)
-            //{
-            //    return Request::sendMessage([
-            //        "chat_id" => $message->Chat->ID,
-            //        "parse_mode" => "html",
-            //        "reply_to_message_id" => $message->MessageID,
-            //        "text" => "This operation is not applicable to this user."
-            //    ]);
-            //}
-
-            if($targetUserClient->User !== null)
+            if($targetUserClient->Chat->Type == TelegramChatType::Private)
             {
                 $UserStatus = SettingsManager::getUserStatus($targetUserClient);
 
                 if($UserStatus->IsOperator)
                 {
                     return Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "reply_to_message_id" => $message->MessageID,
                         "text" => "You can't log an operator"
                     ]);
                 }
 
                 if($UserStatus->IsAgent)
                 {
-
                     return Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "reply_to_message_id" => $message->MessageID,
                         "text" => "You can't log an agent"
                     ]);
                 }
@@ -300,10 +289,35 @@
                 {
 
                     return Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "reply_to_message_id" => $message->MessageID,
                         "text" => "You can't log a user who's whitelisted"
+                    ]);
+                }
+            }
+
+            if($targetUserClient->Chat->Type == TelegramChatType::Channel)
+            {
+                $ChannelStatus = SettingsManager::getChannelStatus($targetUserClient);
+
+                if($ChannelStatus->IsWhitelisted)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "You can't log a channel that's whitelisted"
+                    ]);
+                }
+
+                if($ChannelStatus->IsOfficial)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "Notice! This channel is considered to be official, this does not protect it from logging though."
                     ]);
                 }
             }
@@ -313,9 +327,9 @@
                 if($message->Photo == null)
                 {
                     return Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "reply_to_message_id" => $message->MessageID,
                         "text" => "This message type isn't supported yet, archive this message yourself if necessary"
                     ]);
                 }
