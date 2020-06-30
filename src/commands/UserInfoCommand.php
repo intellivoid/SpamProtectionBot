@@ -255,14 +255,19 @@
          */
         private static function generateUserInfoString(TelegramClient $user_client, string $title="User Information"): string
         {
-            if($user_client->Chat->Type == TelegramChatType::Private)
-            {
-                return "This command does not support users/private chats";
-            }
-
             if($user_client->Chat->Type == TelegramChatType::Channel)
             {
                 return "This command does not support channels";
+            }
+
+            if($user_client->Chat->Type == TelegramChatType::SuperGroup)
+            {
+                return "This command does not support super groups";
+            }
+
+            if($user_client->Chat->Type == TelegramChatType::Group)
+            {
+                return "This command does not support groups";
             }
 
             $UserStatus = SettingsManager::getUserStatus($user_client);
