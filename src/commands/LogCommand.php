@@ -15,6 +15,7 @@
     use SpamProtection\Managers\SettingsManager;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
+    use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
@@ -58,7 +59,7 @@
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
         public function execute()
