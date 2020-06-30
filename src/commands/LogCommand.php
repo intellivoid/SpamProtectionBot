@@ -178,6 +178,19 @@
 
                         if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
                         {
+                            if(strtolower($CommandParameters[1]) == "-u")
+                            {
+                                $TargetUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
+                                $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetUser);
+
+                                $Message = \SpamProtection\Objects\TelegramObjects\Message::fromArray($this->getMessage()->getReplyToMessage()->getRawData());
+                                $Message->ForwardFrom = null;
+                                $Message->From = $TargetUserClient->User;
+                                $Message->Chat = $ChatObject;
+
+                                $this->logSpam($TargetUserClient, $UserClient, $Message);
+                            }
+
                             $TargetForwardChannel = TelegramClient\Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
                             $TargetForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($TargetForwardChannel);
 
