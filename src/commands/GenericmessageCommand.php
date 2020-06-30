@@ -110,6 +110,19 @@
                         $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
                     }
                 }
+
+                // Define and update the channel forwarder if available
+                if($this->getMessage()->getForwardFromChat() !== null)
+                {
+                    $ForwardChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
+                    $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
+                    if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                    {
+                        $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
+                        $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
+                    }
+                }
             }
             catch(Exception $e)
             {
