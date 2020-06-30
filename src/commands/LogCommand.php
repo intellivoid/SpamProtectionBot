@@ -12,11 +12,7 @@
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
-    use SpamProtection\Exceptions\DatabaseException;
-    use SpamProtection\Exceptions\MessageLogNotFoundException;
-    use SpamProtection\Exceptions\UnsupportedMessageException;
     use SpamProtection\Managers\SettingsManager;
-    use SpamProtection\SpamProtection;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
@@ -59,13 +55,10 @@
          * Command execute method
          *
          * @return ServerResponse
-         * @throws DatabaseException
-         * @throws MessageLogNotFoundException
-         * @throws TelegramException
-         * @throws UnsupportedMessageException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         * @throws \TelegramClientManager\Exceptions\DatabaseException
          * @noinspection DuplicatedCode
          */
         public function execute()
@@ -175,13 +168,13 @@
                             $Message->ForwardFrom = null;
                             $Message->From = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
 
-                            return self::logSpam($TargetForwardUserClient, $UserClient, $Message);
+                            return $this->logSpam($TargetForwardUserClient, $UserClient, $Message);
                         }
                     }
                 }
 
                 $Message = \SpamProtection\Objects\TelegramObjects\Message::fromArray($this->getMessage()->getReplyToMessage()->getRawData());
-                return self::logSpam($TargetUserClient, $UserClient, $Message);
+                return $this->logSpam($TargetUserClient, $UserClient, $Message);
             }
 
 
@@ -212,19 +205,15 @@
         }
 
         /**
-         * Blacklists a user
+         * Manually logs the message
          *
          * @param TelegramClient $targetUserClient
          * @param TelegramClient $operatorClient
          * @param \SpamProtection\Objects\TelegramObjects\Message $message
          * @return ServerResponse
-         * @throws DatabaseException
-         * @throws MessageLogNotFoundException
          * @throws TelegramException
-         * @throws UnsupportedMessageException
-         * @noinspection DuplicatedCode
          */
-        public static function logSpam(TelegramClient $targetUserClient, TelegramClient $operatorClient, \SpamProtection\Objects\TelegramObjects\Message $message)
+        public function logSpam(TelegramClient $targetUserClient, TelegramClient $operatorClient, \SpamProtection\Objects\TelegramObjects\Message $message)
         {
             $SpamProtection = SpamProtectionBot::getSpamProtection();
 
@@ -273,11 +262,10 @@
                 ]);
             }
 
-            if($message->Text == null)
+            if($message->getText() == null)
             {
-                if($message->Caption == null)
+                if($message->Photo == null)
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $message->Chat->ID,
                         "parse_mode" => "html",
@@ -287,40 +275,121 @@
                 }
             }
 
-            $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage($message, 0, 0);
-
-            $LogMessage = "#spam\n\n";
-            $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $targetUserClient->PublicID . "</code>\n";
-            $LogMessage .= "<b>Operator PTID:</b> <code>" . $operatorClient->PublicID . "</code>\n";
-            $LogMessage .= "<b>Message Hash:</b> <code>" . $MessageLogObject->MessageHash . "</code>\n";
-            $LogMessage .= "<b>Timestamp:</b> <code>" . $MessageLogObject->Timestamp . "</code>";
-
-            $LogMessageWithContent = $LogMessage . "\n\n<i>===== CONTENT =====</i>\n\n" . self::escapeHTML($message->getText());
-            if(strlen($LogMessageWithContent) > 4096)
+            if($message->Photo !== null)
             {
-                $LogMessage .= "\n\nThe content is too large to be shown\n";
+                if(count($message->Photo) > 0)
+                {
+                    $photoSize = $message->Photo[(count($message->Photo) - 1)];
+                    $File = Request::getFile(["file_id" => $photoSize->FileID]);
+
+                    if($File->isOk())
+                    {
+                        $photoSize->URL = Request::downloadFileLocation($File->getResult());
+                        $photoSize->HamPrediction = 0;
+                        $photoSize->SpamPrediction = 0;
+                        $message->Photo = [$photoSize];
+                    }
+                }
+            }
+
+            try
+            {
+                $MessageLogs = $SpamProtection->getMessageLogManager()->registerMessages($message, 0, 0);
+            }
+            catch(Exception $e)
+            {
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $e->getCode() . "</code>\n" .
+                        "Object: <code>Commands/log.bin</code>"
+                ]);
+            }
+
+            $MessageHashes = "";
+
+            foreach($MessageLogs as $MessageLogObject)
+            {
+                $MessageHashes .= "<code>" . $MessageLogObject->MessageHash . "</code>\n";
+
+                $LogMessage = "#spam\n\n";
+                $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $targetUserClient->PublicID . "</code>\n";
+                $LogMessage .= "<b>Operator PTID:</b> <code>" . $operatorClient->PublicID . "</code>\n";
+                $LogMessage .= "<b>Message Hash:</b> <code>" . $MessageLogObject->MessageHash . "</code>\n";
+                $LogMessage .= "<b>Timestamp:</b> <code>" . $MessageLogObject->Timestamp . "</code>";
+
+                if($MessageLogObject->PhotoSize->URL == null)
+                {
+                    if($message->getText() !== null)
+                    {
+                        $LogMessageWithContent = $LogMessage . "\n\n<i>===== CONTENT =====</i>\n\n" . self::escapeHTML($message->getText());
+                        if(strlen($LogMessageWithContent) > 4096)
+                        {
+                            $LogMessage .= "\n\nThe content is too large to be shown\n";
+                        }
+                        else
+                        {
+                            $LogMessage = $LogMessageWithContent;
+                        }
+
+                        Request::sendMessage([
+                            "chat_id" => "570787098",
+                            "disable_web_page_preview" => true,
+                            "disable_notification" => true,
+                            "parse_mode" => "html",
+                            "text" => $LogMessage
+                        ]);
+
+                        continue;
+                    }
+                }
+                else
+                {
+                    Request::sendPhoto([
+                        "chat_id" => "570787098",
+                        "photo" => $MessageLogObject->PhotoSize->FileID,
+                        "disable_notification" => true,
+                        "parse_mode" => "html",
+                        "caption" => $LogMessage,
+                    ]);
+
+                    continue;
+                }
+
+                Request::sendMessage([
+                    "chat_id" => "570787098",
+                    "disable_web_page_preview" => true,
+                    "disable_notification" => true,
+                    "parse_mode" => "html",
+                    "text" => $LogMessage
+                ]);
+
+            }
+
+            if(count($MessageLogs) > 1)
+            {
+                return Request::sendMessage([
+                    "chat_id" => $message->Chat->ID,
+                    "parse_mode" => "html",
+                    "reply_to_message_id" => $message->MessageID,
+                    "text" => "Multiple messages has been archived successfully.\n\n". $MessageHashes
+                ]);
             }
             else
             {
-                $LogMessage = $LogMessageWithContent;
+                return Request::sendMessage([
+                    "chat_id" => $message->Chat->ID,
+                    "parse_mode" => "html",
+                    "reply_to_message_id" => $message->MessageID,
+                    "text" =>
+                        "This message has been archived successfully.\n\n".
+                        "<code>" . $MessageLogObject->MessageHash . "</code>"
+                ]);
             }
 
-            Request::sendMessage([
-                "chat_id" => $message->Chat->ID,
-                "parse_mode" => "html",
-                "reply_to_message_id" => $message->MessageID,
-                "text" =>
-                    "This message has been archived successfully.\n\n".
-                    "Message Hash: <code>" . $MessageLogObject->MessageHash . "</code>"
-            ]);
-
-            return Request::sendMessage([
-                "chat_id" => "@SpamProtectionLogs",
-                "disable_web_page_preview" => true,
-                "disable_notification" => true,
-                "parse_mode" => "html",
-                "text" => $LogMessage
-            ]);
         }
 
         /**

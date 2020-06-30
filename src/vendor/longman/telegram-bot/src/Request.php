@@ -548,6 +548,19 @@ class Request
     }
 
     /**
+     * Same as DownloadFile but only returns the request URL
+     *
+     * @param File $file
+     * @return bool|string
+     * @throws TelegramException
+     */
+    public static function downloadFileLocation(File $file)
+    {
+        $tg_file_path = $file->getFilePath();
+        return "https://api.telegram.org/file/bot" . self::$telegram->getApiKey() . '/' . $tg_file_path;
+    }
+
+    /**
      * Encode file
      *
      * @param string $file

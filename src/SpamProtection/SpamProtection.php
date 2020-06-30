@@ -8,7 +8,6 @@
     use acm\acm;
     use Exception;
     use mysqli;
-    use SpamProtection\Managers\ImageLogManager;
     use SpamProtection\Managers\MessageLogManager;
     use TelegramClientManager\TelegramClientManager;
 
@@ -28,7 +27,6 @@
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'MessageLog.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'UserStatus.php');
 
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'ImageLogManager.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'MessageLogManager.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'SettingsManager.php');
 
@@ -91,10 +89,6 @@
          */
         private $TelegramClientManager;
 
-        /**
-         * @var ImageLogManager
-         */
-        private $ImageLogManager;
 
         /**
          * SpamProtection constructor.
@@ -108,7 +102,6 @@
             $this->database = null;
 
             $this->MessageLogManager = new MessageLogManager($this);
-            $this->ImageLogManager = new ImageLogManager($this);
             $this->TelegramClientManager = null;
         }
 
@@ -152,14 +145,6 @@
             }
 
             return $this->TelegramClientManager;
-        }
-
-        /**
-         * @return ImageLogManager
-         */
-        public function getImageLogManager(): ImageLogManager
-        {
-            return $this->ImageLogManager;
         }
 
     }
