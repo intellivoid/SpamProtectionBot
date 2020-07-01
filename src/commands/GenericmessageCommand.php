@@ -9,11 +9,13 @@
     use CoffeeHouse\Objects\Results\SpamPredictionResults;
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
+    use Longman\TelegramBot\Entities\ChatMember;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\DetectionAction;
+    use SpamProtection\Abstracts\TelegramUserStatus;
     use SpamProtection\Exceptions\DatabaseException;
     use SpamProtection\Exceptions\MessageLogNotFoundException;
     use SpamProtection\Exceptions\UnsupportedMessageException;
@@ -233,14 +235,11 @@
                     return null;
                 }
 
-                if($MessageObject->isForwarded())
+                if($Message->ForwardFrom !== null)
                 {
-                    if($MessageObject->getForwardedOriginalUser() !== null)
+                    if($Message->ForwardFrom->Username == TELEGRAM_BOT_NAME)
                     {
-                        if($MessageObject->getForwardedOriginalUser()->Username == "SpamProtectionBot")
-                        {
-                            return null;
-                        }
+                        return null;
                     }
                 }
 
@@ -261,6 +260,31 @@
                             }
                         }
                     }
+                }
+
+                if($ChatObject->Type == TelegramChatType::Group || $ChatObject->Type == TelegramChatType::SuperGroup)
+                {
+                    // Update the admin cache if outdated
+                    if(((int)time() - $ChatSettings->AdminCacheLastUpdated) > 600)
+                    {
+                        $Results = Request::getChatAdministrators(["chat_id" => $ChatObject->ID]);
+
+                        if($Results->isOk())
+                        {
+                            /** @var array $ChatMembersResponse */
+                            $ChatMembersResponse = $Results->getRawData()["result"];
+                            $ChatSettings->Administrators = array();
+
+                            foreach($ChatMembersResponse as $chatMember)
+                            {
+                                $ChatSettings->Administrators[] = \SpamProtection\Objects\TelegramObjects\ChatMember::fromArray($chatMember);
+                            }
+
+                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+                        }
+                    }
+
                 }
 
                 if($ChatSettings->DetectSpamEnabled)
@@ -286,7 +310,7 @@
                             return null;
                         }
 
-                        $SpamProtection = \SpamProtectionBot::getSpamProtection();
+                        $SpamProtection = SpamProtectionBot::getSpamProtection();
                         $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage(
                             $MessageObject, $Results->SpamPrediction, $Results->HamPrediction
                         );
@@ -297,26 +321,53 @@
                         $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
                         $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
 
-                        if($Results->SpamPrediction > $Results->HamPrediction)
+                        // Determine if the user is an admin or creator
+                        $IsAdmin = false;
+                        foreach($ChatSettings->Administrators as $chatMember)
                         {
-                            if($ChatSettings->LogSpamPredictions)
+                            if($chatMember->User->ID == $UserClient->User->ID)
                             {
-                                self::logDetectedSpam($MessageObject, $MessageLogObject, $UserClient);
+                                if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
+                                {
+                                    $IsAdmin = true;
+                                }
                             }
-
-                            self::handleSpam(
-                                $MessageObject, $MessageLogObject,
-                                $UserClient, $UserStatus, $ChatSettings, $Results);
-
-                            $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', 0);
-                            $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getChatId());
-                            $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getUserId());
                         }
-                        else
+
+                        if($IsAdmin)
                         {
-                            $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', 0);
-                            $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', (int)$TelegramClient->getChatId());
-                            $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', (int)$TelegramClient->getUserId());
+                            Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "parse_mode" => "html",
+                                "text" => "Admin detected"
+                            ]);
+                        }
+
+                        // If the user isn't an admin or creator, then it's probably a random spammer.
+                        if($IsAdmin == false)
+                        {
+                            if($Results->SpamPrediction > $Results->HamPrediction)
+                            {
+                                if($ChatSettings->LogSpamPredictions)
+                                {
+                                    self::logDetectedSpam($MessageObject, $MessageLogObject, $UserClient);
+                                }
+
+                                self::handleSpam(
+                                    $MessageObject, $MessageLogObject,
+                                    $UserClient, $UserStatus, $ChatSettings, $Results);
+
+                                $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', 0);
+                                $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getChatId());
+                                $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getUserId());
+                            }
+                            else
+                            {
+                                $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', 0);
+                                $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', (int)$TelegramClient->getChatId());
+                                $DeepAnalytics->tally('tg_spam_protection', 'detected_ham', (int)$TelegramClient->getUserId());
+                            }
                         }
                     }
                 }
