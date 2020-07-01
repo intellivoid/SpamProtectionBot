@@ -335,16 +335,6 @@
                             }
                         }
 
-                        if($IsAdmin)
-                        {
-                            Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "Admin detected"
-                            ]);
-                        }
-
                         // If the user isn't an admin or creator, then it's probably a random spammer.
                         if($IsAdmin == false)
                         {
