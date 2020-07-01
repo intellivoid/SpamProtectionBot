@@ -22,6 +22,7 @@
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\ChatSettings;
     use SpamProtection\Objects\MessageLog;
+    use SpamProtection\Objects\TelegramObjects\ChatMember;
     use SpamProtection\Objects\TelegramObjects\Message;
     use SpamProtection\Objects\UserStatus;
     use SpamProtectionBot;
@@ -277,7 +278,7 @@
 
                             foreach($ChatMembersResponse as $chatMember)
                             {
-                                $ChatSettings->Administrators[] = \SpamProtection\Objects\TelegramObjects\ChatMember::fromArray($chatMember);
+                                $ChatSettings->Administrators[] = ChatMember::fromArray($chatMember);
                             }
 
                             $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
