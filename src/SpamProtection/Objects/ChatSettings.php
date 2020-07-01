@@ -4,6 +4,7 @@
     namespace SpamProtection\Objects;
 
     use SpamProtection\Abstracts\DetectionAction;
+    use SpamProtection\Objects\TelegramObjects\ChatMember;
     use TelegramClientManager\Objects\TelegramClient\Chat;
 
     /**
@@ -81,12 +82,33 @@
         public $IsVerified;
 
         /**
+         * The chat administrators in the chat
+         *
+         * @var ChatMember[]
+         */
+        public $Administrators;
+
+        /**
+         * The Unix Timestamp of when this adminstrator cache was last updated
+         *
+         * @var int
+         */
+        public $AdminCacheLastUpdated;
+
+        /**
          * Constructs the configuration array for this object
          *
          * @return array
          */
         public function toArray(): array
         {
+            $AdminResults = array();
+
+            foreach($this->Administrators as $administrator)
+            {
+                $AdminResults[] = $administrator->toArray();
+            }
+
             return array(
                 '0x000' => (int)$this->LogSpamPredictions,
                 '0x001' => (int)$this->ForwardProtectionEnabled,
@@ -95,7 +117,9 @@
                 '0x004' => (int)$this->BlacklistProtectionEnabled,
                 '0x005' => (int)$this->ActiveSpammerAlertEnabled,
                 '0x006' => (int)$this->GeneralAlertsEnabled,
-                '0x007' => (int)$this->IsVerified
+                '0x007' => (int)$this->IsVerified,
+                'Ax000' => $AdminResults,
+                'Ax001' => (int)$this->AdminCacheLastUpdated
             );
         }
 
@@ -181,6 +205,25 @@
             else
             {
                 $ChatSettingsObject->IsVerified = false;
+            }
+
+            $ChatSettingsObject->Administrators = array();
+
+            if(isset($data['Ax000']))
+            {
+                foreach($data['Ax000'] as $datum)
+                {
+                    $ChatSettingsObject->Administrators[] = ChatMember::fromArray($datum);
+                }
+            }
+
+            if(isset($data['Ax001']))
+            {
+                $ChatSettingsObject->AdminCacheLastUpdated = (int)$data['Ax001'];
+            }
+            else
+            {
+                $ChatSettingsObject->AdminCacheLastUpdated = 0;
             }
 
             return $ChatSettingsObject;
