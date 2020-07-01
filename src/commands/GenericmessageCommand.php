@@ -9,7 +9,6 @@
     use CoffeeHouse\Objects\Results\SpamPredictionResults;
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
-    use Longman\TelegramBot\Entities\ChatMember;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
