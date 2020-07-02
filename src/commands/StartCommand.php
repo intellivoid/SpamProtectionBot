@@ -47,7 +47,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = '1.0.2';
 
         /**
          * @var bool
@@ -147,8 +147,7 @@
                     switch(mb_substr($this->getMessage()->getText(true), 0, 3))
                     {
                         case "00_":
-                            $this->whoisLookup((int)mb_substr($this->getMessage()->getText(true), 3));
-                            return null;
+                            return $this->whoisLookup((int)mb_substr($this->getMessage()->getText(true), 3));
                     }
                 }
             }
@@ -170,7 +169,7 @@
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          */
-        public function whoisLookup(int $user_id)
+        public function whoisLookup(int $user_id): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$user_id, (int)$user_id);
