@@ -19,6 +19,8 @@
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
+    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Log message command
@@ -92,28 +94,30 @@
                 }
 
                 // Define and update the forwarder if available
-                if($this->getMessage()->getForwardFrom() !== null)
+                if($this->getMessage()->getReplyToMessage() !== null)
                 {
-                    $ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                    if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
                     {
-                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
+                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        }
                     }
-                }
 
-                // Define and update the channel forwarder if available
-                if($this->getMessage()->getForwardFromChat() !== null)
-                {
-                    $ForwardChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
-                    $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
-                    if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
                     {
-                        $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                        $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
+                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
+                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                        {
+                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
+                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
+                        }
                     }
                 }
             }

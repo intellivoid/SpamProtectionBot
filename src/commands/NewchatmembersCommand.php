@@ -80,15 +80,30 @@
                 }
 
                 // Define and update the forwarder if available
-                if($this->getMessage()->getForwardFrom() !== null)
+                if($this->getMessage()->getReplyToMessage() !== null)
                 {
-                    $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                    if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
                     {
-                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
+                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        }
+                    }
+
+                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
+                    {
+                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
+                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                        {
+                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
+                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
+                        }
                     }
                 }
             }
