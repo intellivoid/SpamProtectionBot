@@ -35,7 +35,7 @@
         /**
          * @var string
          */
-        protected $name = 'General Information Command';
+        protected $name = 'whois';
 
         /**
          * @var string
@@ -124,16 +124,15 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, "user_info");
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
                     "text" =>
                         "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $e->getCode() . "</code>\n" .
-                        "Reference ID: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Commands/whois.bin</code>"
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Commands/" . $this->name . ".bin</code>"
                 ]);
             }
 

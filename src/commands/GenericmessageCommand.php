@@ -42,7 +42,7 @@
         /**
          * @var string
          */
-        protected $name = 'Generic Information';
+        protected $name = 'generic_message';
 
         /**
          * @var string
@@ -129,6 +129,7 @@
             }
             catch(Exception $e)
             {
+                TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
                 return null;
             }
 

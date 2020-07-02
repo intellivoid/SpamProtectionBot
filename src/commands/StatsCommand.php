@@ -119,14 +119,15 @@
             }
             catch(Exception $e)
             {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
                     "text" =>
                         "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $e->getCode() . "</code>\n" .
-                        "Object: <code>Commands/stats.bin</code>"
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Commands/" . $this->name . ".bin</code>"
                 ]);
             }
 
