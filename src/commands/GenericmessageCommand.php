@@ -10,6 +10,7 @@
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
 
+    use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
@@ -336,19 +337,23 @@
                             }
                         }
 
+                        var_dump("Handle");
                         // If the user isn't an admin or creator, then it's probably a random spammer.
-                        if($IsAdmin == false)
+                        if($IsAdmin == true)
                         {
+                            var_dump("Handling spam");
                             if($Results->SpamPrediction > $Results->HamPrediction)
                             {
+                                $LoggedReferenceLink = null;
+
                                 if($ChatSettings->LogSpamPredictions)
                                 {
-                                    self::logDetectedSpam($MessageObject, $MessageLogObject, $UserClient);
+                                    $LoggedReferenceLink = self::logDetectedSpam($MessageObject, $MessageLogObject, $UserClient);
                                 }
 
                                 self::handleSpam(
                                     $MessageObject, $MessageLogObject,
-                                    $UserClient, $UserStatus, $ChatSettings, $Results);
+                                    $UserClient, $UserStatus, $ChatSettings, $Results, $LoggedReferenceLink);
 
                                 $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', 0);
                                 $DeepAnalytics->tally('tg_spam_protection', 'detected_spam', (int)$TelegramClient->getChatId());
@@ -377,14 +382,40 @@
          * @param UserStatus $userStatus
          * @param ChatSettings $chatSettings
          * @param SpamPredictionResults $spamPredictionResults
+         * @param string|null $logLink
          * @throws TelegramException
          */
         private static function handleSpam(
             Message $message, MessageLog $messageLog,
             TelegramClient $userClient, UserStatus $userStatus,
-            ChatSettings $chatSettings, SpamPredictionResults $spamPredictionResults
+            ChatSettings $chatSettings, SpamPredictionResults $spamPredictionResults, $logLink
         )
         {
+            if($logLink !== null)
+            {
+                $UseInlineKeyboard = true;
+                $InlineKeyboard = new InlineKeyboard([
+                    [
+                        "text" => "View Message",
+                        "url" => $logLink
+                    ],
+                    [
+                        "text" => "View User",
+                        "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->ID
+                    ]
+                ]);
+            }
+            else
+            {
+                $UseInlineKeyboard = true;
+                $InlineKeyboard = new InlineKeyboard([
+                    [
+                        "text" => "View User",
+                        "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->ID
+                    ]
+                ]);
+            }
+
             if($chatSettings->ForwardProtectionEnabled)
             {
                 if($message->isForwarded())
@@ -393,14 +424,21 @@
                     {
                         if($chatSettings->GeneralAlertsEnabled)
                         {
-                            Request::sendMessage([
+                            $ResponseMessage = [
                                 "chat_id" => $message->Chat->ID,
                                 "reply_to_message_id" => $message->MessageID,
                                 "parse_mode" => "html",
                                 "text" =>
                                     self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                     "No action will be taken since this group has Forward Protection Enabled"
-                            ]);
+                            ];
+
+                            if($UseInlineKeyboard)
+                            {
+                                $ResponseMessage["reply_markup"] = $InlineKeyboard;
+                            }
+
+                            Request::sendMessage($ResponseMessage);
                         }
 
                         return;
@@ -410,18 +448,6 @@
 
             if($userStatus->IsWhitelisted)
             {
-                if($chatSettings->GeneralAlertsEnabled)
-                {
-                    Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
-                        "reply_to_message_id" => $message->MessageID,
-                        "parse_mode" => "html",
-                        "text" =>
-                            self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                            "No action will be taken since this user is whitelisted"
-                    ]);
-                }
-
                 return;
             }
 
@@ -430,14 +456,21 @@
                 case DetectionAction::Nothing:
                     if($chatSettings->GeneralAlertsEnabled)
                     {
-                        Request::sendMessage([
+                        $ResponseMessage = [
                             "chat_id" => $message->Chat->ID,
                             "reply_to_message_id" => $message->MessageID,
                             "parse_mode" => "html",
                             "text" =>
                                 self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                 "No action will be taken since the the current detection rule in this group is to do nothing"
-                        ]);
+                        ];
+
+                        if($UseInlineKeyboard)
+                        {
+                            $ResponseMessage["reply_markup"] = $InlineKeyboard;
+                        }
+
+                        Request::sendMessage($ResponseMessage);
                     }
                     break;
 
@@ -450,27 +483,41 @@
                     {
                         if($chatSettings->GeneralAlertsEnabled)
                         {
-                            Request::sendMessage([
+                            $ResponseMessage = [
                                 "chat_id" => $message->Chat->ID,
                                 "parse_mode" => "html",
                                 "text" =>
                                     self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                     "The message has been deleted"
-                            ]);
+                            ];
+
+                            if($UseInlineKeyboard)
+                            {
+                                $ResponseMessage["reply_markup"] = $InlineKeyboard;
+                            }
+
+                            Request::sendMessage($ResponseMessage);
                         }
                     }
                     else
                     {
                         if($chatSettings->GeneralAlertsEnabled)
                         {
-                            Request::sendMessage([
+                            $ResponseMessage = [
                                 "chat_id" => $message->Chat->ID,
                                 "reply_to_message_id" => $message->MessageID,
                                 "parse_mode" => "html",
                                 "text" =>
                                     self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                     "<b>The message cannot be deleted because of insufficient administrator privileges</b>"
-                            ]);
+                            ];
+
+                            if($UseInlineKeyboard)
+                            {
+                                $ResponseMessage["reply_markup"] = $InlineKeyboard;
+                            }
+
+                            Request::sendMessage($ResponseMessage);
                         }
 
                     }
@@ -507,11 +554,18 @@
 
                     if($chatSettings->GeneralAlertsEnabled)
                     {
-                        Request::sendMessage([
+                        $ResponseMessage = [
                             "chat_id" => $message->Chat->ID,
                             "parse_mode" => "html",
                             "text" => $Response
-                        ]);
+                        ];
+
+                        if($UseInlineKeyboard)
+                        {
+                            $ResponseMessage["reply_markup"] = $InlineKeyboard;
+                        }
+
+                        Request::sendMessage($ResponseMessage);
                     }
 
                     break;
@@ -547,11 +601,18 @@
 
                     if($chatSettings->GeneralAlertsEnabled)
                     {
-                        Request::sendMessage([
+                        $ResponseMessage = [
                             "chat_id" => $message->Chat->ID,
                             "parse_mode" => "html",
                             "text" => $Response
-                        ]);
+                        ];
+
+                        if($UseInlineKeyboard)
+                        {
+                            $ResponseMessage["reply_markup"] = $InlineKeyboard;
+                        }
+
+                        Request::sendMessage($ResponseMessage);
                     }
 
                     break;
@@ -559,14 +620,21 @@
                 default:
                     if($chatSettings->GeneralAlertsEnabled)
                     {
-                        Request::sendMessage([
+                        $ResponseMessage = [
                             "chat_id" => $message->Chat->ID,
                             "reply_to_message_id" => $message->MessageID,
                             "parse_mode" => "html",
                             "text" =>
                                 self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
                                 "No action was taken because the detection action is not recognized"
-                        ]);
+                        ];
+
+                        if($UseInlineKeyboard)
+                        {
+                            $ResponseMessage["reply_markup"] = $InlineKeyboard;
+                        }
+
+                        Request::sendMessage($ResponseMessage);
                     }
             }
 
@@ -582,8 +650,24 @@
          */
         private static function generateDetectionMessage(MessageLog $messageLog, TelegramClient $userClient, SpamPredictionResults $spamPredictionResults): string
         {
+            if($userClient->User->Username == null)
+            {
+                if($userClient->User->LastName == null)
+                {
+                    $Mention = "<a href=\"tg://user?id=" . $userClient->User->ID . "\">" . self::escapeHTML($userClient->User->FirstName) . "</a>";
+                }
+                else
+                {
+                    $Mention = "<a href=\"tg://user?id=" . $userClient->User->ID . "\">" . self::escapeHTML($userClient->User->FirstName . " " . $userClient->User->LastName) . "</a>";
+                }
+            }
+            else
+            {
+                $Mention = "@" . $userClient->User->Username;
+            }
+
             $Response = "\u{26A0} <b>SPAM DETECTED</b> \u{26A0}\n\n";
-            $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n";
+            $Response .= "<b>User:</b> $Mention (<code>" . $userClient->PublicID . "</code>)\n";
             $Response .= "<b>Message Hash:</b> <code>" . $messageLog->MessageHash . "</code>\n";
             $Response .= "<b>Spam Probability:</b> <code>" . $spamPredictionResults->SpamPrediction . "%</code>";
 
@@ -596,6 +680,7 @@
          * @param Message $message
          * @param MessageLog $messageLog
          * @param TelegramClient $userClient
+         * @return string|null
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
@@ -617,13 +702,24 @@
                 $LogMessage = $LogMessageWithContent;
             }
 
-            Request::sendMessage([
-                "chat_id" => "@SpamProtectionLogs",
+            $Response = Request::sendMessage([
+                "chat_id" => "570787098",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",
                 "text" => $LogMessage
             ]);
+
+            var_dump($Response);
+            if($Response->isOk() == false)
+            {
+                return null;
+            }
+
+            /** @var \Longman\TelegramBot\Entities\Message $LoggedMessage */
+            $LoggedMessage = $Response->getResult();
+
+            return "https://t.me/SpamProtectionLogs/" . $LoggedMessage->getMessageId();
         }
 
         /**
