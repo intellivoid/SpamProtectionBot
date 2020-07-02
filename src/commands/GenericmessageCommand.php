@@ -9,7 +9,6 @@
     use CoffeeHouse\Objects\Results\SpamPredictionResults;
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
-
     use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
@@ -401,7 +400,7 @@
                     ],
                     [
                         "text" => "View User",
-                        "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->ID
+                        "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID
                     ]
                 ]);
             }
@@ -411,7 +410,7 @@
                 $InlineKeyboard = new InlineKeyboard([
                     [
                         "text" => "View User",
-                        "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->ID
+                        "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID
                     ]
                 ]);
             }

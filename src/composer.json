@@ -3,6 +3,7 @@
         "longman/telegram-bot": "^0.57.0",
         "ext-gearman": "*",
         "ext-json": "*",
-        "ext-mysqli": "*"
+        "ext-mysqli": "*",
+        "ext-mbstring": "*"
     }
 }
