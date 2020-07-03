@@ -387,7 +387,7 @@
                     }
 
                     // If the user isn't an admin or creator, then it's probably a random spammer.
-                    if($IsAdmin == true)
+                    if($IsAdmin == false)
                     {
                         if($Results->SpamPrediction > $Results->HamPrediction)
                         {
