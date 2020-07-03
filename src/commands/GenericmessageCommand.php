@@ -477,14 +477,14 @@
                         }
                     }
 
-                    if($IsAdmin == false)
+                    if($IsAdmin)
                     {
                         $Response = Request::deleteMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "message_id" => $this->getMessage()->getMessageId()
                         ]);
 
-                        if($Response->isOk())
+                        if($Response->isOk() == false)
                         {
                             /** @noinspection DuplicatedCode */
                             if($userClient->User->Username == null)
@@ -563,6 +563,16 @@
                             Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "parse_mode" => "html",
+                                "reply_markup" => new InlineKeyboard(
+                                    [
+                                        ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                        ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $channelClient->User->ID],
+                                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
+                                    ],
+                                    [
+                                        ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
+                                    ]
+                                ),
                                 "text" => $Response
                             ]);
                         }
