@@ -151,7 +151,7 @@
 
             // Ban the user from the chat if the chat has blacklist protection enabled
             // and the user is blacklisted.
-            $this->handleBlacklistedUser($ChatSettings, $UserStatus, $UserClient);
+            $this->handleBlacklistedUser($ChatSettings, $UserStatus, $UserClient, $ChatClient);
 
             // Remove the message if it came from a blacklisted channel
             if($this->getMessage()->getForwardFromChat() !== null)
@@ -425,6 +425,7 @@
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @noinspection DuplicatedCode
          */
         public function handleBlacklistedChannel(ChatSettings $chatSettings, ChannelStatus $channelStatus, TelegramClient $channelClient, TelegramClient $userClient, TelegramClient $chatClient)
         {
@@ -578,10 +579,14 @@
          * @param ChatSettings $chatSettings
          * @param UserStatus $userStatus
          * @param TelegramClient $userClient
+         * @param TelegramClient $chatClient
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          * @throws TelegramException
+         * @throws \TelegramClientManager\Exceptions\DatabaseException
          * @noinspection DuplicatedCode
          */
-        public function handleBlacklistedUser(ChatSettings $chatSettings, UserStatus $userStatus, TelegramClient $userClient)
+        public function handleBlacklistedUser(ChatSettings $chatSettings, UserStatus $userStatus, TelegramClient $userClient, TelegramClient $chatClient)
         {
             if($userStatus->IsWhitelisted)
             {
@@ -592,95 +597,136 @@
             {
                 if($userStatus->IsBlacklisted)
                 {
-                    $BanResponse = Request::kickChatMember([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "user_id" => $userClient->User->ID,
-                        "until_date" => 0
-                    ]);
-
-                    if($BanResponse->isOk())
+                    $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
+                    // Update the admin cache if it's outdated
+                    /** @noinspection DuplicatedCode */
+                    if($ChatObject->Type == TelegramChatType::Group || $ChatObject->Type == TelegramChatType::SuperGroup)
                     {
-                        /** @noinspection DuplicatedCode */
-                        if($userClient->User->Username == null)
+                        if(((int)time() - $chatSettings->AdminCacheLastUpdated) > 600)
                         {
-                            if($userClient->User->LastName == null)
+                            $Results = Request::getChatAdministrators(["chat_id" => $ChatObject->ID]);
+
+                            if($Results->isOk())
                             {
-                                $Mention = "<a href=\"tg://user?id=" . $userClient->User->ID . "\">" . self::escapeHTML($userClient->User->FirstName) . "</a>";
+                                /** @var array $ChatMembersResponse */
+                                $ChatMembersResponse = $Results->getRawData()["result"];
+                                $chatSettings->Administrators = array();
+
+                                foreach($ChatMembersResponse as $chatMember)
+                                {
+                                    $chatSettings->Administrators[] = ChatMember::fromArray($chatMember);
+                                }
+
+                                $chatClient = SettingsManager::updateChatSettings($chatClient, $chatSettings);
+                                SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($chatClient);
+                            }
+                        }
+                    }
+
+                    $IsAdmin = false;
+                    foreach($chatSettings->Administrators as $chatMember)
+                    {
+                        if($chatMember->User->ID == $userClient->User->ID)
+                        {
+                            if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
+                            {
+                                $IsAdmin = true;
+                            }
+                        }
+                    }
+
+                    if($IsAdmin == false)
+                    {
+                        $BanResponse = Request::kickChatMember([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "user_id" => $userClient->User->ID,
+                            "until_date" => 0
+                        ]);
+
+                        if($BanResponse->isOk())
+                        {
+                            /** @noinspection DuplicatedCode */
+                            if($userClient->User->Username == null)
+                            {
+                                if($userClient->User->LastName == null)
+                                {
+                                    $Mention = "<a href=\"tg://user?id=" . $userClient->User->ID . "\">" . self::escapeHTML($userClient->User->FirstName) . "</a>";
+                                }
+                                else
+                                {
+                                    $Mention = "<a href=\"tg://user?id=" . $userClient->User->ID . "\">" . self::escapeHTML($userClient->User->FirstName . " " . $userClient->User->LastName) . "</a>";
+                                }
                             }
                             else
                             {
-                                $Mention = "<a href=\"tg://user?id=" . $userClient->User->ID . "\">" . self::escapeHTML($userClient->User->FirstName . " " . $userClient->User->LastName) . "</a>";
+                                $Mention = "@" . $userClient->User->Username;
                             }
+
+                            $Response = "$Mention has been banned because they've been blacklisted!\n\n";
+                            $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n";
+
+                            switch($userStatus->BlacklistFlag)
+                            {
+                                case BlacklistFlag::None:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>None</code>\n";
+                                    break;
+
+                                case BlacklistFlag::Spam:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion</code>\n";
+                                    break;
+
+                                case BlacklistFlag::BanEvade:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
+                                    $Response .= "<b>Original Private ID:</b> <code>" . $userStatus->OriginalPrivateID . "</code>\n";
+                                    break;
+
+                                case BlacklistFlag::ChildAbuse:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Child Pornography / Child Abuse</code>\n";
+                                    break;
+
+                                case BlacklistFlag::Impersonator:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Malicious Impersonator</code>\n";
+                                    break;
+
+                                case BlacklistFlag::PiracySpam:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam Pirated Content</code>\n";
+                                    break;
+
+                                case BlacklistFlag::PornographicSpam:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam NSFW Content</code>\n";
+                                    break;
+
+                                case BlacklistFlag::PrivateSpam:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion via a unsolicited private message</code>\n";
+                                    break;
+
+                                case BlacklistFlag::Raid:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>RAID Initializer / Participator</code>\n";
+                                    break;
+
+                                case BlacklistFlag::Scam:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Scamming</code>\n";
+                                    break;
+
+                                case BlacklistFlag::Special:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Special Reason, consult @IntellivoidSupport</code>\n";
+                                    break;
+
+                                default:
+                                    $Response .= "<b>Blacklist Reason:</b> <code>Unknown</code>\n";
+                                    break;
+                            }
+
+                            $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>\n\n";
+                            $Response .= "<i>If you think this is a mistake, let us know in @IntellivoidDiscussions</i>";
+
+                            Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "parse_mode" => "html",
+                                "text" => $Response
+                            ]);
                         }
-                        else
-                        {
-                            $Mention = "@" . $userClient->User->Username;
-                        }
-
-                        $Response = "$Mention has been banned because they've been blacklisted!\n\n";
-                        $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n";
-
-                        switch($userStatus->BlacklistFlag)
-                        {
-                            case BlacklistFlag::None:
-                                $Response .= "<b>Blacklist Reason:</b> <code>None</code>\n";
-                                break;
-
-                            case BlacklistFlag::Spam:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion</code>\n";
-                                break;
-
-                            case BlacklistFlag::BanEvade:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
-                                $Response .= "<b>Original Private ID:</b> <code>" . $userStatus->OriginalPrivateID . "</code>\n";
-                                break;
-
-                            case BlacklistFlag::ChildAbuse:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Child Pornography / Child Abuse</code>\n";
-                                break;
-
-                            case BlacklistFlag::Impersonator:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Malicious Impersonator</code>\n";
-                                break;
-
-                            case BlacklistFlag::PiracySpam:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam Pirated Content</code>\n";
-                                break;
-
-                            case BlacklistFlag::PornographicSpam:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam NSFW Content</code>\n";
-                                break;
-
-                            case BlacklistFlag::PrivateSpam:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion via a unsolicited private message</code>\n";
-                                break;
-
-                            case BlacklistFlag::Raid:
-                                $Response .= "<b>Blacklist Reason:</b> <code>RAID Initializer / Participator</code>\n";
-                                break;
-
-                            case BlacklistFlag::Scam:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Scamming</code>\n";
-                                break;
-
-                            case BlacklistFlag::Special:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Special Reason, consult @IntellivoidSupport</code>\n";
-                                break;
-
-                            default:
-                                $Response .= "<b>Blacklist Reason:</b> <code>Unknown</code>\n";
-                                break;
-                        }
-
-                        $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>\n\n";
-                        $Response .= "<i>If you think this is a mistake, let us know in @IntellivoidDiscussions</i>";
-
-                        Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => $Response
-                        ]);
                     }
                 }
             }
@@ -963,6 +1009,7 @@
          */
         private static function generateDetectionMessage(MessageLog $messageLog, TelegramClient $userClient, SpamPredictionResults $spamPredictionResults): string
         {
+            /** @noinspection DuplicatedCode */
             if($userClient->User->Username == null)
             {
                 if($userClient->User->LastName == null)
