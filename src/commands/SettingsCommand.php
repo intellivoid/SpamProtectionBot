@@ -590,7 +590,8 @@
                     "   <b>/settings</b> <code>detect_spam_action</code> <code>[Nothing/Delete/Kick/Ban]</code>\n".
                     "   <b>/settings</b> <code>blacklists</code> <code>[On/Off/Enable/Disable]</code>\n".
                     "   <b>/settings</b> <code>general_alerts</code> <code>[On/Off/Enable/Disable]</code>\n".
-                    "   <b>/settings</b> <code>active_spammer_alert</code> <code>[On/Off/Enable/Disable]</code>\n\n".
+                    "   <b>/settings</b> <code>active_spammer_alert</code> <code>[On/Off/Enable/Disable]</code>\n".
+                    "   <b>/settings</b> <code>delete_old_messages</code> <code>[On/Off/Enable/Disable]</code>\n\n".
                     "For more information send <code>/help settings</code>"
             ]);
         }
