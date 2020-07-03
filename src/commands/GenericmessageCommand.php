@@ -428,7 +428,7 @@
                     }
 
                     // If the user isn't an admin or creator, then it's probably a random spammer.
-                    if($IsAdmin == true)
+                    if($IsAdmin == false)
                     {
                         if($Results->SpamPrediction > $Results->HamPrediction)
                         {
@@ -528,7 +528,7 @@
                         }
                     }
 
-                    if($IsAdmin == true)
+                    if($IsAdmin == false)
                     {
                         $Response = Request::deleteMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -705,7 +705,7 @@
                         }
                     }
 
-                    if($IsAdmin == true)
+                    if($IsAdmin == false)
                     {
                         $BanResponse = Request::kickChatMember([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
