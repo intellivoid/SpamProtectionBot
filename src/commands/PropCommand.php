@@ -16,6 +16,7 @@
     use SpamProtection\Objects\UserStatus;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
+    use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
@@ -47,7 +48,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = '1.2.0';
 
         /**
          * @var bool
@@ -192,6 +193,16 @@
                     ]);
                 }
 
+                if($TargetUserClient->Chat->Type !== TelegramChatType::Private)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "This object is not a user"
+                    ]);
+                }
+
                 $TargetUserStatus = SettingsManager::getUserStatus($TargetUserClient);
 
                 if(count($CommandParameters) > 2)
@@ -199,7 +210,6 @@
                     if(count($CommandParameters) == 3)
                     {
                         $Results = $TargetUserStatus->toArray();
-
 
                         if(isset($Results[$CommandParameters[2]]))
                         {
@@ -287,6 +297,19 @@
                     ]);
                 }
 
+                if($TargetChatClient->Chat->Type !== TelegramChatType::Group)
+                {
+                    if($TargetChatClient->Chat->Type !== TelegramChatType::SuperGroup)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            "text" => "This object is not a group or supergroup"
+                        ]);
+                    }
+                }
+
                 $TargetChatSettings = SettingsManager::getChatSettings($TargetChatClient);
 
                 if(count($CommandParameters) > 2)
@@ -350,6 +373,110 @@
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
                         "text" => "<code>" . json_encode($TargetChatSettings->toArray(), JSON_PRETTY_PRINT) . "</code>"
+                    ]);
+                }
+            }
+            elseif($CommandParameters[0] == "ch")
+            {
+                if(count($CommandParameters) < 2)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "Missing Private Channel ID parameter"
+                    ]);
+                }
+
+                try
+                {
+                    $TargetChannelClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                        TelegramClientSearchMethod::byPublicId, $CommandParameters[1]
+                    );
+                }
+                catch (TelegramClientNotFoundException $e)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "Invalid Private ID"
+                    ]);
+                }
+
+                if($TargetChannelClient->Chat->Type !== TelegramChatType::Channel)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "This object is not a channel"
+                    ]);
+                }
+
+                $TargetChannelSettings = SettingsManager::getChannelStatus($TargetChannelClient);
+
+                if(count($CommandParameters) > 2)
+                {
+                    if(count($CommandParameters) == 3)
+                    {
+                        $Results = $TargetChannelSettings->toArray();
+
+                        if(isset($Results[$CommandParameters[2]]))
+                        {
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "parse_mode" => "html",
+                                "text" => "<code>" . $Results[$CommandParameters[2]] . "</code>"
+                            ]);
+                        }
+                        else
+                        {
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "parse_mode" => "html",
+                                "text" => "Property <code>" . $CommandParameters[2] . "</code> not found"
+                            ]);
+                        }
+                    }
+
+                    if(count($CommandParameters) == 4)
+                    {
+                        $Results = $TargetChannelSettings->toArray();
+
+                        if(isset($Results[$CommandParameters[2]]) == false)
+                        {
+
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "parse_mode" => "html",
+                                "text" => "Property <code>" . $CommandParameters[2] . "</code> not found"
+                            ]);
+                        }
+
+                        $Results[$CommandParameters[2]] = $CommandParameters[3];
+                        $TargetChannelSettings = ChatSettings::fromArray($TargetChannelClient->Chat, $Results);
+                        $TargetChannelClient = SettingsManager::updateChatSettings($TargetChannelClient, $TargetChannelSettings);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetChannelClient);
+
+                        return Request::sendMessage([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            "text" => "Property <code>" . $CommandParameters[2] . "</code> updated successfully"
+                        ]);
+                    }
+                }
+                else
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "<code>" . json_encode($TargetChannelSettings->toArray(), JSON_PRETTY_PRINT) . "</code>"
                     ]);
                 }
             }
