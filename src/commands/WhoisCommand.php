@@ -200,6 +200,19 @@
                         $TargetTelegramParameter = $CommandParameters[0];
                         $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetTelegramParameter, (int)$TargetTelegramParameter);
 
+                        if($TargetTelegramParameter == "-c")
+                        {
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "parse_mode" => "html",
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "text" =>
+                                    self::resolveTarget($UserClient, false, "None", false) .
+                                    "\n\n" .
+                                    self::resolveTarget($ChatClient, false, "None", false)
+                            ]);
+                        }
+
                         try
                         {
                             $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);

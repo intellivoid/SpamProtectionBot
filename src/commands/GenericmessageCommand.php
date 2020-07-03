@@ -324,6 +324,7 @@
                             /** @var array $ChatMembersResponse */
                             $ChatMembersResponse = $Results->getRawData()["result"];
                             $ChatSettings->Administrators = array();
+                            $ChatSettings->AdminCacheLastUpdated = (int)time();
 
                             foreach($ChatMembersResponse as $chatMember)
                             {
@@ -502,6 +503,7 @@
                                 /** @var array $ChatMembersResponse */
                                 $ChatMembersResponse = $Results->getRawData()["result"];
                                 $chatSettings->Administrators = array();
+                                $chatSettings->AdminCacheLastUpdated = (int)time();
 
                                 foreach($ChatMembersResponse as $chatMember)
                                 {
@@ -678,6 +680,7 @@
                                 /** @var array $ChatMembersResponse */
                                 $ChatMembersResponse = $Results->getRawData()["result"];
                                 $chatSettings->Administrators = array();
+                                $chatSettings->AdminCacheLastUpdated = (int)time();
 
                                 foreach($ChatMembersResponse as $chatMember)
                                 {

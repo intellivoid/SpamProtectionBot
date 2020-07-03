@@ -142,7 +142,7 @@
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
             $DeepAnalytics->tally('tg_spam_protection', 'prop_command', (int)$TelegramClient->getChatId());
 
-            if($UserClient->User->Username !== "IntellivoidSupport")
+            if($UserClient->User->Username == "IntellivoidSupport")
             {
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
