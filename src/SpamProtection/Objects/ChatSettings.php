@@ -119,7 +119,7 @@
         /**
          * The last ID of the message that was sent by the bot
          *
-         * @var bool
+         * @var int|null
          */
         public $LastMessageID;
 

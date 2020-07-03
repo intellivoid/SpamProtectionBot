@@ -411,7 +411,7 @@
                         }
 
                         Request::sendMessage([
-                            "chat_id" => "570787098",
+                            "chat_id" => "@SpamProtectionLogs",
                             "disable_web_page_preview" => true,
                             "disable_notification" => true,
                             "parse_mode" => "html",
@@ -424,7 +424,7 @@
                 else
                 {
                     Request::sendPhoto([
-                        "chat_id" => "570787098",
+                        "chat_id" => "@SpamProtectionLogs",
                         "photo" => $MessageLogObject->PhotoSize->FileID,
                         "disable_notification" => true,
                         "parse_mode" => "html",
@@ -435,7 +435,7 @@
                 }
 
                 Request::sendMessage([
-                    "chat_id" => "570787098",
+                    "chat_id" => "@SpamProtectionLogs",
                     "disable_web_page_preview" => true,
                     "disable_notification" => true,
                     "parse_mode" => "html",

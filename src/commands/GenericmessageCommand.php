@@ -176,6 +176,46 @@
         }
 
         /**
+         * Handles the message deletion in chat
+         *
+         * @param \Longman\TelegramBot\Entities\Message $sentMessage
+         * @param TelegramClient $chatClient
+         * @return bool
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         */
+        public function handleMessageDeletion(\Longman\TelegramBot\Entities\Message $sentMessage, TelegramClient $chatClient): bool
+        {
+            if($chatClient->Chat->Type == TelegramChatType::Private || $chatClient->Chat->Type == TelegramChatType::Channel)
+            {
+                return false;
+            }
+
+            $ChatSettings = SettingsManager::getChatSettings($chatClient);
+
+            if($ChatSettings->DeleteOlderMessages)
+            {
+                if($ChatSettings->LastMessageID !== null)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $chatClient->Chat->ID,
+                        "message_id" => $ChatSettings->LastMessageID
+                    ]);
+                }
+
+                $ChatSettings->LastMessageID = $sentMessage->getMessageId();
+                $chatClient = SettingsManager::updateChatSettings($chatClient, $ChatSettings);
+
+                SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($chatClient);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
          * @param TelegramClient $chatClient
          * @param TelegramClient $userClient
          * @param TelegramClient $telegramClient
@@ -387,7 +427,7 @@
                     }
 
                     // If the user isn't an admin or creator, then it's probably a random spammer.
-                    if($IsAdmin == false)
+                    if($IsAdmin == true)
                     {
                         if($Results->SpamPrediction > $Results->HamPrediction)
                         {
@@ -398,7 +438,7 @@
                                 $LoggedReferenceLink = self::logDetectedSpam($MessageObject, $MessageLogObject, $TargetUserClient, $TargetChannelClient);
                             }
 
-                            self::handleSpam($MessageObject, $MessageLogObject, $TargetUserClient, $TargetUserStatus, $ChatSettings, $Results, $LoggedReferenceLink);
+                            self::handleSpam($MessageObject, $MessageLogObject, $TargetUserClient, $TargetUserStatus, $ChatSettings, $Results, $chatClient, $LoggedReferenceLink);
 
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', 0);
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getChatId());
@@ -486,7 +526,7 @@
                         }
                     }
 
-                    if($IsAdmin == false)
+                    if($IsAdmin == true)
                     {
                         $Response = Request::deleteMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -569,7 +609,7 @@
 
                             $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID (PID) in @SpamProtectionLogs</i>";
 
-                            Request::sendMessage([
+                            $MessageServerResponse = Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "parse_mode" => "html",
                                 "reply_markup" => new InlineKeyboard(
@@ -584,6 +624,11 @@
                                 ),
                                 "text" => $Response
                             ]);
+
+                            if($MessageServerResponse->isOk())
+                            {
+                                $this->handleMessageDeletion($MessageServerResponse->getResult(), $chatClient);
+                            }
 
                             return true;
                         }
@@ -657,7 +702,7 @@
                         }
                     }
 
-                    if($IsAdmin == false)
+                    if($IsAdmin == true)
                     {
                         $BanResponse = Request::kickChatMember([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -772,14 +817,20 @@
          * @param UserStatus $userStatus
          * @param ChatSettings $chatSettings
          * @param SpamPredictionResults $spamPredictionResults
+         * @param TelegramClient $chatClient
          * @param string|null $logLink
          * @return bool
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          * @throws TelegramException
+         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @noinspection DuplicatedCode
          */
-        private static function handleSpam(
+        public function handleSpam(
             Message $message, MessageLog $messageLog,
             TelegramClient $userClient, UserStatus $userStatus,
-            ChatSettings $chatSettings, SpamPredictionResults $spamPredictionResults, $logLink
+            ChatSettings $chatSettings, SpamPredictionResults $spamPredictionResults, TelegramClient $chatClient,
+            $logLink
         ): bool
         {
             if($logLink !== null)
@@ -829,7 +880,12 @@
                                 $ResponseMessage["reply_markup"] = $InlineKeyboard;
                             }
 
-                            Request::sendMessage($ResponseMessage);
+                            $MessageServerResponse = Request::sendMessage($ResponseMessage);
+
+                            if($MessageServerResponse->isOk())
+                            {
+                                $this->handleMessageDeletion($MessageServerResponse->getResult(), $chatClient);
+                            }
                         }
 
                         return false;
@@ -861,7 +917,12 @@
                             $ResponseMessage["reply_markup"] = $InlineKeyboard;
                         }
 
-                        Request::sendMessage($ResponseMessage);
+                        $MessageServerResponse = Request::sendMessage($ResponseMessage);
+
+                        if($MessageServerResponse->isOk())
+                        {
+                            $this->handleMessageDeletion($MessageServerResponse->getResult(), $chatClient);
+                        }
                     }
                     break;
 
@@ -887,7 +948,12 @@
                                 $ResponseMessage["reply_markup"] = $InlineKeyboard;
                             }
 
-                            Request::sendMessage($ResponseMessage);
+                            $MessageServerResponse = Request::sendMessage($ResponseMessage);
+
+                            if($MessageServerResponse->isOk())
+                            {
+                                $this->handleMessageDeletion($MessageServerResponse->getResult(), $chatClient);
+                            }
                         }
                     }
                     else
@@ -908,7 +974,12 @@
                                 $ResponseMessage["reply_markup"] = $InlineKeyboard;
                             }
 
-                            Request::sendMessage($ResponseMessage);
+                            $MessageServerResponse = Request::sendMessage($ResponseMessage);
+
+                            if($MessageServerResponse->isOk())
+                            {
+                                $this->handleMessageDeletion($MessageServerResponse->getResult(), $chatClient);
+                            }
                         }
 
                     }
@@ -956,7 +1027,12 @@
                             $ResponseMessage["reply_markup"] = $InlineKeyboard;
                         }
 
-                        Request::sendMessage($ResponseMessage);
+                        $MessageServerResponse = Request::sendMessage($ResponseMessage);
+
+                        if($MessageServerResponse->isOk())
+                        {
+                            $this->handleMessageDeletion($MessageServerResponse->getResult(), $chatClient);
+                        }
                     }
 
                     break;
@@ -1003,7 +1079,12 @@
                             $ResponseMessage["reply_markup"] = $InlineKeyboard;
                         }
 
-                        Request::sendMessage($ResponseMessage);
+                        $MessageServerResponse = Request::sendMessage($ResponseMessage);
+
+                        if($MessageServerResponse->isOk())
+                        {
+                            $this->handleMessageDeletion($MessageServerResponse->getResult(), $chatClient);
+                        }
                     }
 
                     break;
@@ -1025,7 +1106,12 @@
                             $ResponseMessage["reply_markup"] = $InlineKeyboard;
                         }
 
-                        Request::sendMessage($ResponseMessage);
+                        $MessageServerResponse = Request::sendMessage($ResponseMessage);
+
+                        if($MessageServerResponse->isOk())
+                        {
+                            $this->handleMessageDeletion($MessageServerResponse->getResult(), $chatClient);
+                        }
                     }
                     break;
             }
@@ -1124,7 +1210,7 @@
             }
 
             $Response = Request::sendMessage([
-                "chat_id" => "570787098",
+                "chat_id" => "@SpamProtectionLogs",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",
