@@ -469,6 +469,31 @@
                             }
                             break;
 
+                        case "delete_old_messages":
+                            $ChatSettings->DeleteOlderMessages = self::isEnabledValue($TargetValueParameter);
+                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+
+                            if($ChatSettings->DeleteOlderMessages)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Success! older spam detection messages will be deleted"
+                                ]);
+                            }
+                            else
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Success! old spam detections will not be deleted"
+                                ]);
+                            }
+                            break;
+
                         default:
 
                             return Request::sendMessage([
@@ -482,6 +507,7 @@
                                     "   <code>blacklists</code>\n".
                                     "   <code>general_alerts</code>\n".
                                     "   <code>active_spammer_alert</code>\n\n".
+                                    "   <code>delete_old_messages</code>\n\n".
                                     "For further information, send <code>/help settings</code>"
                             ]);
                     }
