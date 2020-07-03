@@ -387,7 +387,7 @@
                     }
 
                     // If the user isn't an admin or creator, then it's probably a random spammer.
-                    if($IsAdmin == false)
+                    if($IsAdmin == true)
                     {
                         if($Results->SpamPrediction > $Results->HamPrediction)
                         {
@@ -801,7 +801,7 @@
                 $UseInlineKeyboard = true;
                 $InlineKeyboard = new InlineKeyboard([
                     [
-                        "text" => "View User",
+                        "text" => "User Info",
                         "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID
                     ]
                 ]);
@@ -1088,6 +1088,7 @@
             {
                 $LogMessage .= "<b>Channel PTID:</b> <code>" . $channelClient->PublicID . "</code>\n";
             }
+
             $LogMessage .= "<b>Prediction Results:</b> <code>" . $messageLog->SpamPrediction . "</code>\n";
             $LogMessage .= "<b>Message Hash:</b> <code>" . $messageLog->MessageHash . "</code>\n";
             $LogMessage .= "<b>Timestamp:</b> <code>" . $messageLog->Timestamp . "</code>";
@@ -1102,18 +1103,32 @@
                 $LogMessage = $LogMessageWithContent;
             }
 
+            if($channelClient !== null)
+            {
+                $InlineKeyboard = new InlineKeyboard(
+                    [
+                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
+                        ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID],
+                        ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->ForwardFromChat->ID],
+                    ]
+                );
+            }
+            else
+            {
+                $InlineKeyboard = new InlineKeyboard(
+                    [
+                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
+                        ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID]
+                    ]
+                );
+            }
+
             $Response = Request::sendMessage([
                 "chat_id" => "570787098",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",
-                "reply_markup" => new InlineKeyboard(
-                    [
-                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
-                        ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID],
-                        ["text" => "Message Details", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=01_" . $messageLog->MessageHash],
-                    ]
-                ),
+                "reply_markup" => $InlineKeyboard,
                 "text" => $LogMessage
             ]);
 

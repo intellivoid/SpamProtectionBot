@@ -8,7 +8,7 @@
 
     use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
-    use Longman\TelegramBot\Entities\Message;
+    use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
@@ -148,58 +148,18 @@
                     if(count($CommandParameters) . 0)
                     {
                         $TargetMessageParameter = $CommandParameters[0];
+                        $Results = $this->lookupMessageInfo($TargetMessageParameter);
 
-                        try
+                        if($Results == null)
                         {
-                            $SpamProtection = SpamProtectionBot::getSpamProtection();
-                            $MessageLog = $SpamProtection->getMessageLogManager()->getMessage($TargetMessageParameter);
-
-                            $Response = "<b>Message Hash Lookup</b>\n\n";
-
-                            $UserPrivateID = Hashing::telegramClientPublicID($MessageLog->User->ID, $MessageLog->User->ID);
-                            $ChatPrivateID = Hashing::telegramClientPublicID($MessageLog->Chat->ID, $MessageLog->Chat->ID);
-                            $Response .= "   <b>Private User ID:</b> <code>" . $UserPrivateID . "</code>\n";
-                            $Response .= "   <b>Private Chat ID:</b> <code>" . $ChatPrivateID . "</code>\n";
-                            $Response .= "   <b>Message ID:</b> <code>" . $MessageLog->ID . "</code>\n";
-                            $Response .= "   <b>Content Hash:</b> <code>" . $MessageLog->ContentHash . "</code>\n";
-
-                            if($MessageLog->Chat->Username !== null)
-                            {
-                                $Response .= "   <b>Link:</b> <a href=\"https://t.me/" . $MessageLog->Chat->Username . "/" . $MessageLog->MessageID . "\">" . $MessageLog->Chat->Username . "/" . $MessageLog->MessageID . "</a>\n";
-                            }
-
-                            if($MessageLog->ForwardFrom->ID !== null)
-                            {
-                                $ForwardUserPrivateID = Hashing::telegramClientPublicID($MessageLog->ForwardFrom->ID, $MessageLog->ForwardFrom->ID);
-                                $Response .= "   <b>Original Sender Private ID (Forwarded):</b> <code>" . $ForwardUserPrivateID . "</code>\n";
-                            }
-
-                            if($MessageLog->SpamPrediction > 0 && $MessageLog->HamPrediction > 0)
-                            {
-                                $Response .= "   <b>Ham Prediction:</b> <code>" . $MessageLog->HamPrediction . "</code>\n";
-                                $Response .= "   <b>Spam Prediction:</b> <code>" . $MessageLog->SpamPrediction . "</code>\n";
-
-                                if($MessageLog->SpamPrediction > $MessageLog->HamPrediction)
-                                {
-                                    $Response .= "   <b>Is Spam:</b> <code>True</code>\n";
-                                }
-                                else
-                                {
-                                    $Response .= "   <b>Is Spam:</b> <code>False</code>\n";
-                                }
-                            }
-
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "parse_mode" => "html",
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "text" => $Response
+                                "text" => "Unable to resolve the query '$TargetMessageParameter'!"
                             ]);
                         }
-                        catch(MessageLogNotFoundException $messageLogNotFoundException)
-                        {
-                            unset($messageLogNotFoundException);
-                        }
+
+                        return $Results;
                     }
 
                     if($TargetMessageParameter == null)
@@ -215,29 +175,145 @@
                 }
             }
 
+            return self::displayUsage("Missing message hash parameter");
+        }
 
-            return self::displayUsage($this->getMessage(), "Missing message hash parameter");
+        /**
+         * Looks up a message hash and returns the service response if successful
+         *
+         * @param string $target
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws TelegramException
+         */
+        public function lookupMessageInfo(string $target)
+        {
+            try
+            {
+                $SpamProtection = SpamProtectionBot::getSpamProtection();
+                $MessageLog = $SpamProtection->getMessageLogManager()->getMessage($target);
 
+                $Response = "<b>Message Hash Lookup</b>\n\n";
+
+                $UserPrivateID = Hashing::telegramClientPublicID($MessageLog->User->ID, $MessageLog->User->ID);
+                $ChatPrivateID = Hashing::telegramClientPublicID($MessageLog->Chat->ID, $MessageLog->Chat->ID);
+                $Response .= "<b>Private User ID:</b> <code>" . $UserPrivateID . "</code>\n";
+                $Response .= "<b>Private Chat ID:</b> <code>" . $ChatPrivateID . "</code>\n";
+                $Response .= "<b>Message ID:</b> <code>" . $MessageLog->ID . "</code>\n";
+                $Response .= "<b>Content Hash:</b> <code>" . $MessageLog->ContentHash . "</code>\n";
+
+                if($MessageLog->Chat->Username !== null)
+                {
+                    $Response .= "<b>Link:</b> <a href=\"https://t.me/" . $MessageLog->Chat->Username . "/" . $MessageLog->MessageID . "\">" . $MessageLog->Chat->Username . "/" . $MessageLog->MessageID . "</a>\n";
+                }
+
+                if($MessageLog->ForwardFrom->ID !== null)
+                {
+                    $ForwardUserPrivateID = Hashing::telegramClientPublicID($MessageLog->ForwardFrom->ID, $MessageLog->ForwardFrom->ID);
+                    $Response .= "<b>Original Sender Private ID (Forwarded):</b> <code>" . $ForwardUserPrivateID . "</code>\n";
+                }
+
+                if($MessageLog->SpamPrediction > 0 && $MessageLog->HamPrediction > 0)
+                {
+                    $Response .= "<b>Ham Prediction:</b> <code>" . $MessageLog->HamPrediction . "</code>\n";
+                    $Response .= "<b>Spam Prediction:</b> <code>" . $MessageLog->SpamPrediction . "</code>\n";
+
+                    if($MessageLog->SpamPrediction > $MessageLog->HamPrediction)
+                    {
+                        $Response .= "<b>Is Spam:</b> <code>True</code>\n";
+                    }
+                    else
+                    {
+                        $Response .= "<b>Is Spam:</b> <code>False</code>\n";
+                    }
+                }
+
+
+                if($MessageLog->ForwardFromChat->ID !== null)
+                {
+                    if($MessageLog->ForwardFrom->ID !== null)
+                    {
+                        $InlineKeyboard = new InlineKeyboard(
+                            [
+                                ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->Chat->ID],
+                                ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->User->ID]
+                            ],
+                            [
+                                ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->ForwardFromChat->ID],
+                                ["text" => "Original Sender Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->ForwardFrom->ID]
+                            ]
+                        );
+                    }
+                    else
+                    {
+                        $InlineKeyboard = new InlineKeyboard(
+                            [
+                                ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->Chat->ID],
+                                ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->User->ID]
+                            ],
+                            [
+                                ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->ForwardFromChat->ID]
+                            ]
+                        );
+                    }
+                }
+                elseif($MessageLog->ForwardFrom->ID !== null)
+                {
+                    $InlineKeyboard = new InlineKeyboard(
+                        [
+                            ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->Chat->ID],
+                            ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->User->ID]
+                        ],
+                        [
+                            ["text" => "Original Sender Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->ForwardFrom->ID]
+                        ]
+                    );
+                }
+                else
+                {
+                    $InlineKeyboard = new InlineKeyboard(
+                        [
+                            ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->Chat->ID],
+                            ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $MessageLog->User->ID]
+                        ]
+                    );
+                }
+
+
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "reply_markup" => $InlineKeyboard,
+                    "parse_mode" => "html",
+                    "text" => $Response
+                ]);
+            }
+            catch(MessageLogNotFoundException $messageLogNotFoundException)
+            {
+                unset($messageLogNotFoundException);
+            }
+
+            return null;
         }
 
         /**
          * Displays the command usage
          *
-         * @param Message $message
          * @param string $error
          * @return ServerResponse
          * @throws TelegramException
          */
-        public static function displayUsage(Message $message, string $error="Missing parameter")
+        public function displayUsage(string $error="Missing parameter")
         {
             return Request::sendMessage([
-                "chat_id" => $message->getChat()->getId(),
+                "chat_id" => $this->getMessage()->getChat()->getId(),
+                "reply_to_message_id" => $this->getMessage()->getMessageId(),
                 "parse_mode" => "html",
-                "reply_to_message_id" => $message->getMessageId(),
                 "text" =>
                     "$error\n\n" .
                     "Usage:\n" .
-                    "   <b>/msginfo</b> <code>[Message Hash]</code>"
+                    "<b>/msginfo</b> <code>[Message Hash]</code>"
             ]);
         }
+
     }
