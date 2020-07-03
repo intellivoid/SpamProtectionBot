@@ -58,7 +58,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = '1.2.0';
 
         /**
          * Executes the generic message command
@@ -151,14 +151,22 @@
 
             // Ban the user from the chat if the chat has blacklist protection enabled
             // and the user is blacklisted.
-            $this->handleBlacklistedUser($ChatSettings, $UserStatus, $UserClient, $ChatClient);
+            if($this->handleBlacklistedUser($ChatSettings, $UserStatus, $UserClient, $ChatClient))
+            {
+                // No need to continue any further if the user got banned
+                return null;
+            }
 
             // Remove the message if it came from a blacklisted channel
             if($this->getMessage()->getForwardFromChat() !== null)
             {
                 $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
                 $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                $this->handleBlacklistedChannel($ChatSettings, $ForwardChannelStatus, $ForwardChannelClient, $UserClient, $ChatClient);
+                if($this->handleBlacklistedChannel($ChatSettings, $ForwardChannelStatus, $ForwardChannelClient, $UserClient, $ChatClient))
+                {
+                    // No need to continue any further if the channel message got deleted
+                    return null;
+                }
             }
 
             // Handles the message to detect if it's spam or not
@@ -171,7 +179,7 @@
          * @param TelegramClient $chatClient
          * @param TelegramClient $userClient
          * @param TelegramClient $telegramClient
-         * @return null
+         * @return bool
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws MessageLogNotFoundException
@@ -180,7 +188,7 @@
          * @throws UnsupportedMessageException
          * @throws \TelegramClientManager\Exceptions\DatabaseException
          */
-        public function handleMessage(TelegramClient $chatClient, TelegramClient $userClient, TelegramClient $telegramClient)
+        public function handleMessage(TelegramClient $chatClient, TelegramClient $userClient, TelegramClient $telegramClient): bool
         {
             // Process message text
             $Message = Message::fromArray($this->getMessage()->getRawData());
@@ -195,7 +203,7 @@
                 // Does the chat allow logging?
                 if($ChatSettings->LogSpamPredictions == false)
                 {
-                    return;
+                    return false;
                 }
 
                 // Is the message from the same bot?
@@ -203,7 +211,7 @@
                 {
                     if($Message->ForwardFrom->Username == TELEGRAM_BOT_NAME)
                     {
-                        return;
+                        return false;
                     }
                 }
 
@@ -299,14 +307,14 @@
 
                         if($TargetChannelStatus->IsWhitelisted)
                         {
-                            return;
+                            return false;
                         }
                     }
 
                     // Check if the user is whitelisted
                     if($TargetUserStatus->IsWhitelisted)
                     {
-                        return;
+                        return false;
                     }
 
                     $CoffeeHouse = SpamProtectionBot::getCoffeeHouse();
@@ -324,7 +332,7 @@
                     }
                     catch(Exception $exception)
                     {
-                        return;
+                        return false;
                     }
 
                     try
@@ -396,7 +404,7 @@
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getChatId());
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getUserId());
 
-                            return;
+                            return true;
                         }
                         else
                         {
@@ -404,13 +412,13 @@
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_ham', (int)$telegramClient->getChatId());
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_ham', (int)$telegramClient->getUserId());
 
-                            return;
+                            return false;
                         }
                     }
                 }
             }
 
-            return;
+            return false;
         }
 
         /**
@@ -421,17 +429,18 @@
          * @param TelegramClient $channelClient
          * @param TelegramClient $userClient
          * @param TelegramClient $chatClient
+         * @return bool
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          * @throws \TelegramClientManager\Exceptions\DatabaseException
          * @noinspection DuplicatedCode
          */
-        public function handleBlacklistedChannel(ChatSettings $chatSettings, ChannelStatus $channelStatus, TelegramClient $channelClient, TelegramClient $userClient, TelegramClient $chatClient)
+        public function handleBlacklistedChannel(ChatSettings $chatSettings, ChannelStatus $channelStatus, TelegramClient $channelClient, TelegramClient $userClient, TelegramClient $chatClient): bool
         {
             if($channelStatus->IsWhitelisted)
             {
-                return;
+                return false;
             }
 
             if($chatSettings->BlacklistProtectionEnabled)
@@ -477,7 +486,7 @@
                         }
                     }
 
-                    if($IsAdmin)
+                    if($IsAdmin == false)
                     {
                         $Response = Request::deleteMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -575,12 +584,14 @@
                                 ),
                                 "text" => $Response
                             ]);
+
+                            return true;
                         }
                     }
-
-
                 }
             }
+
+            return false;
         }
 
         /**
@@ -590,17 +601,18 @@
          * @param UserStatus $userStatus
          * @param TelegramClient $userClient
          * @param TelegramClient $chatClient
+         * @return bool
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          * @throws \TelegramClientManager\Exceptions\DatabaseException
          * @noinspection DuplicatedCode
          */
-        public function handleBlacklistedUser(ChatSettings $chatSettings, UserStatus $userStatus, TelegramClient $userClient, TelegramClient $chatClient)
+        public function handleBlacklistedUser(ChatSettings $chatSettings, UserStatus $userStatus, TelegramClient $userClient, TelegramClient $chatClient): bool
         {
             if($userStatus->IsWhitelisted)
             {
-                return;
+                return false;
             }
 
             if($chatSettings->BlacklistProtectionEnabled)
@@ -742,10 +754,13 @@
                                 ),
                                 "text" => $Response
                             ]);
+
+                            return true;
                         }
                     }
                 }
             }
+            return false;
         }
 
         /**
@@ -758,13 +773,14 @@
          * @param ChatSettings $chatSettings
          * @param SpamPredictionResults $spamPredictionResults
          * @param string|null $logLink
+         * @return bool
          * @throws TelegramException
          */
         private static function handleSpam(
             Message $message, MessageLog $messageLog,
             TelegramClient $userClient, UserStatus $userStatus,
             ChatSettings $chatSettings, SpamPredictionResults $spamPredictionResults, $logLink
-        )
+        ): bool
         {
             if($logLink !== null)
             {
@@ -816,14 +832,14 @@
                             Request::sendMessage($ResponseMessage);
                         }
 
-                        return;
+                        return false;
                     }
                 }
             }
 
             if($userStatus->IsWhitelisted)
             {
-                return;
+                return false;
             }
 
             switch($chatSettings->DetectSpamAction)
@@ -1011,8 +1027,10 @@
 
                         Request::sendMessage($ResponseMessage);
                     }
+                    break;
             }
 
+            return true;
         }
 
         /**
