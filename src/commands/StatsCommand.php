@@ -135,9 +135,9 @@
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'stats_command', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'staats_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'stats_command', (int)$TelegramClient->getChatId());
 
-            if($UserClient->User->Username !== "IntellivoidSupport")
+            if($UserClient->User->Username == "IntellivoidSupport")
             {
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -179,9 +179,11 @@
                 "agents" => 0,
                 "whitelisted_users" => 0,
                 "blacklisted_users" => 0,
+                "active_spammers" => 0,
                 "whitelisted_channels" => 0,
                 "blacklisted_channels" => 0,
                 "official_channels" => 0,
+                "spam_channels" => 0,
                 "verified_chats" => 0,
                 "verified_accounts" => 0
             );
@@ -237,6 +239,14 @@
                         {
                             $Results["verified_accounts"] += 1;
                         }
+
+                        if($UserStatus->GeneralizedSpam > 0)
+                        {
+                            if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
+                            {
+                                $Results["active_spammers"] += 1;
+                            }
+                        }
                     }
 
                     if($CurrentClient->Chat->Type == TelegramChatType::Channel)
@@ -259,6 +269,14 @@
                         {
                             $Results["official_channels"] += 1;
                         }
+
+                        if($ChannelStatus->GeneralizedSpam > 0)
+                        {
+                            if($ChannelStatus->GeneralizedSpam > $ChannelStatus->GeneralizedHam)
+                            {
+                                $Results["spam_channels"] += 1;
+                            }
+                        }
                     }
                 }
             }
@@ -277,9 +295,11 @@
                     "Agents: <code>" . number_format($Results["agents"]) . "</code>\n".
                     "Whitelisted Users: <code>" . number_format($Results["whitelisted_users"]) . "</code>\n".
                     "Blacklisted Users: <code>" . number_format($Results["blacklisted_users"]) . "</code>\n".
+                    "Active Spammers: <code>" . number_format($Results["active_spammers"]) . "</code>\n".
                     "Whitelisted Channels: <code>" . number_format($Results["whitelisted_channels"]) . "</code>\n".
                     "Blacklisted Channels: <code>" . number_format($Results["blacklisted_channels"]) . "</code>\n".
                     "Official Channels: <code>" . number_format($Results["official_channels"]) . "</code>\n".
+                    "Spam Channels: <code>" . number_format($Results["spam_channels"]) . "</code>\n".
                     "Verified Chats: <code>" . number_format($Results["verified_chats"]) . "</code>\n".
                     "Verified Accounts: <code>" . number_format($Results["verified_accounts"]) . "</code>\n"
             ]);

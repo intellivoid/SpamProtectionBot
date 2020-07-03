@@ -575,6 +575,12 @@
                 $Response .= "\u{1F6E1} This chat has forward protection enabled\n";
             }
 
+            if($ChatSettings->IsVerified)
+            {
+                $RequiresExtraNewline = true;
+                $Response .= "\u{2705} This chat is verified by Intellivoid Technologies\n";
+            }
+
             if($RequiresExtraNewline)
             {
                 $Response .= "\n";
@@ -646,6 +652,15 @@
                 $Response .= "<b>Active Spammer Alert Enabled:</b> <code>False</code>\n";
             }
 
+            if($ChatSettings->DeleteOlderMessages)
+            {
+                $Response .= "<b>Delete Older Messages:</b> <code>True</code>\n";
+            }
+            else
+            {
+                $Response .= "<b>Delete Older Messages:</b> <code>False</code>\n";
+            }
+
             return $Response;
         }
 
@@ -679,6 +694,15 @@
             {
                 $RequiresExtraNewline = true;
                 $Response .= "\u{1F530} This channel is whitelisted\n";
+            }
+
+            if($ChannelStatus->GeneralizedSpam > 0)
+            {
+                if($ChannelStatus->GeneralizedSpam > $ChannelStatus->GeneralizedHam)
+                {
+                    $RequiresExtraNewline = true;
+                    $Response .= "\u{26A0} <b>This channel may be promoting spam!</b>\n";
+                }
             }
 
             if($RequiresExtraNewline)
