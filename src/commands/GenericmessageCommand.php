@@ -727,13 +727,19 @@
                                     break;
                             }
 
-                            $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>\n\n";
-                            $Response .= "<i>If you think this is a mistake, let us know in @IntellivoidDiscussions</i>";
+                            $Response .= "\n<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs</i>";
 
                             Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                 "parse_mode" => "html",
+                                "reply_markup" => new InlineKeyboard(
+                                    [
+                                        ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
+                                        ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
+                                    ]
+                                ),
                                 "text" => $Response
                             ]);
                         }
