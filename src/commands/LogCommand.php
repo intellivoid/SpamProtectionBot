@@ -12,16 +12,15 @@
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
-    use SpamProtection\Exceptions\DatabaseException;
-    use SpamProtection\Exceptions\MessageLogNotFoundException;
-    use SpamProtection\Exceptions\UnsupportedMessageException;
     use SpamProtection\Managers\SettingsManager;
-    use SpamProtection\SpamProtection;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
+    use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
+    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Log message command
@@ -33,7 +32,7 @@
         /**
          * @var string
          */
-        protected $name = 'Log message command';
+        protected $name = 'log';
 
         /**
          * @var string
@@ -43,12 +42,12 @@
         /**
          * @var string
          */
-        protected $usage = '/log (-f if forwarded content) [Reply]';
+        protected $usage = '/log (-f if forwarded content) (-u if forwarded content is from channel, this option will also effect the user) [Reply]';
 
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = '1.2.0';
 
         /**
          * @var bool
@@ -59,13 +58,10 @@
          * Command execute method
          *
          * @return ServerResponse
-         * @throws DatabaseException
-         * @throws MessageLogNotFoundException
-         * @throws TelegramException
-         * @throws UnsupportedMessageException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
         public function execute()
@@ -98,28 +94,44 @@
                 }
 
                 // Define and update the forwarder if available
-                if($this->getMessage()->getForwardFrom() !== null)
+                if($this->getMessage()->getReplyToMessage() !== null)
                 {
-                    $ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                    if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
                     {
-                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
+                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        }
+                    }
+
+                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
+                    {
+                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
+                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                        {
+                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
+                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
+                        }
                     }
                 }
             }
             catch(Exception $e)
             {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
                     "text" =>
                         "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $e->getCode() . "</code>\n" .
-                        "Object: <code>Commands/log.bin</code>"
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Commands/" . $this->name . ".bin</code>"
                 ]);
             }
 
@@ -158,30 +170,63 @@
                     {
                         if($this->getMessage()->getReplyToMessage()->getForwardFrom() == null)
                         {
-
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "Unable to get the target user from the forwarded message"
-                            ]);
+                            if($this->getMessage()->getReplyToMessage()->getForwardFromChat() == null)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Unable to get the target user or channel from the forwarded message"
+                                ]);
+                            }
                         }
-                        else
+
+                        if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
+                        {
+                            if(count($CommandParameters) > 1)
+                            {
+                                if(strtolower($CommandParameters[1]) == "-u")
+                                {
+                                    $TargetUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
+                                    $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetUser);
+
+                                    $Message = \SpamProtection\Objects\TelegramObjects\Message::fromArray($this->getMessage()->getReplyToMessage()->getRawData());
+                                    $Message->ForwardFrom = null;
+                                    $Message->From = $TargetUserClient->User;
+                                    $Message->Chat = $ChatObject;
+
+                                    $this->logSpam($TargetUserClient, $UserClient, $Message);
+                                }
+                            }
+
+                            $TargetForwardChannel = TelegramClient\Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                            $TargetForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($TargetForwardChannel);
+
+                            $Message = \SpamProtection\Objects\TelegramObjects\Message::fromArray($this->getMessage()->getReplyToMessage()->getRawData());
+                            $Message->ForwardFrom = null;
+                            $Message->From = $TargetForwardChannelClient->User;
+                            $Message->Chat = $TargetForwardChannelClient->Chat;
+
+                            return $this->logSpam($TargetForwardChannelClient, $UserClient, $Message);
+                        }
+
+                        if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
                         {
                             $TargetForwardUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
                             $TargetForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetForwardUser);
 
                             $Message = \SpamProtection\Objects\TelegramObjects\Message::fromArray($this->getMessage()->getReplyToMessage()->getRawData());
                             $Message->ForwardFrom = null;
-                            $Message->From = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                            $Message->From = $TargetForwardUserClient->User;
+                            $Message->Chat = $TargetForwardUserClient->Chat;
 
-                            return self::logSpam($TargetForwardUserClient, $UserClient, $Message);
+                            return $this->logSpam($TargetForwardUserClient, $UserClient, $Message);
                         }
                     }
                 }
 
                 $Message = \SpamProtection\Objects\TelegramObjects\Message::fromArray($this->getMessage()->getReplyToMessage()->getRawData());
-                return self::logSpam($TargetUserClient, $UserClient, $Message);
+                return $this->logSpam($TargetUserClient, $UserClient, $Message);
             }
 
 
@@ -212,115 +257,213 @@
         }
 
         /**
-         * Blacklists a user
+         * Manually logs the message
          *
          * @param TelegramClient $targetUserClient
          * @param TelegramClient $operatorClient
          * @param \SpamProtection\Objects\TelegramObjects\Message $message
          * @return ServerResponse
-         * @throws DatabaseException
-         * @throws MessageLogNotFoundException
          * @throws TelegramException
-         * @throws UnsupportedMessageException
-         * @noinspection DuplicatedCode
          */
-        public static function logSpam(TelegramClient $targetUserClient, TelegramClient $operatorClient, \SpamProtection\Objects\TelegramObjects\Message $message)
+        public function logSpam(TelegramClient $targetUserClient, TelegramClient $operatorClient, \SpamProtection\Objects\TelegramObjects\Message $message)
         {
             $SpamProtection = SpamProtectionBot::getSpamProtection();
 
-            if($targetUserClient->Chat->Type !== TelegramChatType::Private)
+            if($targetUserClient->Chat->Type == TelegramChatType::Private)
             {
-                return Request::sendMessage([
-                    "chat_id" => $message->Chat->ID,
-                    "parse_mode" => "html",
-                    "reply_to_message_id" => $message->MessageID,
-                    "text" => "This operation is not applicable to this user."
-                ]);
-            }
+                $UserStatus = SettingsManager::getUserStatus($targetUserClient);
 
-            $UserStatus = SettingsManager::getUserStatus($targetUserClient);
+                if($UserStatus->IsOperator)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "You can't log an operator"
+                    ]);
+                }
 
-            if($UserStatus->IsOperator)
-            {
+                if($UserStatus->IsAgent)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "You can't log an agent"
+                    ]);
+                }
 
-                return Request::sendMessage([
-                    "chat_id" => $message->Chat->ID,
-                    "parse_mode" => "html",
-                    "reply_to_message_id" => $message->MessageID,
-                    "text" => "You can't log an operator"
-                ]);
-            }
-
-            if($UserStatus->IsAgent)
-            {
-
-                return Request::sendMessage([
-                    "chat_id" => $message->Chat->ID,
-                    "parse_mode" => "html",
-                    "reply_to_message_id" => $message->MessageID,
-                    "text" => "You can't log an agent"
-                ]);
-            }
-
-            if($UserStatus->IsWhitelisted)
-            {
-
-                return Request::sendMessage([
-                    "chat_id" => $message->Chat->ID,
-                    "parse_mode" => "html",
-                    "reply_to_message_id" => $message->MessageID,
-                    "text" => "You can't log a user who's whitelisted"
-                ]);
-            }
-
-            if($message->Text == null)
-            {
-                if($message->Caption == null)
+                if($UserStatus->IsWhitelisted)
                 {
 
                     return Request::sendMessage([
-                        "chat_id" => $message->Chat->ID,
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "reply_to_message_id" => $message->MessageID,
+                        "text" => "You can't log a user who's whitelisted"
+                    ]);
+                }
+            }
+
+            if($targetUserClient->Chat->Type == TelegramChatType::Channel)
+            {
+                $ChannelStatus = SettingsManager::getChannelStatus($targetUserClient);
+
+                if($ChannelStatus->IsWhitelisted)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "You can't log a channel that's whitelisted"
+                    ]);
+                }
+
+                if($ChannelStatus->IsOfficial)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "Notice! This channel is considered to be official, this does not protect it from logging though."
+                    ]);
+                }
+            }
+
+            if($message->getText() == null)
+            {
+                if($message->Photo == null)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
                         "text" => "This message type isn't supported yet, archive this message yourself if necessary"
                     ]);
                 }
             }
 
-            $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage($message, 0, 0);
-
-            $LogMessage = "#spam\n\n";
-            $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $targetUserClient->PublicID . "</code>\n";
-            $LogMessage .= "<b>Operator PTID:</b> <code>" . $operatorClient->PublicID . "</code>\n";
-            $LogMessage .= "<b>Message Hash:</b> <code>" . $MessageLogObject->MessageHash . "</code>\n";
-            $LogMessage .= "<b>Timestamp:</b> <code>" . $MessageLogObject->Timestamp . "</code>";
-
-            $LogMessageWithContent = $LogMessage . "\n\n<i>===== CONTENT =====</i>\n\n" . self::escapeHTML($message->getText());
-            if(strlen($LogMessageWithContent) > 4096)
+            if($message->Photo !== null)
             {
-                $LogMessage .= "\n\nThe content is too large to be shown\n";
+                if(count($message->Photo) > 0)
+                {
+                    $photoSize = $message->Photo[(count($message->Photo) - 1)];
+                    $File = Request::getFile(["file_id" => $photoSize->FileID]);
+
+                    if($File->isOk())
+                    {
+                        $photoSize->URL = Request::downloadFileLocation($File->getResult());
+                        $photoSize->HamPrediction = 0;
+                        $photoSize->SpamPrediction = 0;
+                        $message->Photo = [$photoSize];
+                    }
+                }
+            }
+
+            try
+            {
+                $MessageLogs = $SpamProtection->getMessageLogManager()->registerMessages($message, 0, 0);
+            }
+            catch(Exception $e)
+            {
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $e->getCode() . "</code>\n" .
+                        "Object: <code>Commands/log.bin</code>"
+                ]);
+            }
+
+            $MessageHashes = "";
+
+            foreach($MessageLogs as $MessageLogObject)
+            {
+                $MessageHashes .= "<code>" . $MessageLogObject->MessageHash . "</code>\n";
+
+                $LogMessage = "#spam\n\n";
+                if($targetUserClient->Chat->Type == TelegramChatType::Private)
+                {
+                    $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $targetUserClient->PublicID . "</code>\n";
+                }
+                else
+                {
+                    $LogMessage .= "<b>Channel PTID:</b> <code>" . $targetUserClient->PublicID . "</code>\n";
+                }
+                $LogMessage .= "<b>Operator PTID:</b> <code>" . $operatorClient->PublicID . "</code>\n";
+                $LogMessage .= "<b>Message Hash:</b> <code>" . $MessageLogObject->MessageHash . "</code>\n";
+                $LogMessage .= "<b>Timestamp:</b> <code>" . $MessageLogObject->Timestamp . "</code>";
+
+                if($MessageLogObject->PhotoSize->URL == null)
+                {
+                    if($message->getText() !== null)
+                    {
+                        $LogMessageWithContent = $LogMessage . "\n\n<i>===== CONTENT =====</i>\n\n" . self::escapeHTML($message->getText());
+                        if(strlen($LogMessageWithContent) > 4096)
+                        {
+                            $LogMessage .= "\n\nThe content is too large to be shown\n";
+                        }
+                        else
+                        {
+                            $LogMessage = $LogMessageWithContent;
+                        }
+
+                        Request::sendMessage([
+                            "chat_id" => "@SpamProtectionLogs",
+                            "disable_web_page_preview" => true,
+                            "disable_notification" => true,
+                            "parse_mode" => "html",
+                            "text" => $LogMessage
+                        ]);
+
+                        continue;
+                    }
+                }
+                else
+                {
+                    Request::sendPhoto([
+                        "chat_id" => "@SpamProtectionLogs",
+                        "photo" => $MessageLogObject->PhotoSize->FileID,
+                        "disable_notification" => true,
+                        "parse_mode" => "html",
+                        "caption" => $LogMessage,
+                    ]);
+
+                    continue;
+                }
+
+                Request::sendMessage([
+                    "chat_id" => "@SpamProtectionLogs",
+                    "disable_web_page_preview" => true,
+                    "disable_notification" => true,
+                    "parse_mode" => "html",
+                    "text" => $LogMessage
+                ]);
+            }
+
+            if(count($MessageLogs) > 1)
+            {
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" => "Multiple messages has been archived successfully.\n\n". $MessageHashes
+                ]);
             }
             else
             {
-                $LogMessage = $LogMessageWithContent;
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "This message has been archived successfully.\n\n".
+                        "<code>" . $MessageLogs[0]->MessageHash . "</code>"
+                ]);
             }
 
-            Request::sendMessage([
-                "chat_id" => $message->Chat->ID,
-                "parse_mode" => "html",
-                "reply_to_message_id" => $message->MessageID,
-                "text" =>
-                    "This message has been archived successfully.\n\n".
-                    "Message Hash: <code>" . $MessageLogObject->MessageHash . "</code>"
-            ]);
-
-            return Request::sendMessage([
-                "chat_id" => "@SpamProtectionLogs",
-                "disable_web_page_preview" => true,
-                "disable_notification" => true,
-                "parse_mode" => "html",
-                "text" => $LogMessage
-            ]);
         }
 
         /**

@@ -116,6 +116,13 @@
         public $Caption;
 
         /**
+         * Optional. Message is a photo, available sizes of the photo
+         *
+         * @var PhotoSize[]
+         */
+        public $Photo;
+
+        /**
          * Attempts to get the text of the message either from the text itself of caption
          * of the media object
          *
@@ -134,6 +141,28 @@
             }
 
             return null;
+        }
+
+        /**
+         * Returns an array of the photo size
+         *
+         * @return array
+         */
+        public function photosToArray(): array
+        {
+            if($this->Photo !== null)
+            {
+                $Results = [];
+
+                foreach($this->Photo as $photoSize)
+                {
+                    $Results[] = $photoSize->toArray();
+                }
+
+                return $Results;
+            }
+
+            return [];
         }
 
         /**
@@ -251,6 +280,16 @@
                 $Results['text'] = $this->Text;
             }
 
+            if($this->Photo !== null)
+            {
+                $Results['photo'] = [];
+
+                foreach($this->Photo as $photoSize)
+                {
+                    $Results['photo'][] = $photoSize->toArray();
+                }
+            }
+
             if($this->Caption !== null)
             {
                 $Results['caption'] = $this->Caption;
@@ -332,6 +371,16 @@
             if(isset($data['text']))
             {
                 $MessageObject->Text = $data['text'];
+            }
+
+            if(isset($data['photo']))
+            {
+                $MessageObject->Photo = [];
+
+                foreach($data['photo'] as $photoSize)
+                {
+                    $MessageObject->Photo[] = PhotoSize::fromArray($photoSize);
+                }
             }
 
             if(isset($data['caption']))

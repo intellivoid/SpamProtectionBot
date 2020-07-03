@@ -18,6 +18,7 @@
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
+    use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient\Chat;
     use TelegramClientManager\Objects\TelegramClient\User;
 
@@ -31,7 +32,7 @@
         /**
          * @var string
          */
-        protected $name = 'Settings Command';
+        protected $name = 'settings';
 
         /**
          * @var string
@@ -57,9 +58,10 @@
          * Command execute method
          *
          * @return ServerResponse
-         * @throws TelegramException
          * @throws DatabaseException
          * @throws InvalidSearchMethod
+         * @throws TelegramException
+         * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
         public function execute()
@@ -92,28 +94,44 @@
                 }
 
                 // Define and update the forwarder if available
-                if($this->getMessage()->getForwardFrom() !== null)
+                if($this->getMessage()->getReplyToMessage() !== null)
                 {
-                    $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                    if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
                     {
-                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
+                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        }
+                    }
+
+                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
+                    {
+                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
+                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                        {
+                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
+                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
+                        }
                     }
                 }
             }
             catch(Exception $e)
             {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
                     "text" =>
                         "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $e->getCode() . "</code>\n" .
-                        "Object: <code>Commands/settings.bin</code>"
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Commands/" . $this->name . ".bin</code>"
                 ]);
             }
 
@@ -451,6 +469,31 @@
                             }
                             break;
 
+                        case "delete_old_messages":
+                            $ChatSettings->DeleteOlderMessages = self::isEnabledValue($TargetValueParameter);
+                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+
+                            if($ChatSettings->DeleteOlderMessages)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Success! older spam detection messages will be deleted"
+                                ]);
+                            }
+                            else
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Success! old spam detections will not be deleted"
+                                ]);
+                            }
+                            break;
+
                         default:
 
                             return Request::sendMessage([
@@ -464,6 +507,7 @@
                                     "   <code>blacklists</code>\n".
                                     "   <code>general_alerts</code>\n".
                                     "   <code>active_spammer_alert</code>\n\n".
+                                    "   <code>delete_old_messages</code>\n\n".
                                     "For further information, send <code>/help settings</code>"
                             ]);
                     }
@@ -546,7 +590,8 @@
                     "   <b>/settings</b> <code>detect_spam_action</code> <code>[Nothing/Delete/Kick/Ban]</code>\n".
                     "   <b>/settings</b> <code>blacklists</code> <code>[On/Off/Enable/Disable]</code>\n".
                     "   <b>/settings</b> <code>general_alerts</code> <code>[On/Off/Enable/Disable]</code>\n".
-                    "   <b>/settings</b> <code>active_spammer_alert</code> <code>[On/Off/Enable/Disable]</code>\n\n".
+                    "   <b>/settings</b> <code>active_spammer_alert</code> <code>[On/Off/Enable/Disable]</code>\n".
+                    "   <b>/settings</b> <code>delete_old_messages</code> <code>[On/Off/Enable/Disable]</code>\n\n".
                     "For more information send <code>/help settings</code>"
             ]);
         }

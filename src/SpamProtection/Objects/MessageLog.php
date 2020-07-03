@@ -4,6 +4,7 @@
     namespace SpamProtection\Objects;
 
 
+    use SpamProtection\Objects\TelegramObjects\PhotoSize;
     use TelegramClientManager\Objects\TelegramClient\Chat;
     use TelegramClientManager\Objects\TelegramClient\User;
 
@@ -33,6 +34,13 @@
          * @var int
          */
         public $MessageID;
+
+        /**
+         * The photo size entity
+         *
+         * @var PhotoSize|null
+         */
+        public $PhotoSize;
 
         /**
          * The ID of the chat this message is housed in
@@ -127,6 +135,11 @@
                 'user' => $this->User->toArray(),
             );
 
+            if($this->PhotoSize !== null)
+            {
+                $Results['photo_size'] = $this->PhotoSize->toArray();
+            }
+
             if($this->ForwardFrom !== null)
             {
                 $Results['forward_from'] = $this->ForwardFrom->toArray();
@@ -185,6 +198,11 @@
             if(isset($data['message_id']))
             {
                 $MessageLogObject->MessageID = (int)$data['message_id'];
+            }
+
+            if(isset($data['photo_size']))
+            {
+                $MessageLogObject->PhotoSize = PhotoSize::fromArray($data['photo_size']);
             }
 
             if(isset($data['chat_id']))

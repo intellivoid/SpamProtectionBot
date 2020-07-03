@@ -8,11 +8,17 @@
 
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
+    use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtection\Managers\SettingsManager;
+    use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
+    use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
+    use TelegramClientManager\Exceptions\DatabaseException;
+    use TelegramClientManager\Exceptions\InvalidSearchMethod;
+    use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient\Chat;
     use TelegramClientManager\Objects\TelegramClient\User;
 
@@ -41,7 +47,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = '1.0.2';
 
         /**
          * @var bool
@@ -52,6 +58,8 @@
          * Command execute method
          *
          * @return ServerResponse
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
@@ -85,28 +93,44 @@
                 }
 
                 // Define and update the forwarder if available
-                if($this->getMessage()->getForwardFrom() !== null)
+                if($this->getMessage()->getReplyToMessage() !== null)
                 {
-                    $ForwardUserObject = User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                    if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
                     {
-                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
+                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
+                        }
+                    }
+
+                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
+                    {
+                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
+                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                        {
+                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
+                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
+                        }
                     }
                 }
             }
             catch(Exception $e)
             {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
                     "text" =>
                         "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $e->getCode() . "</code>\n" .
-                        "Object: <code>Commands/start.bin</code>"
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Commands/" . $this->name . ".bin</code>"
                 ]);
             }
 
@@ -116,11 +140,63 @@
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
             $DeepAnalytics->tally('tg_spam_protection', 'start_command', (int)$TelegramClient->getChatId());
 
+            if($this->getMessage()->getText(true) !== null)
+            {
+                if(strlen($this->getMessage()->getText(true)) > 3)
+                {
+                    switch(mb_substr($this->getMessage()->getText(true), 0, 3))
+                    {
+                        case "00_":
+                            return $this->whoisLookup((int)mb_substr($this->getMessage()->getText(true), 3));
+                    }
+                }
+            }
+
             return Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                 "text" => "Hey there! Looking for help? send /help@SpamProtectionBot"
             ]);
 
+        }
+
+        /**
+         * Performs a whois lookup of a user ID
+         *
+         * @param int $user_id
+         * @return ServerResponse
+         * @throws TelegramException
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         */
+        public function whoisLookup(int $user_id): ServerResponse
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$user_id, (int)$user_id);
+            $WhoisLookup = new WhoisCommand($this->getTelegram());
+
+            try
+            {
+                $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                    TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID
+                );
+
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "parse_mode" => "html",
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "text" => $WhoisLookup->resolveTarget($TargetTelegramClient, false, "None", false)
+                ]);
+            }
+            catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+            {
+                unset($telegramClientNotFoundException);
+            }
+
+            return Request::sendMessage([
+                "chat_id" => $this->getMessage()->getChat()->getId(),
+                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                "text" => "Unable to resolve the query '$user_id'!"
+            ]);
         }
     }
