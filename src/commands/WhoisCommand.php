@@ -545,6 +545,8 @@
                 $Response .= "<b>Spam Detection Agent:</b> <code>True</code>\n";
             }
 
+            $Response .=  "<b>User Link:</b> <a href=\"tg://user?id=" . $user_client->User->ID . "\">tg://user?id=" . $user_client->User->ID . "</a>";
+
             if($UserStatus->OperatorNote !== "None")
             {
                 $Response .= "\n" . self::escapeHTML($UserStatus->OperatorNote) . "\n";

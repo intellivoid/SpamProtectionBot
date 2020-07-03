@@ -1107,6 +1107,13 @@
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
+                        ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID],
+                        ["text" => "Message Details", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=01_" . $messageLog->MessageHash],
+                    ]
+                ),
                 "text" => $LogMessage
             ]);
 
