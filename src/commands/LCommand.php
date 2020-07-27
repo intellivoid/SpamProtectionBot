@@ -16,22 +16,22 @@
     /**
      * Blacklist user command alias
      */
-    class BlCommand extends UserCommand
+    class LCommand extends UserCommand
     {
         /**
          * @var string
          */
-        protected $name = 'blacklist alias';
+        protected $name = 'Log alias';
 
         /**
          * @var string
          */
-        protected $description = 'Alias to the blacklist command';
+        protected $description = 'Alias to the log command';
 
         /**
          * @var string
          */
-        protected $usage = '/blacklist alias';
+        protected $usage = '/log alias';
 
         /**
          * @var string
@@ -55,8 +55,8 @@
          */
         public function execute()
         {
-            $BlacklistCommand = new BlacklistCommand($this->telegram, $this->update);
-            return $BlacklistCommand->execute();
+            $LogCommand = new LogCommand($this->telegram, $this->update);
+            return $LogCommand->execute();
         }
 
     }
