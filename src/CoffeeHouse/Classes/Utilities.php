@@ -139,4 +139,15 @@
 
             return $input;
         }
+
+        /**
+         * Cleans the double spaces found in text
+         *
+         * @param string $input
+         * @return string
+         */
+        public static function cleanInput_DS(string $input): string
+        {
+            return preg_replace('/\s+/', ' ', $input);
+        }
     }

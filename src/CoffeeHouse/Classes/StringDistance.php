@@ -16,7 +16,7 @@
          * @param bool $linear_usage
          * @return mixed
          */
-        public static function levenshtein(string $string_1, string $string_2, $linear_usage = false)
+        public static function levenshtein(string $string_1, string $string_2, bool $linear_usage=false)
         {
             if($linear_usage == true)
             {

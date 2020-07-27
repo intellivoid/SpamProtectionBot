@@ -74,13 +74,17 @@
         public function resolveInterfaceConnection(string $module): ServerInterfaceConnection
         {
             $ServerInterfaceConnection = new ServerInterfaceConnection();
-            $ServerInterfaceConnection->Host = $this->coffeehouse->getServerConfiguration()['Host'];
+            $ServerInterfaceConnection->Host = $this->coffeehouse->getServerConfiguration()["Host"];
             $ServerInterfaceConnection->Module = $module;
 
             switch($module)
             {
                 case ServerInterfaceModule::SpamPrediction:
-                    $ServerInterfaceConnection->Port = $this->coffeehouse->getServerConfiguration()['SpamPredictionPort'];
+                    $ServerInterfaceConnection->Port = $this->coffeehouse->getServerConfiguration()["SpamPredictionPort"];
+                    break;
+
+                case ServerInterfaceModule::LanguagePrediction:
+                    $ServerInterfaceConnection->Port = $this->coffeehouse->getServerConfiguration()["LanguagePredictionPort"];
                     break;
 
                 default:

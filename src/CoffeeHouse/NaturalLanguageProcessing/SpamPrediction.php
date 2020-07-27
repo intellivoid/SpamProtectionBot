@@ -9,6 +9,7 @@
     use CoffeeHouse\CoffeeHouse;
     use CoffeeHouse\Exceptions\DatabaseException;
     use CoffeeHouse\Exceptions\GeneralizedClassificationNotFoundException;
+    use CoffeeHouse\Exceptions\InvalidInputException;
     use CoffeeHouse\Exceptions\InvalidSearchMethodException;
     use CoffeeHouse\Exceptions\InvalidServerInterfaceModuleException;
     use CoffeeHouse\Exceptions\ServerInterfaceException;
@@ -49,10 +50,16 @@
          * @throws InvalidSearchMethodException
          * @throws InvalidServerInterfaceModuleException
          * @throws ServerInterfaceException
+         * @throws InvalidInputException
          * @noinspection DuplicatedCode
          */
         public function predict(string $input, bool $generalize=false, string $generalized_id="None", bool $cache=true): SpamPredictionResults
         {
+            if(strlen($input) == 0)
+            {
+                throw new InvalidInputException();
+            }
+
             $SpamPredictionCache = null;
             $PredictionGeneralization = null;
 

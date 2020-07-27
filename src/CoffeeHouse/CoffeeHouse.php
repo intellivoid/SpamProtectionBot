@@ -1,5 +1,7 @@
 <?php
 
+    /** @noinspection PhpUndefinedClassInspection */
+
 
     namespace CoffeeHouse;
 
@@ -8,8 +10,11 @@
     use CoffeeHouse\Managers\ChatDialogsManager;
     use CoffeeHouse\Managers\ForeignSessionsManager;
     use CoffeeHouse\Managers\GeneralizedClassificationManager;
+    use CoffeeHouse\Managers\LanguagePredictionCacheManager;
+    use CoffeeHouse\Managers\LargeGeneralizedClassificationManager;
     use CoffeeHouse\Managers\SpamPredictionCacheManager;
     use CoffeeHouse\Managers\UserSubscriptionManager;
+    use CoffeeHouse\NaturalLanguageProcessing\LanguagePrediction;
     use CoffeeHouse\NaturalLanguageProcessing\SpamPrediction;
     use DeepAnalytics\DeepAnalytics;
     use Exception;
@@ -18,6 +23,7 @@
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'ExceptionCodes.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'ForeignSessionSearchMethod.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'GeneralizedClassificationSearchMethod.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'LargeGeneralizedClassificationSearchMethod.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'ServerInterfaceModule.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'UserSubscriptionSearchMethod.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Abstracts' . DIRECTORY_SEPARATOR . 'UserSubscriptionStatus.php');
@@ -35,9 +41,12 @@
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'ForeignSessionNotFoundException.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'GeneralizedClassificationLimitException.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'GeneralizedClassificationNotFoundException.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'InvalidInputException.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'InvalidMessageException.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'InvalidSearchMethodException.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'InvalidServerInterfaceModuleException.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'LanguagePredictionCacheNotFoundException.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'NoResultsFoundException.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'ServerInterfaceException.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'SpamPredictionCacheNotFoundException.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Exceptions' . DIRECTORY_SEPARATOR . 'UserSubscriptionNotFoundException.php');
@@ -45,17 +54,28 @@
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'ChatDialogsManager.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'ForeignSessionsManager.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'GeneralizedClassificationManager.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'LanguagePredictionCacheManager.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'LargeGeneralizedClassificationManager.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'SpamPredictionCacheManager.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Managers' . DIRECTORY_SEPARATOR . 'UserSubscriptionManager.php');
 
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'NaturalLanguageProcessing' . DIRECTORY_SEPARATOR . 'LanguagePrediction.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'NaturalLanguageProcessing' . DIRECTORY_SEPARATOR . 'SpamPrediction.php');
 
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Cache' . DIRECTORY_SEPARATOR . 'LanguagePredictionCache.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Cache' . DIRECTORY_SEPARATOR . 'SpamPredictionCache.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Datums' . DIRECTORY_SEPARATOR . 'LargeGeneralizationDatum.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Results' . DIRECTORY_SEPARATOR . 'LargeClassificationResults' . DIRECTORY_SEPARATOR . 'Probabilities.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Results' . DIRECTORY_SEPARATOR . 'LanguagePrediction.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Results' . DIRECTORY_SEPARATOR . 'LanguagePredictionResults.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Results' . DIRECTORY_SEPARATOR . 'LanguagePredictions.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Results' . DIRECTORY_SEPARATOR . 'LargeClassificationResults.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'Results' . DIRECTORY_SEPARATOR . 'SpamPredictionResults.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'BotThought.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'ForeignSession.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'GeneralizedClassification.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'HttpResponse.php');
+    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'LargeGeneralization.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'ServerInterfaceConnection.php');
     include_once(__DIR__ . DIRECTORY_SEPARATOR . 'Objects' . DIRECTORY_SEPARATOR . 'UserSubscription.php');
 
@@ -99,6 +119,7 @@
 
         /**
          * @var acm
+         * @noinspection PhpUndefinedClassInspection
          */
         private $acm;
 
@@ -148,8 +169,24 @@
         private $GeneralizedClassificationManager;
 
         /**
+         * @var LanguagePrediction
+         */
+        private $LanguagePrediction;
+
+        /**
+         * @var LanguagePredictionCacheManager
+         */
+        private $LanguagePredictionCacheManager;
+
+        /**
+         * @var LargeGeneralizedClassificationManager
+         */
+        private $LargeGeneralizedClassificationManager;
+
+        /**
          * CoffeeHouse constructor.
          * @throws Exception
+         * @noinspection PhpUndefinedClassInspection
          */
         public function __construct()
         {
@@ -162,9 +199,12 @@
             $this->ChatDialogsManager = new ChatDialogsManager($this);
             $this->UserSubscriptionManager = new UserSubscriptionManager($this);
             $this->SpamPredictionCacheManager = new SpamPredictionCacheManager($this);
+            $this->LanguagePredictionCacheManager = new LanguagePredictionCacheManager($this);
             $this->GeneralizedClassificationManager = new GeneralizedClassificationManager($this);
+            $this->LargeGeneralizedClassificationManager = new LargeGeneralizedClassificationManager($this);
             $this->ServerInterface = new ServerInterface($this);
             $this->SpamPrediction = new SpamPrediction($this);
+            $this->LanguagePrediction = new LanguagePrediction($this);
             $this->DeepAnalytics = new DeepAnalytics();
         }
 
@@ -206,6 +246,7 @@
 
         /**
          * @return mixed
+         * @noinspection PhpUnused
          */
         public function getDatabaseConfiguration()
         {
@@ -214,6 +255,7 @@
 
         /**
          * @return UserSubscriptionManager
+         * @noinspection PhpUnused
          */
         public function getUserSubscriptionManager(): UserSubscriptionManager
         {
@@ -266,6 +308,32 @@
         public function getGeneralizedClassificationManager(): GeneralizedClassificationManager
         {
             return $this->GeneralizedClassificationManager;
+        }
+
+        /**
+         * @return LanguagePrediction
+         * @noinspection PhpUnused
+         */
+        public function getLanguagePrediction(): LanguagePrediction
+        {
+            return $this->LanguagePrediction;
+        }
+
+        /**
+         * @return LanguagePredictionCacheManager
+         * @noinspection PhpUnused
+         */
+        public function getLanguagePredictionCacheManager(): LanguagePredictionCacheManager
+        {
+            return $this->LanguagePredictionCacheManager;
+        }
+
+        /**
+         * @return LargeGeneralizedClassificationManager
+         */
+        public function getLargeGeneralizedClassificationManager(): LargeGeneralizedClassificationManager
+        {
+            return $this->LargeGeneralizedClassificationManager;
         }
 
     }

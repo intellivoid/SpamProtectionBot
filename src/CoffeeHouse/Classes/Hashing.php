@@ -4,6 +4,8 @@
     namespace CoffeeHouse\Classes;
 
 
+    use CoffeeHouse\Objects\LargeGeneralization;
+
     /**
      * Class Hashing
      * @package CoffeeHouse\Classes
@@ -82,5 +84,18 @@
             $combined = self::pepper($time_pepper . $size_pepper);
 
             return hash('sha256', $time_pepper . $size_pepper . $combined);
+        }
+
+        /**
+         * Generates a unique large generalization Public ID
+         *
+         * @param LargeGeneralization $largeGeneralization
+         * @return string
+         */
+        public static function largeGeneralizationPublicId(LargeGeneralization $largeGeneralization): string
+        {
+            $data_pepper = self::pepper(json_encode($largeGeneralization->toArray()["data"]));
+            $top_k = hash('crc32b', $largeGeneralization->TopProbability . $largeGeneralization->TopLabel);
+            return hash('sha256', $data_pepper . $largeGeneralization->Created . $top_k);
         }
     }
