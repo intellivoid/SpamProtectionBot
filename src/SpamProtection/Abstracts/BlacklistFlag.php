@@ -30,4 +30,24 @@
         const Impersonator = "0xIMPER";
 
         const BanEvade = "0xEVADE";
+
+        const MassAdding = "0xMASSADD";
+
+        const NameSpam = "0xNAMESPAM";
+
+        const All = [
+            self::None,
+            self::Special,
+            self::Spam,
+            self::PornographicSpam,
+            self::PrivateSpam,
+            self::PiracySpam,
+            self::ChildAbuse,
+            self::Raid,
+            self::Scam,
+            self::Impersonator,
+            self::BanEvade,
+            self::MassAdding,
+            self::NameSpam
+        ];
     }

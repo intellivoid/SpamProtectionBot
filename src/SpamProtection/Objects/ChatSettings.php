@@ -4,7 +4,10 @@
     namespace SpamProtection\Objects;
 
     use SpamProtection\Abstracts\DetectionAction;
+    use SpamProtection\Exceptions\TemporaryVerificationCodeExpiredException;
+    use SpamProtection\Exceptions\TemporaryVerificationCodeNotSetException;
     use SpamProtection\Objects\TelegramObjects\ChatMember;
+    use SpamProtection\Utilities\Hashing;
     use TelegramClientManager\Objects\TelegramClient\Chat;
 
     /**
@@ -60,10 +63,18 @@
         public $BlacklistProtectionEnabled;
 
         /**
+         * When enabled, the bot will ban users that are considered to be active spammers from the chat
+         *
+         * @var bool
+         */
+        public $ActiveSpammerProtectionEnabled;
+
+        /**
          * When enabled, new users who join the chat who are recognized to be
          * an active spammer will cause an alert to be shown
          *
          * @var bool
+         * @deprecated
          */
         public $ActiveSpammerAlertEnabled;
 
@@ -119,9 +130,101 @@
         /**
          * The last ID of the message that was sent by the bot
          *
-         * @var int|null
+         * @var bool
          */
         public $LastMessageID;
+
+        /**
+         * Chat client parameters obtained from an agent
+         *
+         * @var ChatClientParameters
+         */
+        public $ChatClientParameters;
+
+        /**
+         * The generalized language prediction of this user
+         *
+         * @var string
+         */
+        public $GeneralizedLanguage;
+
+        /**
+         * The probability of the language prediction generalization
+         *
+         * @var float|int
+         */
+        public $GeneralizedLanguageProbability;
+
+        /**
+         * The ID of the large generalization of the language
+         *
+         * @var string|null
+         */
+        public $LargeLanguageGeneralizedID;
+
+        /**
+         * The generated unique temporary verification code for linking a chat to a log channel
+         *
+         * @var string
+         */
+        public $TemporaryVerificationCode;
+
+        /**
+         * The Unix Timestamp for when this code expires
+         *
+         * @var int
+         */
+        public $TemporaryVerificationCodeExpires;
+
+        /**
+         * Generates a temporary verification code that lasts for 10 minutes.
+         *
+         * @return string
+         * @noinspection PhpUnused
+         */
+        public function generateTemporaryVerificationCode(): string
+        {
+            $this->TemporaryVerificationCode = Hashing::temporaryVerificationCode($this->Chat);
+            $this->TemporaryVerificationCodeExpires = (int)time() + 600;
+
+            return $this->TemporaryVerificationCode;
+        }
+
+        /**
+         * Validates the temporary verification code and invalidates it if the option is enabled
+         *
+         * @param string $code
+         * @param bool $invalidate
+         * @return bool
+         * @throws TemporaryVerificationCodeExpiredException
+         * @throws TemporaryVerificationCodeNotSetException
+         * @noinspection PhpUnused
+         */
+        public function verifyTemporaryVerificationCode(string $code, bool $invalidate=true): bool
+        {
+            if($this->TemporaryVerificationCode == null)
+            {
+                throw new TemporaryVerificationCodeNotSetException();
+            }
+
+            if((int)time() > $this->TemporaryVerificationCodeExpires)
+            {
+                throw new TemporaryVerificationCodeExpiredException();
+            }
+
+            if($this->TemporaryVerificationCode == $code)
+            {
+                if($invalidate)
+                {
+                    $this->TemporaryVerificationCode = null;
+                    $this->TemporaryVerificationCodeExpires = 0;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
 
         /**
          * Constructs the configuration array for this object
@@ -150,6 +253,13 @@
                 '0x009' => (int)$this->BanActiveSpammer,
                 '0x010' => (int)$this->DeleteOlderMessages,
                 '0x011' => $this->LastMessageID,
+                '0x012' => $this->ChatClientParameters->toArray(),
+                '0x013' => $this->GeneralizedLanguage,
+                '0x014' => $this->GeneralizedLanguageProbability,
+                '0x015' => $this->LargeLanguageGeneralizedID,
+                '0x016' => $this->TemporaryVerificationCode,
+                '0x017' => $this->TemporaryVerificationCodeExpires,
+                '0x018' => (bool)$this->ActiveSpammerProtectionEnabled,
                 'Ax000' => $AdminResults,
                 'Ax001' => (int)$this->AdminCacheLastUpdated
             );
@@ -273,6 +383,69 @@
             else
             {
                 $ChatSettingsObject->LastMessageID = null;
+            }
+
+            if(isset($data['0x012']))
+            {
+                $ChatSettingsObject->ChatClientParameters = ChatClientParameters::fromArray($data['0x012']);
+            }
+            else
+            {
+                $ChatSettingsObject->ChatClientParameters = new ChatClientParameters();
+            }
+
+            if(isset($data['0x013']))
+            {
+                $ChatSettingsObject->GeneralizedLanguage = $data['0x013'];
+            }
+            else
+            {
+                $ChatSettingsObject->GeneralizedLanguage = "Unknown";
+            }
+
+            if(isset($data['0x014']))
+            {
+                $ChatSettingsObject->GeneralizedLanguageProbability = (float)$data['0x014'];
+            }
+            else
+            {
+                $ChatSettingsObject->GeneralizedLanguageProbability = 0;
+            }
+
+            if(isset($data['0x015']))
+            {
+                $ChatSettingsObject->LargeLanguageGeneralizedID = $data['0x015'];
+            }
+            else
+            {
+                $ChatSettingsObject->LargeLanguageGeneralizedID = null;
+            }
+
+            if(isset($data['0x016']))
+            {
+                $ChatSettingsObject->TemporaryVerificationCode = $data['0x016'];
+            }
+            else
+            {
+                $ChatSettingsObject->TemporaryVerificationCode = null;
+            }
+
+            if(isset($data['0x017']))
+            {
+                $ChatSettingsObject->TemporaryVerificationCodeExpires = $data['0x017'];
+            }
+            else
+            {
+                $ChatSettingsObject->TemporaryVerificationCodeExpires = null;
+            }
+
+            if(isset($data['0x018']))
+            {
+                $ChatSettingsObject->ActiveSpammerProtectionEnabled = (bool)$data['0x018'];
+            }
+            else
+            {
+                $ChatSettingsObject->ActiveSpammerProtectionEnabled = true;
             }
 
             $ChatSettingsObject->Administrators = array();

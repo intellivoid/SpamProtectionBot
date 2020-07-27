@@ -6,9 +6,36 @@
 
     use SpamProtection\Exceptions\DownloadFileException;
     use SpamProtection\Objects\TelegramObjects\PhotoSize;
+    use TelegramClientManager\Objects\TelegramClient\Chat;
 
+    /**
+     * Class Hashing
+     * @package SpamProtection\Utilities
+     */
     class Hashing
     {
+        /**
+         * Peppers a hash using whirlpool
+         *
+         * @param string $Data The hash to pepper
+         * @param int $Min Minimal amounts of executions
+         * @param int $Max Maximum amount of executions
+         * @return string
+         */
+        public static function pepper(string $Data, int $Min = 100, int $Max = 1000): string
+        {
+            $n = rand($Min, $Max);
+            $res = '';
+            $Data = hash('whirlpool', $Data);
+            for ($i=0,$l=strlen($Data) ; $l ; $l--)
+            {
+                $i = ($i+$n-1) % $l;
+                $res = $res . $Data[$i];
+                $Data = ($i ? substr($Data, 0, $i) : '') . ($i < $l-1 ? substr($Data, $i+1) : '');
+            }
+            return($res);
+        }
+
         /**
          * Creates a unique public telegram client ID
          *
@@ -114,5 +141,16 @@
         public static function messageContent(string $content): string
         {
             return hash('sha256', $content . 'IVASP');
+        }
+
+        /**
+         * Generates a temporary verification code for the chat
+         *
+         * @param Chat $chat
+         * @return string
+         */
+        public static function temporaryVerificationCode(Chat $chat): string
+        {
+            return hash('crc32', self::pepper($chat->ID));
         }
     }

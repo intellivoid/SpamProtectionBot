@@ -5,6 +5,9 @@
 
 
     use SpamProtection\Abstracts\BlacklistFlag;
+    use SpamProtection\Exceptions\InvalidBlacklistFlagException;
+    use SpamProtection\Exceptions\MissingOriginalPrivateIdException;
+    use SpamProtection\Exceptions\PropertyConflictedException;
     use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
@@ -93,6 +96,221 @@
         public $OperatorNote;
 
         /**
+         * The user client parameters obtained from an agent
+         *
+         * @var UserClientParameters
+         */
+        public $ClientParameters;
+
+        /**
+         * The generalized language prediction of this user
+         *
+         * @var string
+         */
+        public $GeneralizedLanguage;
+
+        /**
+         * The probability of the language prediction generalization
+         *
+         * @var float|int
+         */
+        public $GeneralizedLanguageProbability;
+
+        /**
+         * The ID of the large generalization of the language
+         *
+         * @var string|null
+         */
+        public $LargeLanguageGeneralizedID;
+
+        /**
+         * Resets the trust prediction of this user
+         *
+         * @return bool
+         * @noinspection PhpUnused
+         */
+        public function resetTrustPrediction(): bool
+        {
+            $this->GeneralizedID = "None";
+            $this->GeneralizedHam = 0;
+            $this->GeneralizedSpam = 0;
+
+            return true;
+        }
+
+        /**
+         * Resets the language prediction of the user
+         *
+         * @return bool
+         * @noinspection PhpUnused
+         */
+        public function resetLanguagePrediction(): bool
+        {
+            $this->GeneralizedLanguage = "Unknown";
+            $this->GeneralizedLanguageProbability = 0;
+            $this->GeneralizedID = null;
+
+            return true;
+        }
+
+        /**
+         * Updates the whitelist state of the user, throws an exception if there's a conflict
+         *
+         * @param bool $whitelisted
+         * @return bool
+         * @throws PropertyConflictedException
+         * @noinspection PhpUnused
+         */
+        public function updateWhitelist(bool $whitelisted): bool
+        {
+            if($whitelisted)
+            {
+                // If the user is already blacklisted
+                if($this->IsBlacklisted)
+                {
+                    throw new PropertyConflictedException("This blacklisted user cannot be whitelisted, remove the blacklist first.");
+                }
+
+                $this->IsWhitelisted = true;
+                return true;
+            }
+            else
+            {
+                $this->IsWhitelisted = false;
+                return true;
+            }
+        }
+
+        /**
+         * Updates the blacklist flag of the user
+         *
+         * @param string $blacklist_flag
+         * @param string|null $original_private_id
+         * @return bool
+         * @throws InvalidBlacklistFlagException
+         * @throws MissingOriginalPrivateIdException
+         * @throws PropertyConflictedException
+         * @noinspection PhpUnused
+         */
+        public function updateBlacklist(string $blacklist_flag, string $original_private_id=null): bool
+        {
+            if($this->IsWhitelisted)
+            {
+                throw new PropertyConflictedException("This whitelisted user cannot be blacklisted, remove the whitelist first.");
+            }
+
+            if($this->IsAgent)
+            {
+                throw new PropertyConflictedException("You can't blacklist a agent");
+            }
+
+            if($this->IsOperator)
+            {
+                throw new PropertyConflictedException("You can't blacklist a operator");
+            }
+
+            // Auto-capitalize the flag
+            $blacklist_flag = strtoupper($blacklist_flag);
+            $blacklist_flag = str_replace("0X", "0x", $blacklist_flag);
+
+            switch($blacklist_flag)
+            {
+                case BlacklistFlag::None:
+                    $this->IsBlacklisted = false;
+                    $this->BlacklistFlag = $blacklist_flag;
+                    $this->OriginalPrivateID = null;
+                    break;
+
+                case BlacklistFlag::Special:
+                case BlacklistFlag::Spam:
+                case BlacklistFlag::PornographicSpam:
+                case BlacklistFlag::PrivateSpam:
+                case BlacklistFlag::PiracySpam:
+                case BlacklistFlag::ChildAbuse:
+                case BlacklistFlag::Raid:
+                case BlacklistFlag::Scam:
+                case BlacklistFlag::Impersonator:
+                case BlacklistFlag::MassAdding:
+                case BlacklistFlag::NameSpam:
+                    $this->IsBlacklisted = true;
+                    $this->BlacklistFlag = $blacklist_flag;
+                    $this->OriginalPrivateID = null;
+                    break;
+
+                case BlacklistFlag::BanEvade:
+                    if($original_private_id == null)
+                    {
+                        throw new MissingOriginalPrivateIdException();
+                    }
+
+                    $this->IsBlacklisted = true;
+                    $this->BlacklistFlag = $blacklist_flag;
+                    $this->OriginalPrivateID = $original_private_id;
+                    break;
+
+                default:
+                    throw new InvalidBlacklistFlagException($blacklist_flag, "The given blacklist flag is not valid");
+
+            }
+
+            return true;
+        }
+
+        /**
+         * Updates the agent permissions
+         *
+         * @param bool $grant_permissions
+         * @return bool
+         * @throws PropertyConflictedException
+         * @noinspection PhpUnused
+         */
+        public function updateAgent(bool $grant_permissions): bool
+        {
+            if($this->IsBlacklisted)
+            {
+                throw new PropertyConflictedException("You can't make a blacklisted user an agent");
+            }
+
+            if($grant_permissions)
+            {
+                $this->IsAgent = true;
+            }
+            else
+            {
+                $this->IsAgent = false;
+            }
+
+            return true;
+        }
+
+        /**
+         * Updates the operator permissions
+         *
+         * @param bool $grant_permissions
+         * @return bool
+         * @throws PropertyConflictedException
+         * @noinspection PhpUnused
+         */
+        public function updateOperator(bool $grant_permissions): bool
+        {
+            if($this->IsBlacklisted)
+            {
+                throw new PropertyConflictedException("You can't make a blacklisted user an operator");
+            }
+
+             if($grant_permissions)
+             {
+                 $this->IsOperator = true;
+             }
+             else
+             {
+                 $this->IsOperator = false;
+             }
+
+            return true;
+        }
+
+        /**
          * Returns a configuration array of the user stats
          *
          * @return array
@@ -109,7 +327,11 @@
                 '0x006' => (int)$this->IsBlacklisted,
                 '0x007' => $this->BlacklistFlag,
                 '0x008' => $this->OriginalPrivateID,
-                '0x009' => $this->OperatorNote
+                '0x009' => $this->OperatorNote,
+                '0x010' => $this->ClientParameters->toArray(),
+                '0x011' => $this->GeneralizedLanguage,
+                '0x012' => $this->GeneralizedLanguageProbability,
+                '0x013' => $this->LargeLanguageGeneralizedID
             );
         }
 
@@ -213,6 +435,42 @@
             else
             {
                 $UserStatusObject->OperatorNote = "None";
+            }
+
+            if(isset($data['0x010']))
+            {
+                $UserStatusObject->ClientParameters = UserClientParameters::fromArray($data['0x010']);
+            }
+            else
+            {
+                $UserStatusObject->ClientParameters = new UserClientParameters();
+            }
+
+            if(isset($data['0x011']))
+            {
+                $UserStatusObject->GeneralizedLanguage = $data['0x011'];
+            }
+            else
+            {
+                $UserStatusObject->GeneralizedLanguage = "Unknown";
+            }
+
+            if(isset($data['0x012']))
+            {
+                $UserStatusObject->GeneralizedLanguageProbability = (float)$data['0x012'];
+            }
+            else
+            {
+                $UserStatusObject->GeneralizedLanguageProbability = 0;
+            }
+
+            if(isset($data['0x013']))
+            {
+                $UserStatusObject->LargeLanguageGeneralizedID = $data['0x013'];
+            }
+            else
+            {
+                $UserStatusObject->LargeLanguageGeneralizedID = null;
             }
 
             return $UserStatusObject;
