@@ -58,7 +58,61 @@
         /**
          * @var string
          */
-        protected $version = '1.2.0';
+        protected $version = '2.0.0';
+
+        /**
+         * The chat that the message was sent in
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $ChatObject;
+
+        /**
+         * The chat client of the chat object
+         *
+         * @var TelegramClient|null
+         */
+        public $ChatClient;
+
+        /**
+         * The user that sent the message
+         *
+         * @var TelegramClient\User|null
+         */
+        public $UserObject;
+
+        /**
+         * The user client of the chat object
+         *
+         * @var TelegramClient|null
+         */
+        public $UserClient;
+
+        /**
+         * The channel object of a channel object that was forwarded
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $ForwardChannelObject;
+
+        /**
+         * The client of the forward channel object
+         *
+         * @var TelegramClient|null
+         */
+        public $ForwardChannelClient;
+
+        /**
+         * The user object of the original sender of the forwarded message
+         *
+         * @var TelegramClient\User|null
+         */
+        public $ForwardUserObject;
+
+        /**
+         * @var
+         */
+        public $ForwardUserClient;
 
         /**
          * Executes the generic message command
