@@ -7,7 +7,14 @@
         "organization": "Intellivoid",
         "description": "Protects your group from unwanted spam using machine learning from CoffeeHouse.",
         "url": "https://github.com/intellivoid/SpamProtectionBot",
-        "dependencies": [],
+        "dependencies": [
+            {"package": "net.intellivoid.acm", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.background_worker", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.coffeehouse", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.deepanalytics", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.spam_protection", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.telegram_client_manager", "required": true, "version": "latest"}
+        ],
         "configuration": {
             "autoload_method": "indexed",
             "main": {

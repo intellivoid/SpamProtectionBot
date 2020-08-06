@@ -32,6 +32,7 @@
         \ppm\ppm::import("net.intellivoid.coffeehouse");
         \ppm\ppm::import("net.intellivoid.deepanalytics");
         \ppm\ppm::import("net.intellivoid.spam_protection");
+        \ppm\ppm::import("net.intellivoid.telegram_client_manager");
     }
 
     $current_directory = getcwd();
