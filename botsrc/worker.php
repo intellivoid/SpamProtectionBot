@@ -17,25 +17,53 @@
     use TelegramClientManager\TelegramClientManager;
 
     // Import all required auto loaders
+    /** @noinspection PhpIncludeInspection */
+    require("ppm");
 
-    require __DIR__ . '/vendor/autoload.php';
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'CoffeeHouse' . DIRECTORY_SEPARATOR . 'CoffeeHouse.php');
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
-
-    if(class_exists('DeepAnalytics\DeepAnalytics') == false)
+    if(defined("PPM") == false)
     {
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'DeepAnalytics' . DIRECTORY_SEPARATOR . 'DeepAnalytics.php');
+        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
+        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'CoffeeHouse' . DIRECTORY_SEPARATOR . 'CoffeeHouse.php');
+        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
+
+        if(class_exists('DeepAnalytics\DeepAnalytics') == false)
+        {
+            include_once(__DIR__ . DIRECTORY_SEPARATOR . 'DeepAnalytics' . DIRECTORY_SEPARATOR . 'DeepAnalytics.php');
+        }
     }
+    else
+    {
+        \ppm\ppm::import("net.intellivoid.acm");
+        \ppm\ppm::import("net.intellivoid.background_worker");
+        \ppm\ppm::import("net.intellivoid.coffeehouse");
+        \ppm\ppm::import("net.intellivoid.deepanalytics");
+        \ppm\ppm::import("net.intellivoid.telegram_client_manager");
+        \ppm\ppm::import("net.intellivoid.spam_protection");
+    }
+
+    $current_directory = getcwd();
+
+    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
+    {
+        $current_directory = __DIR__;
+    }
+
+    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
+    {
+        print("Cannot find vendor directory" . PHP_EOL);
+        exit(255);
+    }
+
+    require($current_directory . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
     if(class_exists("SpamProtectionBot") == false)
     {
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        include_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
     }
 
     if(class_exists("TgFileLogging") == false)
     {
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'TgFileLogging.php');
+        include_once($current_directory . DIRECTORY_SEPARATOR . 'TgFileLogging.php');
     }
 
     // Load all required configurations
@@ -68,7 +96,7 @@
             $TelegramServiceConfiguration['BotToken'],
             $TelegramServiceConfiguration['BotName']
         );
-        $telegram->addCommandsPaths([__DIR__ . DIRECTORY_SEPARATOR . 'commands']);
+        $telegram->addCommandsPaths([$current_directory . DIRECTORY_SEPARATOR . 'commands']);
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {

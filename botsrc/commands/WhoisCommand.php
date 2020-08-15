@@ -58,6 +58,368 @@
         protected $private_only = false;
 
         /**
+         * The chat/channel object of the current chat/channel
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $ChatObject = null;
+
+        /**
+         * The client of the chat/channel of the current chat/channel
+         *
+         * @var TelegramClient|null
+         */
+        public $ChatClient = null;
+
+        /**
+         * The user/bot object of the initializer (Entity that sent the message/action)
+         *
+         * @var TelegramClient\User|null
+         */
+        public $UserObject = null;
+
+        /**
+         * The user/bot client of the initializer (Entity that sent the message/action)
+         *
+         * @var TelegramClient|null
+         */
+        public $UserClient = null;
+
+        /**
+         * The direct client combination of the user initializer and the current chat/channel
+         *
+         * @var TelegramClient|null
+         */
+        public $DirectClient = null;
+
+        /**
+         * The original sender object of the forwarded content
+         *
+         * @var TelegramClient\User|null
+         */
+        public $ForwardUserObject = null;
+
+        /**
+         * The original sender client of the forwarded content
+         *
+         * @var TelegramClient|null
+         */
+        public $ForwardUserClient = null;
+
+        /**
+         * The channel origin object of the forwarded content
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $ForwardChannelObject = null;
+
+        /**
+         * The channel origin client of the forwarded content
+         *
+         * @var TelegramClient|null
+         */
+        public $ForwardChannelClient = null;
+
+        /**
+         * The target user object of the message that the reply is to
+         *
+         * @var TelegramClient\User|null
+         */
+        public $ReplyToUserObject = null;
+
+        /**
+         * The target user client of the message that the reply is to
+         *
+         * @var TelegramClient|null
+         */
+        public $ReplyToUserClient = null;
+
+        /**
+         * The original sender object of the forwarded content that this message is replying to
+         *
+         * @var TelegramClient\User|null
+         */
+        public $ReplyToUserForwardUserObject = null;
+
+        /**
+         * The original sender client of the forwarded content that this message is replying to
+         *
+         * @var TelegramClient\User|null
+         */
+        public $ReplyToUserForwardUserClient = null;
+
+        public $ReplyToUserForwardChannelObject = null;
+
+        public $ReplyToUserForwardChannelClient = null;
+
+        /**
+         * Array of user mentions by UserID:ObjectType
+         *
+         * @var TelegramClient\User[]|null
+         */
+        public $MentionUserObjects = null;
+
+        /**
+         * Array of user mentions by UserID:ObjectClient
+         *
+         * @var TelegramClient[]|null
+         */
+        public $MentionUserClients = null;
+
+        /**
+         * Parses the request and establishes all client connections
+         */
+        public function findClients()
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+
+            $this->ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
+            $this->UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
+
+            try
+            {
+                $this->DirectClient = $TelegramClientManager->getTelegramClientManager()->registerClient(
+                    $this->ChatObject, $this->UserObject
+                );
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::direct.bin</code>"
+                ]);
+            }
+
+            // Define and update chat client
+            try
+            {
+                $this->ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->ChatObject);
+                if(isset($this->ChatClient->SessionData->Data["chat_settings"]) == false)
+                {
+                    $ChatSettings = SettingsManager::getChatSettings($this->ChatClient);
+                    $this->ChatClient = SettingsManager::updateChatSettings($this->ChatClient, $ChatSettings);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->ChatClient);
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::chat_client.bin</code>"
+                ]);
+            }
+
+            // Define and update user client
+            try
+            {
+                $this->UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->UserObject);
+                if(isset($this->UserClient->SessionData->Data["user_status"]) == false)
+                {
+                    $UserStatus = SettingsManager::getUserStatus($this->UserClient);
+                    $this->UserClient = SettingsManager::updateUserStatus($this->UserClient, $UserStatus);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->UserClient);
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::user_client.bin</code>"
+                ]);
+            }
+
+            // Define and update the forwarder if available
+            try
+            {
+                if($this->getMessage()->getForwardFrom() !== null)
+                {
+                    $this->ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
+                    $this->ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ForwardUserObject);
+                    if(isset($this->ForwardUserClient->SessionData->Data["user_status"]) == false)
+                    {
+                        $ForwardUserStatus = SettingsManager::getUserStatus($this->ForwardUserClient);
+                        $this->ForwardUserClient = SettingsManager::updateUserStatus($this->ForwardUserClient, $ForwardUserStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($this->ForwardUserClient);
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::forward_from_user.bin</code>"
+                ]);
+            }
+
+            // Define and update the channel forwarder if available
+            try
+            {
+                if($this->getMessage()->getForwardFromChat() !== null)
+                {
+                    $this->ForwardChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
+                    $this->ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->ForwardChannelObject);
+                    if(isset($this->ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                    {
+                        $ForwardChannelStatus = SettingsManager::getChannelStatus($this->ForwardChannelClient);
+                        $this->ForwardChannelClient = SettingsManager::updateChannelStatus($this->ForwardChannelClient, $ForwardChannelStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($this->ForwardChannelClient);
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::forward_from_channel.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                if($this->getMessage()->getReplyToMessage() !== null)
+                {
+                    if($this->getMessage()->getReplyToMessage()->getFrom() !== null)
+                    {
+                        $this->ReplyToUserObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
+                        $this->ReplyToUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserObject);
+
+                        if(isset($this->ReplyToUserClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($this->ReplyToUserClient);
+                            $this->ReplyToUserClient = SettingsManager::updateUserStatus($this->ReplyToUserClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserClient);
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::reply_to_user.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                if($this->getMessage()->getReplyToMessage() !== null)
+                {
+                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
+                    {
+                        $this->ReplyToUserForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                        $this->ReplyToUserForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserForwardUserObject);
+
+                        if(isset($this->ReplyToUserForwardUserClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($this->ReplyToUserForwardUserClient);
+                            $this->ReplyToUserForwardUserClient = SettingsManager::updateUserStatus($this->ReplyToUserForwardUserClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserForwardUserClient);
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::reply_to_user_forwarder_user.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                $this->MentionUserObjects = array();
+                $this->MentionUserClients = array();
+
+                if($this->getMessage()->getEntities() !== null)
+                {
+                    foreach($this->getMessage()->getEntities() as $messageEntity)
+                    {
+                        if($messageEntity->getUser() !== null)
+                        {
+                            $MentionUserObject = TelegramClient\User::fromArray($messageEntity->getUser()->getRawData());
+                            $MentionUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($MentionUserObject);
+                            if(isset($MentionUserClient->SessionData->Data["user_status"]) == false)
+                            {
+                                $UserStatus = SettingsManager::getUserStatus($MentionUserClient);
+                                $MentionUserClient = SettingsManager::updateUserStatus($MentionUserClient, $UserStatus);
+                                $TelegramClientManager->getTelegramClientManager()->updateClient($MentionUserClient);
+                            }
+
+                            $this->MentionUserObjects[$MentionUserObject->ID] = $MentionUserObject;
+                            $this->MentionUserClients[$MentionUserObject->ID] = $MentionUserClient;
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::mentions.bin</code>"
+                ]);
+            }
+
+            return $this;
+        }
+
+        /**
          * Command execute method
          *
          * @return ServerResponse

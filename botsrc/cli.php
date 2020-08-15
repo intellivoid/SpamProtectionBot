@@ -15,23 +15,50 @@
     use Longman\TelegramBot\Exception\TelegramException;
 
     // Import all required auto loaders
+    /** @noinspection PhpIncludeInspection */
+    require("ppm");
 
-    require __DIR__ . '/vendor/autoload.php';
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
-    include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
+    if(defined("PPM") == false)
+    {
+        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
+        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
+    }
+    else
+    {
+        \ppm\ppm::import("net.intellivoid.acm");
+        \ppm\ppm::import("net.intellivoid.background_worker");
+        \ppm\ppm::import("net.intellivoid.coffeehouse");
+        \ppm\ppm::import("net.intellivoid.deepanalytics");
+        \ppm\ppm::import("net.intellivoid.telegram_client_manager");
+        \ppm\ppm::import("net.intellivoid.spam_protection");
+    }
+
+    $current_directory = getcwd();
+
+    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
+    {
+        $current_directory = __DIR__;
+    }
+
+    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
+    {
+        print("Cannot find vendor directory" . PHP_EOL);
+        exit(255);
+    }
+
+    require($current_directory . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
     if(class_exists("SpamProtectionBot") == false)
     {
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        include_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
     }
 
     if(class_exists("TgFileLogging") == false)
     {
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'TgFileLogging.php');
+        include_once($current_directory . DIRECTORY_SEPARATOR . 'TgFileLogging.php');
     }
 
     // Load all configurations
-
     /** @noinspection PhpUnhandledExceptionInspection */
     $TelegramServiceConfiguration = SpamProtectionBot::getTelegramConfiguration();
 
@@ -85,10 +112,7 @@
     $telegram->useGetUpdatesWithoutDatabase();
 
     // Start the workers using the supervisor
-
-    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main",
-        "Starting Supervisor"
-    );
+    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_main", "Starting Supervisor");
 
     try
     {
@@ -98,7 +122,7 @@
             (int)$BackgroundWorkerConfiguration["Port"]
         );
         SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
-            __DIR__ . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME,
+            $current_directory . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME,
             (int)$BackgroundWorkerConfiguration['MaxWorkers']
         );
     }
