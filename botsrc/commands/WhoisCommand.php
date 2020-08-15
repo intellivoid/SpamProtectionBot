@@ -144,7 +144,7 @@
         /**
          * The original sender client of the forwarded content that this message is replying to
          *
-         * @var TelegramClient\User|null
+         * @var TelegramClient|null
          */
         public $ReplyToUserForwardUserClient = null;
 
@@ -178,6 +178,7 @@
 
         /**
          * Parses the request and establishes all client connections
+         * @noinspection DuplicatedCode
          */
         public function findClients()
         {
@@ -423,13 +424,16 @@
                 $this->MentionUserObjects = array();
                 $this->MentionUserClients = array();
 
+                // The message in general
                 if($this->getMessage()->getEntities() !== null)
                 {
                     foreach($this->getMessage()->getEntities() as $messageEntity)
                     {
+                        /** @noinspection DuplicatedCode */
                         if($messageEntity->getUser() !== null)
                         {
                             $MentionUserObject = TelegramClient\User::fromArray($messageEntity->getUser()->getRawData());
+                            /** @noinspection DuplicatedCode */
                             $MentionUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($MentionUserObject);
                             if(isset($MentionUserClient->SessionData->Data["user_status"]) == false)
                             {
@@ -440,6 +444,36 @@
 
                             $this->MentionUserObjects[$MentionUserObject->ID] = $MentionUserObject;
                             $this->MentionUserClients[$MentionUserObject->ID] = $MentionUserClient;
+                        }
+                    }
+                }
+
+                // If the reply contains mentions
+                if($this->getMessage()->getReplyToMessage() !== null)
+                {
+                    if($this->getMessage()->getReplyToMessage()->getEntities() !== null)
+                    {
+                        foreach($this->getMessage()->getReplyToMessage()->getEntities() as $messageEntity)
+                        {
+                            /** @noinspection DuplicatedCode */
+                            if($messageEntity->getUser() !== null)
+                            {
+                                $MentionUserObject = TelegramClient\User::fromArray($messageEntity->getUser()->getRawData());
+                                if(isset($this->MentionUserObjects[$MentionUserObject->ID]) == false)
+                                {
+                                    /** @noinspection DuplicatedCode */
+                                    $MentionUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($MentionUserObject);
+                                    if(isset($MentionUserClient->SessionData->Data["user_status"]) == false)
+                                    {
+                                        $UserStatus = SettingsManager::getUserStatus($MentionUserClient);
+                                        $MentionUserClient = SettingsManager::updateUserStatus($MentionUserClient, $UserStatus);
+                                        $TelegramClientManager->getTelegramClientManager()->updateClient($MentionUserClient);
+                                    }
+
+                                    $this->MentionUserObjects[$MentionUserObject->ID] = $MentionUserObject;
+                                    $this->MentionUserClients[$MentionUserObject->ID] = $MentionUserClient;
+                                }
+                            }
                         }
                     }
                 }
@@ -460,6 +494,74 @@
             }
 
             return $this;
+        }
+
+        /**
+         * Attempts to find the target user that the reply/message is referring to
+         *
+         * @param bool $reply_only If enabled, the target user can refer to the user of that sent the message
+         * @return TelegramClient
+         * @throws Exception Raises an exception if the target cannot be determined
+         */
+        public function findTarget(bool $reply_only=true): TelegramClient
+        {
+            if($this->ReplyToUserClient !== null)
+            {
+                return $this->ReplyToUserClient;
+            }
+
+            if($this->MentionUserClients !== null)
+            {
+                if(count($this->MentionUserClients) > 0)
+                {
+                    return $this->MentionUserClients[0];
+                }
+            }
+
+            if($reply_only == false)
+            {
+                if($this->UserClient !== null)
+                {
+                    return $this->UserClient;
+                }
+            }
+
+            throw new Exception("Cannot determine the target entity");
+        }
+
+        /**
+         * Finds the original target of a forwarded message
+         *
+         * @param bool $reply_only If enabled, the target user can refer to the user of that sent the message
+         * @return TelegramClient
+         * @throws Exception Raises an exception if the target cannot be determined
+         */
+        public function findForwardedTarget(bool $reply_only=true): TelegramClient
+        {
+            if($this->ReplyToUserForwardUserClient !== null)
+            {
+                return $this->ReplyToUserForwardUserClient;
+            }
+
+            if($this->ReplyToUserForwardChannelClient !== null)
+            {
+                return $this->ReplyToUserForwardChannelClient;
+            }
+
+            if($reply_only == false)
+            {
+                if($this->ForwardUserClient !== null)
+                {
+                    return $this->ForwardUserClient;
+                }
+
+                if($this->ForwardChannelClient !== null)
+                {
+                    return $this->ForwardChannelClient;
+                }
+            }
+
+            throw new Exception("Cannot determine the target entity");
         }
 
         /**
