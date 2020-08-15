@@ -148,8 +148,18 @@
          */
         public $ReplyToUserForwardUserClient = null;
 
+        /**
+         * The original channel object origin of the forwarded content that this message is replying to
+         *
+         * @var TelegramClient\Chat|null
+         */
         public $ReplyToUserForwardChannelObject = null;
 
+        /**
+         * The original channel cient origin of the forwarded content that this message is replying to
+         *
+         * @var TelegramClient|null
+         */
         public $ReplyToUserForwardChannelClient = null;
 
         /**
@@ -348,14 +358,47 @@
                 {
                     if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
                     {
-                        $this->ReplyToUserForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                        $this->ReplyToUserForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserForwardUserObject);
+                        $this->ReplyToUserForwardChannelObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                        $this->ReplyToUserForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserForwardUserObject);
 
-                        if(isset($this->ReplyToUserForwardUserClient->SessionData->Data["user_status"]) == false)
+                        if(isset($this->ReplyToUserForwardChannelClient->SessionData->Data["channel_status"]) == false)
                         {
-                            $ForwardUserStatus = SettingsManager::getUserStatus($this->ReplyToUserForwardUserClient);
-                            $this->ReplyToUserForwardUserClient = SettingsManager::updateUserStatus($this->ReplyToUserForwardUserClient, $ForwardUserStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserForwardUserClient);
+                            $ForwardChannelStatus = SettingsManager::getChannelStatus($this->ReplyToUserForwardChannelClient);
+                            $this->ReplyToUserForwardChannelClient = SettingsManager::updateChannelStatus($this->ReplyToUserForwardChannelClient, $ForwardChannelStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserForwardChannelClient);
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::reply_to_user_forwarder_channel.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                if($this->getMessage()->getReplyToMessage() !== null)
+                {
+                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
+                    {
+                        $this->ReplyToUserForwardChannelObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                        $this->ReplyToUserForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserForwardChannelObject);
+
+                        if(isset($this->ReplyToUserForwardChannelClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($this->ReplyToUserForwardChannelClient);
+                            $this->ReplyToUserForwardChannelClient = SettingsManager::updateUserStatus($this->ReplyToUserForwardChannelClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserForwardChannelClient);
                         }
                     }
                 }

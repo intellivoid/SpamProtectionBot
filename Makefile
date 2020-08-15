@@ -29,6 +29,8 @@ stop_workers:
 
 debug:
 	# Starts the bot, kills all the workers and focuses on one worker in STDOUT
+	# Run with -i to ignore possible errors.
+	make stop
 	screen -dm bash -c 'ppm --main="net.intellivoid.spam_protection_bot" --version="latest"'
 	sleep 3
 	make stop_workers
