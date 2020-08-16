@@ -500,10 +500,9 @@
          * Attempts to find the target user that the reply/message is referring to
          *
          * @param bool $reply_only If enabled, the target user can refer to the user of that sent the message
-         * @return TelegramClient
-         * @throws Exception Raises an exception if the target cannot be determined
+         * @return TelegramClient|null
          */
-        public function findTarget(bool $reply_only=true): TelegramClient
+        public function findTarget(bool $reply_only=true)
         {
             if($this->ReplyToUserClient !== null)
             {
@@ -526,17 +525,16 @@
                 }
             }
 
-            throw new Exception("Cannot determine the target entity");
+            return null;
         }
 
         /**
          * Finds the original target of a forwarded message
          *
          * @param bool $reply_only If enabled, the target user can refer to the user of that sent the message
-         * @return TelegramClient
-         * @throws Exception Raises an exception if the target cannot be determined
+         * @return TelegramClient|null
          */
-        public function findForwardedTarget(bool $reply_only=true): TelegramClient
+        public function findForwardedTarget(bool $reply_only=true)
         {
             if($this->ReplyToUserForwardUserClient !== null)
             {
@@ -561,7 +559,7 @@
                 }
             }
 
-            throw new Exception("Cannot determine the target entity");
+            return null;
         }
 
         /**
