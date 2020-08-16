@@ -37,6 +37,11 @@
                 "package": "net.intellivoid.telegram_client_manager",
                 "version": "latest",
                 "required": true
+            },
+            {
+                "package": "net.intellivoid.pop",
+                "version": "latest",
+                "required": true
             }
         ],
         "configuration": {
