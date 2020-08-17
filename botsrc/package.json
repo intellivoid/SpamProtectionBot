@@ -8,6 +8,7 @@
         "description": "Protects your group from unwanted spam using machine learning from CoffeeHouse.",
         "url": "https://github.com/intellivoid/SpamProtectionBot",
         "dependencies": [
+<<<<<<< HEAD
             {
                 "package": "net.intellivoid.acm",
                 "version": "latest",
@@ -53,6 +54,14 @@
                 "version": "latest",
                 "required": true
             }
+=======
+            {"package": "net.intellivoid.acm", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.background_worker", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.coffeehouse", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.deepanalytics", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.spam_protection", "required": true, "version": "latest"},
+            {"package": "net.intellivoid.telegram_client_manager", "required": true, "version": "latest"}
+>>>>>>> master
         ],
         "configuration": {
             "autoload_method": "indexed",
@@ -76,10 +85,13 @@
         },
         {
             "required": true,
+<<<<<<< HEAD
             "file": "commands/BlCommand.php"
         },
         {
             "required": true,
+=======
+>>>>>>> master
             "file": "commands/GenericmessageCommand.php"
         },
         {
@@ -88,10 +100,13 @@
         },
         {
             "required": true,
+<<<<<<< HEAD
             "file": "commands/LCommand.php"
         },
         {
             "required": true,
+=======
+>>>>>>> master
             "file": "commands/LogCommand.php"
         },
         {
@@ -1591,7 +1606,10 @@
         ".htaccess",
         "composer.json",
         "composer.lock",
+<<<<<<< HEAD
         "package.json",
+=======
+>>>>>>> master
         "vendor/composer/installed.json",
         "vendor/composer/LICENSE",
         "vendor/guzzlehttp/guzzle/.php_cs",
