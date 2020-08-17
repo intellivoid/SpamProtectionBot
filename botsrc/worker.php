@@ -40,6 +40,8 @@
         \ppm\ppm::import("net.intellivoid.telegram_client_manager");
         \ppm\ppm::import("net.intellivoid.spam_protection");
         \ppm\ppm::import("net.intellivoid.pop");
+        \ppm\ppm::import("net.intellivoid.msqg");
+        \ppm\ppm::import("net.intellivoid.ziproto");
     }
 
     $current_directory = getcwd();
