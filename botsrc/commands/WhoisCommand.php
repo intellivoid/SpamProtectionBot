@@ -633,7 +633,7 @@
                     break;
 
                 default:
-                    return "<a href=\"tg://user?id=" . $client->Chat->ID . "\">" . Unknown . "</a>";
+                    return "<a href=\"tg://user?id=" . $client->Chat->ID . "\">Unknown</a>";
             }
 
             return "Unknown";

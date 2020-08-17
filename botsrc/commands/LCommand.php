@@ -14,30 +14,10 @@
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
 
     /**
-     * Blacklist user command alias
+     * Log message command alias
      */
     class LCommand extends UserCommand
     {
-        /**
-         * @var string
-         */
-        protected $name = 'Log alias';
-
-        /**
-         * @var string
-         */
-        protected $description = 'Alias to the log command';
-
-        /**
-         * @var string
-         */
-        protected $usage = '/log alias';
-
-        /**
-         * @var string
-         */
-        protected $version = '1.0.0';
-
         /**
          * @var bool
          */
