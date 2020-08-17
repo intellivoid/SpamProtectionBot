@@ -7,6 +7,7 @@
     namespace Longman\TelegramBot\Commands\UserCommands;
 
     use Longman\TelegramBot\Commands\UserCommand;
+    use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
@@ -629,10 +630,22 @@
                 $LogMessage .= "<b>Blacklist Flag:</b> <code>" . $NewBlacklistFlag. "</code> (" . self::blacklistFlagToReason($NewBlacklistFlag) . ")\n";
             }
 
+            $InlineKeyboard = new InlineKeyboard([
+                [
+                    "text" => "View Target",
+                    "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $targetClient->User->ID
+                ],
+                [
+                    "text" => "View Operator",
+                    "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $operatorUserClient->User->ID
+                ]
+            ]);
+
             return Request::sendMessage([
                 "chat_id" => "-497877807",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
+                "reply_markup" => $InlineKeyboard,
                 "parse_mode" => "html",
                 "text" => $LogMessage
             ]);
