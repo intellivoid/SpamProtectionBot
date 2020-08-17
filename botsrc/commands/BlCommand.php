@@ -19,26 +19,6 @@
     class BlCommand extends UserCommand
     {
         /**
-         * @var string
-         */
-        protected $name = 'blacklist alias';
-
-        /**
-         * @var string
-         */
-        protected $description = 'Alias to the blacklist command';
-
-        /**
-         * @var string
-         */
-        protected $usage = '/blacklist alias';
-
-        /**
-         * @var string
-         */
-        protected $version = '1.0.0';
-
-        /**
          * @var bool
          */
         protected $private_only = false;

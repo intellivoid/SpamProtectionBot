@@ -1213,7 +1213,7 @@
             }
 
             $Response = Request::sendMessage([
-                "chat_id" => "@SpamProtectionLogs",
+                "chat_id" => "-497877807",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",

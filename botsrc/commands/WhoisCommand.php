@@ -586,6 +586,60 @@
         }
 
         /**
+         * Generates a HTML mention
+         *
+         * @param TelegramClient $client
+         * @return string
+         */
+        public static function generateMention(TelegramClient $client)
+        {
+            switch($client->Chat->Type)
+            {
+                case TelegramChatType::Private:
+                    /** @noinspection DuplicatedCode */
+                    if($client->User->Username == null)
+                    {
+                        if($client->User->LastName == null)
+                        {
+                            return "<a href=\"tg://user?id=" . $client->User->ID . "\">" . self::escapeHTML($client->User->FirstName) . "</a>";
+                        }
+                        else
+                        {
+                            return "<a href=\"tg://user?id=" . $client->User->ID . "\">" . self::escapeHTML($client->User->FirstName . " " . $client->User->LastName) . "</a>";
+                        }
+                    }
+                    else
+                    {
+                        return "@" . $client->User->Username;
+                    }
+                    break;
+
+                case TelegramChatType::SuperGroup:
+                case TelegramChatType::Group:
+                case TelegramChatType::Channel:
+                    /** @noinspection DuplicatedCode */
+                    if($client->Chat->Username == null)
+                    {
+                        if($client->Chat->Title !== null)
+                        {
+                            return "<a href=\"tg://user?id=" . $client->User->ID . "\">" . self::escapeHTML($client->Chat->Title) . "</a>";
+                        }
+                    }
+                    else
+                    {
+                        return "@" . $client->Chat->Username;
+                    }
+
+                    break;
+
+                default:
+                    return "<a href=\"tg://user?id=" . $client->Chat->ID . "\">" . Unknown . "</a>";
+            }
+
+            return "Unknown";
+        }
+
+        /**
          * Command execute method
          *
          * @return ServerResponse
@@ -602,6 +656,8 @@
             {
                 // Find all clients
                 $this->findClients();
+                $this->DestinationChat = $this->ChatObject;
+                $this->ReplyToID = $this->getMessage()->getMessageId();
             }
             catch(Exception $e)
             {
@@ -637,19 +693,17 @@
 
                 if(isset($options["p"]) == true || isset($options["private"]))
                 {
-                    $this->PrivateMode = true;
-                    $this->DestinationChat = new TelegramClient\Chat();
-                    $this->DestinationChat->ID = $this->UserObject->ID;
-                    $this->DestinationChat->Type = TelegramChatType::Private;
-                    $this->DestinationChat->FirstName = $this->UserObject->FirstName;
-                    $this->DestinationChat->LastName = $this->UserObject->LastName;
-                    $this->DestinationChat->Username = $this->UserObject->Username;
-                    $this->ReplyToID = null;
-                }
-                else
-                {
-                    $this->DestinationChat = $this->ChatObject;
-                    $this->ReplyToID = $this->getMessage()->getMessageId();
+                    if($this->ChatObject->Type !== TelegramChatType::Private)
+                    {
+                        $this->PrivateMode = true;
+                        $this->DestinationChat = new TelegramClient\Chat();
+                        $this->DestinationChat->ID = $this->UserObject->ID;
+                        $this->DestinationChat->Type = TelegramChatType::Private;
+                        $this->DestinationChat->FirstName = $this->UserObject->FirstName;
+                        $this->DestinationChat->LastName = $this->UserObject->LastName;
+                        $this->DestinationChat->Username = $this->UserObject->Username;
+                        $this->ReplyToID = null;
+                    }
                 }
 
                 if(isset($options["info"]))
@@ -673,7 +727,6 @@
                     ]);
                 }
             }
-
 
             // If this message is a reply
             if($this->getMessage()->getReplyToMessage() !== null)
@@ -1025,7 +1078,7 @@
             $RequiresExtraNewline = false;
             $Response = "<b>$title</b>\n\n";
 
-            if($user_client->User->Username == "IntellivoidSupport")
+            if($user_client->User->Username == "Netkas")
             {
                 $RequiresExtraNewline = true;
                 $Response .= "\u{2705} This user is the main operator\n";
@@ -1111,53 +1164,13 @@
 
                 switch($UserStatus->BlacklistFlag)
                 {
-                    case BlacklistFlag::None:
-                        $Response .= "<b>Blacklist Reason:</b> <code>None</code>\n";
-                        break;
-
-                    case BlacklistFlag::Spam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion</code>\n";
-                        break;
-
                     case BlacklistFlag::BanEvade:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
+                        $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($UserStatus->BlacklistFlag) . "</code>\n";
                         $Response .= "<b>Original Private ID:</b> <code>" . $UserStatus->OriginalPrivateID . "</code>\n";
                         break;
 
-                    case BlacklistFlag::ChildAbuse:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Child Pornography / Child Abuse</code>\n";
-                        break;
-
-                    case BlacklistFlag::Impersonator:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Malicious Impersonator</code>\n";
-                        break;
-
-                    case BlacklistFlag::PiracySpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam Pirated Content</code>\n";
-                        break;
-
-                    case BlacklistFlag::PornographicSpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam NSFW Content</code>\n";
-                        break;
-
-                    case BlacklistFlag::PrivateSpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion via a unsolicited private message</code>\n";
-                        break;
-
-                    case BlacklistFlag::Raid:
-                        $Response .= "<b>Blacklist Reason:</b> <code>RAID Initializer / Participator</code>\n";
-                        break;
-
-                    case BlacklistFlag::Scam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Scamming</code>\n";
-                        break;
-
-                    case BlacklistFlag::Special:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Special Reason, consult @IntellivoidSupport</code>\n";
-                        break;
-
                     default:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Unknown</code>\n";
+                        $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($UserStatus->BlacklistFlag) . "</code>\n";
                         break;
                 }
 
