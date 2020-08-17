@@ -13,12 +13,11 @@
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use msqg\QueryBuilder;
+    use pop\pop;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Objects\TelegramClient;
-    use TelegramClientManager\Objects\TelegramClient\Chat;
-    use TelegramClientManager\Objects\TelegramClient\User;
     use ZiProto\ZiProto;
 
     /**
@@ -46,12 +45,19 @@
         /**
          * @var string
          */
-        protected $version = '1.0.0';
+        protected $version = '2.0.0';
 
         /**
          * @var bool
          */
         protected $private_only = false;
+
+        /**
+         * The whois command used for finding targets
+         *
+         * @var WhoisCommand|null
+         */
+        public $WhoisCommand = null;
 
         /**
          * Command execute method
@@ -62,60 +68,11 @@
          */
         public function execute()
         {
-            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
-
-            $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
+            $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
 
             try
             {
-                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
-
-                // Define and update chat client
-                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
-                if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
-                {
-                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
-                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
-                }
-
-                // Define and update user client
-                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
-                if(isset($UserClient->SessionData->Data["user_status"]) == false)
-                {
-                    $UserStatus = SettingsManager::getUserStatus($UserClient);
-                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
-                }
-
-                // Define and update the forwarder if available
-                if($this->getMessage()->getReplyToMessage() !== null)
-                {
-                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
-                    {
-                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
-                        {
-                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
-                        }
-                    }
-
-                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
-                    {
-                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
-                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
-                        {
-                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
-                        }
-                    }
-                }
+                $this->WhoisCommand->findClients();
             }
             catch(Exception $e)
             {
@@ -134,10 +91,35 @@
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'stats_command', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'stats_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'stats_command', (int)$this->WhoisCommand->ChatClient->getChatId());
 
-            if($UserClient->User->Username !== "Netkas")
+            // Ignore forwarded commands
+            if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
+            {
+                return null;
+            }
+
+            // Parse the options
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
+            {
+                $options = pop::parse($this->getMessage()->getText(true));
+
+                if(isset($options["info"]))
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "parse_mode" => "html",
+                        "reply_to_message_id" =>$this->getMessage()->getMessageId(),
+                        "text" =>
+                            $this->name . " (v" . $this->version . ")\n" .
+                            " Usage: <code>" . $this->usage . "</code>\n\n" .
+                            "<i>" . $this->description . "</i>"
+                    ]);
+                }
+            }
+
+            if($this->WhoisCommand->UserClient->User->Username !== "Netkas")
             {
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
