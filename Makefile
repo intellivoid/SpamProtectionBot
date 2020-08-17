@@ -1,5 +1,4 @@
 clean:
-<<<<<<< HEAD
 	# Removes the build directory
 	rm -rf build
 
@@ -9,16 +8,10 @@ update:
 
 build:
 	# Compiles the package
-=======
-	rm -rf build
-
-build:
->>>>>>> master
 	mkdir build
 	ppm --compile="botsrc" --directory="build"
 
 install:
-<<<<<<< HEAD
 	# Installs the compiled package to the system
 	ppm --fix-conflict --no-prompt --install="build/net.intellivoid.spam_protection_bot.ppm"
 
@@ -42,9 +35,3 @@ debug:
 	sleep 3
 	make stop_workers
 	php botsrc/worker.php
-=======
-	ppm --fix-conflict --no-prompt --install="build/net.intellivoid.spam_protection_bot.ppm"
-
-run:
-	ppm --main="net.intellivoid.spam_protection_bot" --version="latest"
->>>>>>> master

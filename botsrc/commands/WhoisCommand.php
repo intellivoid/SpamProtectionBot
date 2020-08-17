@@ -11,6 +11,7 @@
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
+    use pop\pop;
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\DetectionAction;
     use SpamProtection\Managers\SettingsManager;
@@ -45,12 +46,12 @@
         /**
          * @var string
          */
-        protected $usage = '/whois [None/Reply/ID/Private Telegram ID/Username]';
+        protected $usage = '/whois [None/Reply/ID/Private Telegram ID/Username/Mention]';
 
         /**
          * @var string
          */
-        protected $version = '1.0.0';
+        protected $version = '2.0.0';
 
         /**
          * @var bool
@@ -58,69 +59,605 @@
         protected $private_only = false;
 
         /**
+         * The chat/channel object of the current chat/channel
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $ChatObject = null;
+
+        /**
+         * The client of the chat/channel of the current chat/channel
+         *
+         * @var TelegramClient|null
+         */
+        public $ChatClient = null;
+
+        /**
+         * The user/bot object of the initializer (Entity that sent the message/action)
+         *
+         * @var TelegramClient\User|null
+         */
+        public $UserObject = null;
+
+        /**
+         * The user/bot client of the initializer (Entity that sent the message/action)
+         *
+         * @var TelegramClient|null
+         */
+        public $UserClient = null;
+
+        /**
+         * The direct client combination of the user initializer and the current chat/channel
+         *
+         * @var TelegramClient|null
+         */
+        public $DirectClient = null;
+
+        /**
+         * The original sender object of the forwarded content
+         *
+         * @var TelegramClient\User|null
+         */
+        public $ForwardUserObject = null;
+
+        /**
+         * The original sender client of the forwarded content
+         *
+         * @var TelegramClient|null
+         */
+        public $ForwardUserClient = null;
+
+        /**
+         * The channel origin object of the forwarded content
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $ForwardChannelObject = null;
+
+        /**
+         * The channel origin client of the forwarded content
+         *
+         * @var TelegramClient|null
+         */
+        public $ForwardChannelClient = null;
+
+        /**
+         * The target user object of the message that the reply is to
+         *
+         * @var TelegramClient\User|null
+         */
+        public $ReplyToUserObject = null;
+
+        /**
+         * The target user client of the message that the reply is to
+         *
+         * @var TelegramClient|null
+         */
+        public $ReplyToUserClient = null;
+
+        /**
+         * The original sender object of the forwarded content that this message is replying to
+         *
+         * @var TelegramClient\User|null
+         */
+        public $ReplyToUserForwardUserObject = null;
+
+        /**
+         * The original sender client of the forwarded content that this message is replying to
+         *
+         * @var TelegramClient|null
+         */
+        public $ReplyToUserForwardUserClient = null;
+
+        /**
+         * The original channel object origin of the forwarded content that this message is replying to
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $ReplyToUserForwardChannelObject = null;
+
+        /**
+         * The original channel cient origin of the forwarded content that this message is replying to
+         *
+         * @var TelegramClient|null
+         */
+        public $ReplyToUserForwardChannelClient = null;
+
+        /**
+         * Array of user mentions by UserID:ObjectType
+         *
+         * @var TelegramClient\User[]|null
+         */
+        public $MentionUserObjects = null;
+
+        /**
+         * Array of user mentions by UserID:ObjectClient
+         *
+         * @var TelegramClient[]|null
+         */
+        public $MentionUserClients = null;
+
+        /**
+         * When enabled, the results will be sent privately and
+         * the message will be deleted
+         *
+         * @var bool
+         */
+        public $PrivateMode = false;
+
+        /**
+         * The destination chat relative to the private mode
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $DestinationChat = null;
+
+        /**
+         * The message ID to reply to
+         *
+         * @var int|null
+         */
+        public $ReplyToID = null;
+
+        /**
+         * Parses the request and establishes all client connections
+         * @noinspection DuplicatedCode
+         */
+        public function findClients()
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+
+            $this->ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
+            $this->UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
+
+            try
+            {
+                $this->DirectClient = $TelegramClientManager->getTelegramClientManager()->registerClient(
+                    $this->ChatObject, $this->UserObject
+                );
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::direct.bin</code>"
+                ]);
+            }
+
+            // Define and update chat client
+            try
+            {
+                $this->ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->ChatObject);
+                if(isset($this->ChatClient->SessionData->Data["chat_settings"]) == false)
+                {
+                    $ChatSettings = SettingsManager::getChatSettings($this->ChatClient);
+                    $this->ChatClient = SettingsManager::updateChatSettings($this->ChatClient, $ChatSettings);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->ChatClient);
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::chat_client.bin</code>"
+                ]);
+            }
+
+            // Define and update user client
+            try
+            {
+                $this->UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->UserObject);
+                if(isset($this->UserClient->SessionData->Data["user_status"]) == false)
+                {
+                    $UserStatus = SettingsManager::getUserStatus($this->UserClient);
+                    $this->UserClient = SettingsManager::updateUserStatus($this->UserClient, $UserStatus);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->UserClient);
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::user_client.bin</code>"
+                ]);
+            }
+
+            // Define and update the forwarder if available
+            try
+            {
+                if($this->getMessage()->getForwardFrom() !== null)
+                {
+                    $this->ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
+                    $this->ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ForwardUserObject);
+                    if(isset($this->ForwardUserClient->SessionData->Data["user_status"]) == false)
+                    {
+                        $ForwardUserStatus = SettingsManager::getUserStatus($this->ForwardUserClient);
+                        $this->ForwardUserClient = SettingsManager::updateUserStatus($this->ForwardUserClient, $ForwardUserStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($this->ForwardUserClient);
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::forward_from_user.bin</code>"
+                ]);
+            }
+
+            // Define and update the channel forwarder if available
+            try
+            {
+                if($this->getMessage()->getForwardFromChat() !== null)
+                {
+                    $this->ForwardChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
+                    $this->ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->ForwardChannelObject);
+                    if(isset($this->ForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                    {
+                        $ForwardChannelStatus = SettingsManager::getChannelStatus($this->ForwardChannelClient);
+                        $this->ForwardChannelClient = SettingsManager::updateChannelStatus($this->ForwardChannelClient, $ForwardChannelStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($this->ForwardChannelClient);
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::forward_from_channel.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                if($this->getMessage()->getReplyToMessage() !== null)
+                {
+                    if($this->getMessage()->getReplyToMessage()->getFrom() !== null)
+                    {
+                        $this->ReplyToUserObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
+                        $this->ReplyToUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserObject);
+
+                        if(isset($this->ReplyToUserClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($this->ReplyToUserClient);
+                            $this->ReplyToUserClient = SettingsManager::updateUserStatus($this->ReplyToUserClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserClient);
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::reply_to_user.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                if($this->getMessage()->getReplyToMessage() !== null)
+                {
+                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
+                    {
+                        $this->ReplyToUserForwardChannelObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
+                        $this->ReplyToUserForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserForwardChannelObject);
+
+                        if(isset($this->ReplyToUserForwardChannelClient->SessionData->Data["channel_status"]) == false)
+                        {
+                            $ForwardChannelStatus = SettingsManager::getChannelStatus($this->ReplyToUserForwardChannelClient);
+                            $this->ReplyToUserForwardChannelClient = SettingsManager::updateChannelStatus($this->ReplyToUserForwardChannelClient, $ForwardChannelStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserForwardChannelClient);
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::reply_to_user_forwarder_channel.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                if($this->getMessage()->getReplyToMessage() !== null)
+                {
+                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
+                    {
+                        $this->ReplyToUserForwardChannelObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                        $this->ReplyToUserForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserForwardChannelObject);
+
+                        if(isset($this->ReplyToUserForwardChannelClient->SessionData->Data["user_status"]) == false)
+                        {
+                            $ForwardUserStatus = SettingsManager::getUserStatus($this->ReplyToUserForwardChannelClient);
+                            $this->ReplyToUserForwardChannelClient = SettingsManager::updateUserStatus($this->ReplyToUserForwardChannelClient, $ForwardUserStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserForwardChannelClient);
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::reply_to_user_forwarder_user.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                $this->MentionUserObjects = array();
+                $this->MentionUserClients = array();
+
+                // The message in general
+                if($this->getMessage()->getEntities() !== null)
+                {
+                    foreach($this->getMessage()->getEntities() as $messageEntity)
+                    {
+                        /** @noinspection DuplicatedCode */
+                        if($messageEntity->getUser() !== null)
+                        {
+                            $MentionUserObject = TelegramClient\User::fromArray($messageEntity->getUser()->getRawData());
+                            /** @noinspection DuplicatedCode */
+                            $MentionUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($MentionUserObject);
+                            if(isset($MentionUserClient->SessionData->Data["user_status"]) == false)
+                            {
+                                $UserStatus = SettingsManager::getUserStatus($MentionUserClient);
+                                $MentionUserClient = SettingsManager::updateUserStatus($MentionUserClient, $UserStatus);
+                                $TelegramClientManager->getTelegramClientManager()->updateClient($MentionUserClient);
+                            }
+
+                            $this->MentionUserObjects[$MentionUserObject->ID] = $MentionUserObject;
+                            $this->MentionUserClients[$MentionUserObject->ID] = $MentionUserClient;
+                        }
+                    }
+                }
+
+                // If the reply contains mentions
+                if($this->getMessage()->getReplyToMessage() !== null)
+                {
+                    if($this->getMessage()->getReplyToMessage()->getEntities() !== null)
+                    {
+                        foreach($this->getMessage()->getReplyToMessage()->getEntities() as $messageEntity)
+                        {
+                            /** @noinspection DuplicatedCode */
+                            if($messageEntity->getUser() !== null)
+                            {
+                                $MentionUserObject = TelegramClient\User::fromArray($messageEntity->getUser()->getRawData());
+                                if(isset($this->MentionUserObjects[$MentionUserObject->ID]) == false)
+                                {
+                                    /** @noinspection DuplicatedCode */
+                                    $MentionUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($MentionUserObject);
+                                    if(isset($MentionUserClient->SessionData->Data["user_status"]) == false)
+                                    {
+                                        $UserStatus = SettingsManager::getUserStatus($MentionUserClient);
+                                        $MentionUserClient = SettingsManager::updateUserStatus($MentionUserClient, $UserStatus);
+                                        $TelegramClientManager->getTelegramClientManager()->updateClient($MentionUserClient);
+                                    }
+
+                                    $this->MentionUserObjects[$MentionUserObject->ID] = $MentionUserObject;
+                                    $this->MentionUserClients[$MentionUserObject->ID] = $MentionUserClient;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::mentions.bin</code>"
+                ]);
+            }
+
+            return $this;
+        }
+
+        /**
+         * Attempts to find the target user that the reply/message is referring to
+         *
+         * @param bool $reply_only If enabled, the target user can refer to the user of that sent the message
+         * @return TelegramClient|null
+         */
+        public function findTarget(bool $reply_only=true)
+        {
+            if($this->ReplyToUserClient !== null)
+            {
+                return $this->ReplyToUserClient;
+            }
+
+            if($this->MentionUserClients !== null)
+            {
+                if(count($this->MentionUserClients) > 0)
+                {
+                    return $this->MentionUserClients[array_keys($this->MentionUserClients)[0]];
+                }
+            }
+
+            if($reply_only == false)
+            {
+                if($this->UserClient !== null)
+                {
+                    return $this->UserClient;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Finds the original target of a forwarded message
+         *
+         * @param bool $reply_only If enabled, the target user can refer to the user of that sent the message
+         * @return TelegramClient|null
+         */
+        public function findForwardedTarget(bool $reply_only=true)
+        {
+            if($this->ReplyToUserForwardUserClient !== null)
+            {
+                return $this->ReplyToUserForwardUserClient;
+            }
+
+            if($this->ReplyToUserForwardChannelClient !== null)
+            {
+                return $this->ReplyToUserForwardChannelClient;
+            }
+
+            if($reply_only == false)
+            {
+                if($this->ForwardUserClient !== null)
+                {
+                    return $this->ForwardUserClient;
+                }
+
+                if($this->ForwardChannelClient !== null)
+                {
+                    return $this->ForwardChannelClient;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Generates a HTML mention
+         *
+         * @param TelegramClient $client
+         * @return string
+         */
+        public static function generateMention(TelegramClient $client)
+        {
+            switch($client->Chat->Type)
+            {
+                case TelegramChatType::Private:
+                    /** @noinspection DuplicatedCode */
+                    if($client->User->Username == null)
+                    {
+                        if($client->User->LastName == null)
+                        {
+                            return "<a href=\"tg://user?id=" . $client->User->ID . "\">" . self::escapeHTML($client->User->FirstName) . "</a>";
+                        }
+                        else
+                        {
+                            return "<a href=\"tg://user?id=" . $client->User->ID . "\">" . self::escapeHTML($client->User->FirstName . " " . $client->User->LastName) . "</a>";
+                        }
+                    }
+                    else
+                    {
+                        return "@" . $client->User->Username;
+                    }
+                    break;
+
+                case TelegramChatType::SuperGroup:
+                case TelegramChatType::Group:
+                case TelegramChatType::Channel:
+                    /** @noinspection DuplicatedCode */
+                    if($client->Chat->Username == null)
+                    {
+                        if($client->Chat->Title !== null)
+                        {
+                            return "<a href=\"tg://user?id=" . $client->User->ID . "\">" . self::escapeHTML($client->Chat->Title) . "</a>";
+                        }
+                    }
+                    else
+                    {
+                        return "@" . $client->Chat->Username;
+                    }
+
+                    break;
+
+                default:
+                    return "<a href=\"tg://user?id=" . $client->Chat->ID . "\">Unknown</a>";
+            }
+
+            return "Unknown";
+        }
+
+        /**
          * Command execute method
          *
          * @return ServerResponse
-         * @throws TelegramException
          * @throws DatabaseException
          * @throws InvalidSearchMethod
-         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
          * @noinspection DuplicatedCode
          */
         public function execute()
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
 
-            $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
-
             try
             {
-                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
-
-                // Define and update chat client
-                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
-                if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
-                {
-                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
-                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
-                }
-
-                // Define and update user client
-                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
-                if(isset($UserClient->SessionData->Data["user_status"]) == false)
-                {
-                    $UserStatus = SettingsManager::getUserStatus($UserClient);
-                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
-                }
-
-                // Define and update the forwarder if available
-                if($this->getMessage()->getForwardFrom() !== null)
-                {
-                    $ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                    if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
-                    {
-                        $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                        $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
-                    }
-                }
-
-                // Define and update the channel forwarder if available
-                if($this->getMessage()->getForwardFromChat() !== null)
-                {
-                    $ForwardChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
-                    $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
-                    if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
-                    {
-                        $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                        $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
-                    }
-                }
+                // Find all clients
+                $this->findClients();
+                $this->DestinationChat = $this->ChatObject;
+                $this->ReplyToID = $this->getMessage()->getMessageId();
             }
             catch(Exception $e)
             {
@@ -136,152 +673,282 @@
                 ]);
             }
 
+            // Tally DeepAnalytics trait
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'whois_command', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'whois_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->ChatClient->ID);
+            $DeepAnalytics->tally('tg_spam_protection', 'whois_command', (int)$this->ChatClient->ID);
 
-            if($this->getMessage()->getReplyToMessage() !== null)
+            // Ignore forwarded commands
+            if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                $TargetUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
-                $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetUser);
-
-                if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
-                {
-                    $ForwardChannel = TelegramClient\Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                    $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannel);
-
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "parse_mode" => "html",
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "text" =>
-                            self::resolveTarget($TargetTelegramClient, false, "None", false) .
-                            "\n\n" .
-                            self::resolveTarget($ForwardChannelClient, false, "None", true)
-                    ]);
-                }
-
-                if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
-                {
-                    $ForwardUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                    $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUser);
-
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "parse_mode" => "html",
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "text" =>
-                            self::resolveTarget($TargetTelegramClient, false, "None", false) .
-                            "\n\n" .
-                            self::resolveTarget($ForwardUserClient, false, "None", true)
-                    ]);
-                }
-
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "parse_mode" => "html",
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "text" => self::resolveTarget($TargetTelegramClient, false, "None", false)
-                ]);
+                return null;
             }
 
-            if($this->getMessage()->getText(true) !== null)
+            // Parse the options
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
             {
-                if(strlen($this->getMessage()->getText(true)) > 0)
+                $options = pop::parse($this->getMessage()->getText(true));
+
+                if(isset($options["p"]) == true || isset($options["private"]))
                 {
-                    $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-                    $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
-                    $TargetTelegramParameter = null;
-
-                    if(count($CommandParameters) > 0)
+                    if($this->ChatObject->Type !== TelegramChatType::Private)
                     {
-                        $TargetTelegramParameter = $CommandParameters[0];
-                        $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetTelegramParameter, (int)$TargetTelegramParameter);
-
-                        if($TargetTelegramParameter == "-c")
-                        {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "parse_mode" => "html",
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "text" =>
-                                    self::resolveTarget($UserClient, false, "None", false) .
-                                    "\n\n" .
-                                    self::resolveTarget($ChatClient, false, "None", false)
-                            ]);
-                        }
-
-                        try
-                        {
-                            $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
-
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "parse_mode" => "html",
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "text" => self::resolveTarget($TargetTelegramClient, true, "ID", false)
-                            ]);
-                        }
-                        catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                        {
-                            unset($telegramClientNotFoundException);
-                        }
-
-                        try
-                        {
-                            $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetTelegramParameter);
-
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "parse_mode" => "html",
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "text" => self::resolveTarget($TargetTelegramClient, true, "Private ID", false)
-                            ]);
-                        }
-                        catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                        {
-                            unset($telegramClientNotFoundException);
-                        }
-
-                        try
-                        {
-                            $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                                TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetTelegramParameter)
-                            );
-
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "parse_mode" => "html",
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "text" => self::resolveTarget($TargetTelegramClient, true, "Username", false)
-                            ]);
-                        }
-                        catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                        {
-                            unset($telegramClientNotFoundException);
-                        }
+                        $this->PrivateMode = true;
+                        $this->DestinationChat = new TelegramClient\Chat();
+                        $this->DestinationChat->ID = $this->UserObject->ID;
+                        $this->DestinationChat->Type = TelegramChatType::Private;
+                        $this->DestinationChat->FirstName = $this->UserObject->FirstName;
+                        $this->DestinationChat->LastName = $this->UserObject->LastName;
+                        $this->DestinationChat->Username = $this->UserObject->Username;
+                        $this->ReplyToID = null;
                     }
+                }
 
-                    if($TargetTelegramParameter == null)
+                if(isset($options["info"]))
+                {
+                    if($this->PrivateMode)
                     {
-                        $TargetTelegramParameter = "No Input";
+                        Request::deleteMessage([
+                            "chat_id" => $this->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
                     }
 
                     return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" =>
+                            $this->name . " (v" . $this->version . ")\n" .
+                            " Usage: <code>" . $this->usage . "</code>\n\n" .
+                            "<i>" . $this->description . "</i>"
+                    ]);
+                }
+            }
+
+            // If this message is a reply
+            if($this->getMessage()->getReplyToMessage() !== null)
+            {
+                // If the reply is to forwarded content
+                if($this->findForwardedTarget() !== null)
+                {
+                    if($this->findTarget() !== null)
+                    {
+                        if($this->PrivateMode)
+                        {
+                            Request::deleteMessage([
+                                "chat_id" => $this->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+                        }
+
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "parse_mode" => "html",
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "text" =>
+                                self::resolveTarget($this->findForwardedTarget(), false, "None", true) .
+                                "\n\n" .
+                                self::resolveTarget($this->findTarget(), false, "None", false)
+                        ]);
+                    }
+
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" => self::resolveTarget($this->findForwardedTarget(), false, "None", true)
+                    ]);
+                }
+
+                // If the reply is directly to another uer
+                if($this->findTarget() !== null)
+                {
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" => self::resolveTarget($this->findTarget(), false, "None", false)
+                    ]);
+                }
+            }
+
+            // If the message contains text which is not null or empty
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
+            {
+                // NOTE: Argument parsing is done with pop now.
+                $options = pop::parse($this->getMessage()->getText(true));
+
+                if(isset($options["c"]) == true || isset($options["chat"]) == true)
+                {
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" =>
+                            self::resolveTarget($this->ChatClient, false, "None", false)
+                    ]);
+                }
+
+                // If the last parameter is the option
+                if(count($options) > 0)
+                {
+                    $TargetTelegramParameter = array_values($options)[(count($options)-1)];
+
+                    if(is_bool($TargetTelegramParameter))
+                    {
+                        $TargetTelegramParameter = array_keys($options)[(count($options)-1)];
+                    }
+
+                    $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetTelegramParameter, (int)$TargetTelegramParameter);
+
+                    try
+                    {
+                        $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
+
+                        if($this->PrivateMode)
+                        {
+                            Request::deleteMessage([
+                                "chat_id" => $this->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+                        }
+
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "parse_mode" => "html",
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "text" => self::resolveTarget($TargetTelegramClient, true, "ID", false)
+                        ]);
+                    }
+                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                    {
+                        unset($telegramClientNotFoundException);
+                    }
+
+                    try
+                    {
+                        $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetTelegramParameter);
+
+                        if($this->PrivateMode)
+                        {
+                            Request::deleteMessage([
+                                "chat_id" => $this->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+                        }
+
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "parse_mode" => "html",
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "text" => self::resolveTarget($TargetTelegramClient, true, "Private ID", false)
+                        ]);
+                    }
+                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                    {
+                        unset($telegramClientNotFoundException);
+                    }
+
+                    try
+                    {
+                        $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                            TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetTelegramParameter)
+                        );
+
+                        if($this->PrivateMode)
+                        {
+                            Request::deleteMessage([
+                                "chat_id" => $this->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+                        }
+
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "parse_mode" => "html",
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "text" => self::resolveTarget($TargetTelegramClient, true, "Username", false)
+                        ]);
+                    }
+                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                    {
+                        unset($telegramClientNotFoundException);
+                    }
+
+                    if(count($this->MentionUserClients) > 0)
+                    {
+                        if($this->PrivateMode)
+                        {
+                            Request::deleteMessage([
+                                "chat_id" => $this->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+                        }
+
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "parse_mode" => "html",
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "text" => self::resolveTarget($this->MentionUserClients[array_keys($this->MentionUserClients)[0]], true, "Mention", false)
+                        ]);
+                    }
+
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
                         "text" => "Unable to resolve the query '$TargetTelegramParameter'!"
                     ]);
                 }
             }
 
+            if($this->PrivateMode)
+            {
+                Request::deleteMessage([
+                    "chat_id" => $this->ChatObject->ID,
+                    "message_id" => $this->getMessage()->getMessageId()
+                ]);
+            }
+
             return Request::sendMessage([
-                "chat_id" => $this->getMessage()->getChat()->getId(),
+                "chat_id" => $this->DestinationChat->ID,
                 "parse_mode" => "html",
-                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "text" => self::resolveTarget($UserClient, false, "None", false)
+                "reply_to_message_id" => $this->ReplyToID,
+                "text" => self::resolveTarget($this->UserClient, false, "None", false)
             ]);
         }
 
@@ -406,11 +1073,12 @@
          */
         private function generateUserInfoString(TelegramClient $user_client, string $title="User Information"): string
         {
+            // TODO: Add language support
             $UserStatus = SettingsManager::getUserStatus($user_client);
             $RequiresExtraNewline = false;
             $Response = "<b>$title</b>\n\n";
 
-            if($user_client->User->Username == "IntellivoidSupport")
+            if($user_client->User->Username == "Netkas")
             {
                 $RequiresExtraNewline = true;
                 $Response .= "\u{2705} This user is the main operator\n";
@@ -496,53 +1164,13 @@
 
                 switch($UserStatus->BlacklistFlag)
                 {
-                    case BlacklistFlag::None:
-                        $Response .= "<b>Blacklist Reason:</b> <code>None</code>\n";
-                        break;
-
-                    case BlacklistFlag::Spam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion</code>\n";
-                        break;
-
                     case BlacklistFlag::BanEvade:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
+                        $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($UserStatus->BlacklistFlag) . "</code>\n";
                         $Response .= "<b>Original Private ID:</b> <code>" . $UserStatus->OriginalPrivateID . "</code>\n";
                         break;
 
-                    case BlacklistFlag::ChildAbuse:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Child Pornography / Child Abuse</code>\n";
-                        break;
-
-                    case BlacklistFlag::Impersonator:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Malicious Impersonator</code>\n";
-                        break;
-
-                    case BlacklistFlag::PiracySpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam Pirated Content</code>\n";
-                        break;
-
-                    case BlacklistFlag::PornographicSpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam NSFW Content</code>\n";
-                        break;
-
-                    case BlacklistFlag::PrivateSpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion via a unsolicited private message</code>\n";
-                        break;
-
-                    case BlacklistFlag::Raid:
-                        $Response .= "<b>Blacklist Reason:</b> <code>RAID Initializer / Participator</code>\n";
-                        break;
-
-                    case BlacklistFlag::Scam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Scamming</code>\n";
-                        break;
-
-                    case BlacklistFlag::Special:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Special Reason, consult @IntellivoidSupport</code>\n";
-                        break;
-
                     default:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Unknown</code>\n";
+                        $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($UserStatus->BlacklistFlag) . "</code>\n";
                         break;
                 }
 
@@ -578,6 +1206,7 @@
          */
         private function generateChatInfoString(TelegramClient $chat_client, string $title="Chat Information"): string
         {
+            // TODO: Add language support
             $ChatSettings = SettingsManager::getChatSettings($chat_client);
             $RequiresExtraNewline = false;
             $Response = "<b>$title</b>\n\n";
@@ -656,13 +1285,13 @@
                 $Response .= "<b>Blacklist Protection Enabled:</b> <code>False</code>\n";
             }
 
-            if($ChatSettings->ActiveSpammerAlertEnabled)
+            if($ChatSettings->ActiveSpammerProtectionEnabled)
             {
-                $Response .= "<b>Active Spammer Alert Enabled:</b> <code>True</code>\n";
+                $Response .= "<b>Active Spammer Protection Enabled:</b> <code>True</code>\n";
             }
             else
             {
-                $Response .= "<b>Active Spammer Alert Enabled:</b> <code>False</code>\n";
+                $Response .= "<b>Active Spammer Protection Enabled:</b> <code>False</code>\n";
             }
 
             if($ChatSettings->DeleteOlderMessages)

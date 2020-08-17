@@ -6,13 +6,17 @@
 
     namespace Longman\TelegramBot\Commands\UserCommands;
 
-    use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
+    use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
+    use pop\pop;
     use SpamProtection\Abstracts\BlacklistFlag;
+    use SpamProtection\Exceptions\InvalidBlacklistFlagException;
+    use SpamProtection\Exceptions\MissingOriginalPrivateIdException;
+    use SpamProtection\Exceptions\PropertyConflictedException;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
@@ -22,8 +26,6 @@
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
-    use TelegramClientManager\Objects\TelegramClient\Chat;
-    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Blacklist user command
@@ -36,27 +38,70 @@
         /**
          * @var string
          */
-        protected $name = 'blacklist';
+        protected $name = "blacklist";
 
         /**
          * @var string
          */
-        protected $description = 'Allows the operator with sufficient permissions to blacklist a user';
+        protected $description = "Allows the operator with sufficient permissions to blacklist a user";
 
         /**
          * @var string
          */
-        protected $usage = '/blacklist [Reply/ID/Private Telegram ID/Username]';
+        protected $usage = "/blacklist [Reply/ID/Private Telegram ID/Username/Mention]";
 
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = "2.0.0";
 
         /**
          * @var bool
          */
         protected $private_only = false;
+
+        /**
+         * The whois command used for finding targets
+         *
+         * @var WhoisCommand|null
+         */
+        public $WhoisCommand = null;
+
+        /**
+         * When enabled, the results will be sent privately and
+         * the message will be deleted
+         *
+         * @var bool
+         */
+        public $PrivateMode = false;
+
+        /**
+         * When enabled, success messages will be suppressed
+         *
+         * @var bool
+         */
+        public $SilentMode = false;
+
+        /**
+         * When enabled, all messages will be suppressed
+         *
+         * @var bool
+         */
+        public $CompleteSilentMode = false;
+
+        /**
+         * The destination chat relative to the private mode
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $DestinationChat = null;
+
+        /**
+         * The message ID to reply to
+         *
+         * @var int|null
+         */
+        public $ReplyToID = null;
 
         /**
          * Command execute method
@@ -70,276 +115,359 @@
          */
         public function execute()
         {
+            // Find clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
+            $this->WhoisCommand->findClients();
+            $this->DestinationChat = $this->WhoisCommand->ChatObject;
+            $this->ReplyToID = $this->getMessage()->getMessageId();
 
-            $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
-
-            try
-            {
-                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
-
-                // Define and update chat client
-                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
-                if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
-                {
-                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
-                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
-                }
-
-                // Define and update user client
-                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
-                if(isset($UserClient->SessionData->Data["user_status"]) == false)
-                {
-                    $UserStatus = SettingsManager::getUserStatus($UserClient);
-                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
-                }
-
-                // Define and update the forwarder if available
-                if($this->getMessage()->getReplyToMessage() !== null)
-                {
-                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
-                    {
-                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
-                        {
-                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
-                        }
-                    }
-
-                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
-                    {
-                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
-                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
-                        {
-                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
-                        }
-                    }
-                }
-            }
-            catch(Exception $e)
-            {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Commands/" . $this->name . ".bin</code>"
-                ]);
-            }
-
+            // Tally DeepAnalytics
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'blacklist_command', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'blacklist_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
+            $DeepAnalytics->tally('tg_spam_protection', 'blacklist_command', (int)$this->WhoisCommand->ChatObject->ID);
 
-            $UserStatus = SettingsManager::getUserStatus($UserClient);
+            // Ignore forwarded commands
+            if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
+            {
+                return null;
+            }
+
+            // Parse the options
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
+            {
+                $options = pop::parse($this->getMessage()->getText(true));
+
+                if(isset($options["p"]) == true || isset($options["private"]) == true)
+                {
+                    if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::Private)
+                    {
+                        $this->PrivateMode = true;
+                        $this->DestinationChat = new TelegramClient\Chat();
+                        $this->DestinationChat->ID = $this->WhoisCommand->UserObject->ID;
+                        $this->DestinationChat->Type = TelegramChatType::Private;
+                        $this->DestinationChat->FirstName = $this->WhoisCommand->UserObject->FirstName;
+                        $this->DestinationChat->LastName = $this->WhoisCommand->UserObject->LastName;
+                        $this->DestinationChat->Username = $this->WhoisCommand->UserObject->Username;
+                        $this->ReplyToID = null;
+                    }
+                }
+
+                if(isset($options["s"]) == true || isset($options["silent"]) == true)
+                {
+                    $this->SilentMode = true;
+                }
+
+                if(isset($options["cs"]) == true || isset($options["complete-silent"]) == true)
+                {
+                    $this->SilentMode = true;
+                    $this->CompleteSilentMode = true;
+                }
+
+                if(isset($options["info"]))
+                {
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" =>
+                            $this->name . " (v" . $this->version . ")\n" .
+                            " Usage: <code>" . $this->usage . "</code>\n\n" .
+                            "<i>" . $this->description . "</i>"
+                    ]);
+                }
+            }
+
+            // Check if permissions are applicable
+            $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
             if($UserStatus->IsOperator == false)
             {
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
                 return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "chat_id" => $this->DestinationChat->ID,
+                    "reply_to_message_id" => $this->ReplyToID,
                     "parse_mode" => "html",
                     "text" => "This command can only be used by an operator!"
                 ]);
             }
 
+            $options = [];
+
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
+            {
+                // NOTE: Argument parsing is done with pop now.
+                $options = pop::parse($this->getMessage()->getText(true));
+            }
+
+            // Parse the parameters
+            $BlacklistFlag = null;
+            $OriginalPrivateID = null;
+
+            // Determine blacklist reason
+            if(isset($options["r"]) || isset($options["reason"]) || isset($options["flag"]))
+            {
+                if(isset($options["r"]))
+                {
+                    $BlacklistFlag = $options["r"];
+                }
+
+                if(isset($options["reason"]))
+                {
+                    $BlacklistFlag = $options["reason"];
+                }
+
+                if(isset($options["flag"]))
+                {
+                    $BlacklistFlag = $options["flag"];
+                }
+
+                if(is_bool($BlacklistFlag))
+                {
+                    return self::displayUsage($this->getMessage(), "Blacklist parameter cannot be empty");
+                }
+            }
+            else
+            {
+                return self::displayUsage($this->getMessage(), "Missing blacklist parameter option (-r, --reason, --flag)");
+            }
+
+
+            if(isset($options["o"]) || isset($options["optid"]))
+            {
+                if(isset($options["o"]))
+                {
+                    $OriginalPrivateID = $options["o"];
+                }
+
+                if(isset($options["optid"]))
+                {
+                    $OriginalPrivateID = $options["optid"];
+                }
+
+                if(is_bool($OriginalPrivateID))
+                {
+                    return self::displayUsage($this->getMessage(), "Original Private Telegram ID parameter cannot be empty");
+                }
+            }
+
+            if($BlacklistFlag == BlacklistFlag::BanEvade)
+            {
+                if($OriginalPrivateID == null)
+                {
+                    return self::displayUsage($this->getMessage(), "Blacklisting a user for ban evade requires the original private telegram ID parameter (-o, -optid)");
+                }
+            }
+
             // Is it a reply to message?
             if($this->getMessage()->getReplyToMessage() !== null)
             {
-                $TargetUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getFrom()->getRawData());
-                $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetUser);
-
-                $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-                $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
-
-                // Check if there's parameters
-                if(count($CommandParameters) == 0)
+                // If to target the forwarder
+                if(isset($options["f"]))
                 {
-                    return self::displayUsage($this->getMessage(), "Missing blacklist parameter/forward option");
-                }
-                else
-                {
-                    // If to target the forwarder
-                    if(strtolower($CommandParameters[0]) == "-f")
+                    $TargetUser = $this->WhoisCommand->findForwardedTarget();
+
+                    if($TargetUser == null)
                     {
-                        // If the message is from a user
-                        if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
+                        if($this->PrivateMode)
                         {
-                            $TargetForwardUser = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                            $TargetForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($TargetForwardUser);
-
-                            // If missing the blacklist parameter
-                            if(count($CommandParameters) < 2)
-                            {
-                                return self::displayUsage($this->getMessage(), "Missing blacklist parameter");
-                            }
-
-                            // If it contains the original user ID
-                            if(count($CommandParameters) == 3)
-                            {
-                                return self::blacklistTarget(
-                                    $TargetForwardUserClient, $UserClient,
-                                    $CommandParameters[1], $CommandParameters[2]
-                                );
-                            }
-                            else
-                            {
-                                return self::blacklistTarget($TargetForwardUserClient, $UserClient, $CommandParameters[1]);
-                            }
+                            Request::deleteMessage([
+                                "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
                         }
-                        // If the message is from a channel
-                        elseif($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
-                        {
-                            $TargetChannel = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                            $TargetForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($TargetChannel);
 
-                            // If missing the blacklist parameter
-                            if(count($CommandParameters) < 2)
-                            {
-                                return self::displayUsage($this->getMessage(), "Missing blacklist parameter");
-                            }
-
-                            // If it contains the original user ID
-                            if(count($CommandParameters) == 3)
-                            {
-                                return self::blacklistTarget(
-                                    $TargetForwardChannelClient, $UserClient,
-                                    $CommandParameters[1], $CommandParameters[2]
-                                );
-                            }
-                            else
-                            {
-                                return self::blacklistTarget($TargetForwardChannelClient, $UserClient, $CommandParameters[1]);
-                            }
-                        }
-                        else
+                        if($this->CompleteSilentMode == false)
                         {
                             return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "chat_id" => $this->DestinationChat->ID,
+                                "reply_to_message_id" => $this->ReplyToID,
                                 "parse_mode" => "html",
                                 "text" => "Unable to get the target user/channel from the forwarded message"
                             ]);
                         }
+                        else
+                        {
+                            return null;
+                        }
+
+
                     }
-                    // Target the user the operator replied to
+
+                    // If it contains the original user ID
+                    if($OriginalPrivateID !== null)
+                    {
+                        return self::blacklistTarget($TargetUser, $this->WhoisCommand->UserClient, $BlacklistFlag, $OriginalPrivateID);
+                    }
                     else
                     {
-                        if(count($CommandParameters) == 1)
+                        return self::blacklistTarget($TargetUser, $this->WhoisCommand->UserClient, $BlacklistFlag);
+                    }
+                }
+                // Target the user the operator replied to
+                else
+                {
+                    $TargetUser = $this->WhoisCommand->findTarget();
+
+                    if($TargetUser == null)
+                    {
+                        if($this->PrivateMode)
                         {
-                            return self::blacklistTarget($TargetUserClient, $UserClient, $CommandParameters[0]);
+                            Request::deleteMessage([
+                                "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+                        }
+
+                        if($this->CompleteSilentMode == false)
+                        {
+                            return Request::sendMessage([
+                                "chat_id" => $this->DestinationChat->ID,
+                                "reply_to_message_id" => $this->ReplyToID,
+                                "parse_mode" => "html",
+                                "text" => "Unable to get the target user/channel from the replied message"
+                            ]);
                         }
                         else
                         {
-                            return self::blacklistTarget($TargetUserClient, $UserClient, $CommandParameters[0], $CommandParameters[1]);
+                            return null;
                         }
+
+                    }
+
+                    if($OriginalPrivateID !== null)
+                    {
+                        return self::blacklistTarget($TargetUser, $this->WhoisCommand->UserClient, $BlacklistFlag, $OriginalPrivateID);
+                    }
+                    else
+                    {
+                        return self::blacklistTarget($TargetUser, $this->WhoisCommand->UserClient, $BlacklistFlag);
                     }
                 }
             }
-
-            if($this->getMessage()->getText(true) !== null)
+            // Check if the target user is specified in text or a mention
+            else
             {
-                if(strlen($this->getMessage()->getText(true)) > 0)
-                {
-                    $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-                    $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
+                $TargetUserParameter = null;
 
-                    $TargetUserParameter = $CommandParameters[0];
+                if(isset($options["u"]) || isset($options["user"]) || isset($options["target"]))
+                {
+                    if(isset($options["u"]))
+                    {
+                        $TargetUserParameter = $options["u"];
+                    }
+
+                    if(isset($options["user"]))
+                    {
+                        $TargetUserParameter = $options["user"];
+                    }
+
+                    if(isset($options["target"]))
+                    {
+                        $TargetUserParameter = $options["target"];
+                    }
+
+                    if(is_bool($TargetUserParameter))
+                    {
+                        return self::displayUsage($this->getMessage(), "Original Private Telegram ID parameter cannot be empty");
+                    }
+                }
+
+                if($TargetUserParameter !== null)
+                {
                     $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetUserParameter, (int)$TargetUserParameter);
 
                     try
                     {
                         $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                            TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
-
-                        // Target user via ID
-                        if(count($CommandParameters) < 2)
-                        {
-                            return self::displayUsage($this->getMessage(), "Missing blacklist parameter");
-                        }
-                        elseif(count($CommandParameters) == 2)
-                        {
-                            return self::blacklistTarget($TargetUserClient, $UserClient, $CommandParameters[1]);
-                        }
-                        else
-                        {
-                            return self::blacklistTarget($TargetUserClient, $UserClient, $CommandParameters[1], $CommandParameters[2]);
-                        }
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
-                    }
-
-                    try
-                    {
-                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                            TelegramClientSearchMethod::byPublicId, $TargetUserParameter);
-
-                        // Target user via Private ID
-                        if(count($CommandParameters) < 2)
-                        {
-                            return self::displayUsage($this->getMessage(), "Missing blacklist parameter");
-                        }
-                        elseif(count($CommandParameters) == 2)
-                        {
-                            return self::blacklistTarget($TargetUserClient, $UserClient, $CommandParameters[1]);
-                        }
-                        else
-                        {
-                            return self::blacklistTarget($TargetUserClient, $UserClient, $CommandParameters[1], $CommandParameters[2]);
-                        }
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
-                    }
-
-
-                    try
-                    {
-                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                            TelegramClientSearchMethod::byUsername,
-                            str_ireplace("@", "", $TargetUserParameter)
+                            TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID
                         );
-
-                        // Target user via Username
-                        if(count($CommandParameters) < 2)
-                        {
-                            return self::displayUsage($this->getMessage(), "Missing blacklist parameter");
-                        }
-                        elseif(count($CommandParameters) == 2)
-                        {
-                            return self::blacklistTarget($TargetUserClient, $UserClient, $CommandParameters[1]);
-                        }
-                        else
-                        {
-                            return self::blacklistTarget($TargetUserClient, $UserClient, $CommandParameters[1], $CommandParameters[2]);
-                        }
+                        return self::blacklistTarget(
+                            $TargetUserClient, $this->WhoisCommand->UserClient, $BlacklistFlag, $OriginalPrivateID
+                        );
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
                     {
                         unset($telegramClientNotFoundException);
                     }
 
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "text" => "Unable to resolve the query '$TargetUserParameter'!"
-                    ]);
+                    try
+                    {
+                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                            TelegramClientSearchMethod::byPublicId, $TargetUserParameter
+                        );
+                        return self::blacklistTarget(
+                            $TargetUserClient, $this->WhoisCommand->UserClient, $BlacklistFlag, $OriginalPrivateID
+                        );
+                    }
+                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                    {
+                        unset($telegramClientNotFoundException);
+                    }
+
+
+                    try
+                    {
+                        $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                            TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetUserParameter)
+                        );
+                        return self::blacklistTarget(
+                            $TargetUserClient, $this->WhoisCommand->UserClient, $BlacklistFlag, $OriginalPrivateID
+                        );
+                    }
+                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                    {
+                        unset($telegramClientNotFoundException);
+                    }
+
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    if($this->CompleteSilentMode == false)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "text" => "Unable to resolve the query '$TargetUserParameter'!"
+                        ]);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                }
+                else
+                {
+                    if($this->WhoisCommand->MentionUserClients !== null)
+                    {
+                        if(count($this->WhoisCommand->MentionUserClients) > 0)
+                        {
+                            $TargetUserClient = $this->WhoisCommand->MentionUserClients[array_keys($this->WhoisCommand->MentionUserClients)[0]];
+                            return self::blacklistTarget($TargetUserClient, $this->WhoisCommand->UserClient, $BlacklistFlag, $OriginalPrivateID);
+                        }
+                    }
                 }
             }
 
@@ -354,22 +482,39 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public static function displayUsage(Message $message, string $error="Missing parameter")
+        public function displayUsage(Message $message, string $error="Missing parameter")
         {
-            return Request::sendMessage([
-                "chat_id" => $message->getChat()->getId(),
-                "parse_mode" => "html",
-                "reply_to_message_id" => $message->getMessageId(),
-                "text" =>
-                    "$error\n\n" .
-                    "Usage:\n" .
-                    "   <b>/blacklist</b> (In reply to target user) <code>[Blacklist Flag]</code>\n" .
-                    "   <b>/blacklist</b> (In reply to forwarded content/channel content) -f <code>[Blacklist Flag]</code>\n" .
-                    "   <b>/blacklist</b> <code>[Private Telegram ID]</code> <code>[Blacklist Flag]</code>\n" .
-                    "   <b>/blacklist</b> <code>[User/Channel ID]</code> <code>[Blacklist Flag]</code>\n" .
-                    "   <b>/blacklist</b> <code>[Username]</code> <code>[Blacklist Flag]</code>\n\n" .
-                    "For further instructions, refer to the operator manual"
-            ]);
+            if($this->PrivateMode)
+            {
+                Request::deleteMessage([
+                    "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                    "message_id" => $this->getMessage()->getMessageId()
+                ]);
+            }
+
+            if($this->CompleteSilentMode == false)
+            {
+                return Request::sendMessage([
+                    "chat_id" => $message->getChat()->getId(),
+                    "parse_mode" => "html",
+                    "reply_to_message_id" => $message->getMessageId(),
+                    "text" =>
+                        "$error\n\n" .
+                        "Usage:\n" .
+                        "   <b>/blacklist</b> (In reply to target user) <code>-r [Blacklist Flag]</code>\n" .
+                        "   <b>/blacklist</b> (In reply to forwarded content/channel content) -f <code>-r [Blacklist Flag]</code>\n" .
+                        "   <b>/blacklist</b> <code>-u [Private Telegram ID]</code> <code>-r [Blacklist Flag]</code>\n" .
+                        "   <b>/blacklist</b> <code>-u [User/Channel ID]</code> <code>-r [Blacklist Flag]</code>\n" .
+                        "   <b>/blacklist</b> <code>-u [Username]</code> <code>-r [Blacklist Flag]</code>\n" .
+                        "   <b>/blacklist</b> (Mention) <code>-r [Blacklist Flag]</code>\n\n" .
+                        "For further instructions, send /help blacklist"
+                ]);
+            }
+            else
+            {
+                return null;
+            }
+
         }
 
         /**
@@ -378,7 +523,7 @@
          * @param string $flag
          * @return string
          */
-        private static function blacklistFlagToReason(string $flag): string
+        public static function blacklistFlagToReason(string $flag): string
         {
             switch($flag)
             {
@@ -415,6 +560,12 @@
                 case BlacklistFlag::Special:
                     return "Special Reason, consult @IntellivoidSupport";
 
+                case BlacklistFlag::MassAdding:
+                    return "Mass adding users to groups/channels";
+
+                case BlacklistFlag::NameSpam:
+                    return "Promotion/Spam via Name or Bio";
+
                 default:
                     return "Unknown";
             }
@@ -423,7 +574,7 @@
         /**
          * Logs a blacklist action
          *
-         * @param TelegramClient $targetUserClient
+         * @param TelegramClient $targetClient
          * @param TelegramClient $operatorUserClient
          * @param bool $removal
          * @param bool $update
@@ -431,9 +582,23 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        private static function logAction(TelegramClient $targetUserClient, TelegramClient $operatorUserClient, bool $removal=false, bool $update=false, string $previous_flag=null)
+        private function logAction(TelegramClient $targetClient, TelegramClient $operatorUserClient, bool $removal=false, bool $update=false, string $previous_flag=null)
         {
-            $TargetUserStatus = SettingsManager::getUserStatus($targetUserClient);
+            switch($targetClient->Chat->Type)
+            {
+                case TelegramChatType::Private:
+                    $TargetUserStatus = SettingsManager::getUserStatus($targetClient);
+                    $NewBlacklistFlag = $TargetUserStatus->BlacklistFlag;
+                    break;
+
+                case TelegramChatType::Channel:
+                    $TargetChannelStatus = SettingsManager::getChannelStatus($targetClient);
+                    $NewBlacklistFlag = $TargetChannelStatus->BlacklistFlag;
+                    break;
+
+                default:
+                    $NewBlacklistFlag = "0x0";
+            }
 
             if($removal)
             {
@@ -448,7 +613,7 @@
                 $LogMessage = "#blacklist\n\n";
             }
 
-            $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $targetUserClient->PublicID . "</code>\n";
+            $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $targetClient->PublicID . "</code>\n";
             $LogMessage .= "<b>Operator PTID:</b> <code>" . $operatorUserClient->PublicID . "</code>\n";
 
             if($removal)
@@ -456,25 +621,38 @@
                 $LogMessage .= "\n<i>The previous blacklist flag</i> <code>$previous_flag</code> <i>has been lifted</i>";
             }
             elseif($update)
-            {$LogMessage .= "<b>Previous Flag:</b> <code>" . $previous_flag . "</code> (" . self::blacklistFlagToReason($previous_flag) . ")\n";
-                $LogMessage .= "<b>New Flag:</b> <code>" . $TargetUserStatus->BlacklistFlag . "</code> (" . self::blacklistFlagToReason($TargetUserStatus->BlacklistFlag) . ")\n";
+            {
+                $LogMessage .= "<b>Previous Flag:</b> <code>" . $previous_flag . "</code> (" . self::blacklistFlagToReason($previous_flag) . ")\n";
+                $LogMessage .= "<b>New Flag:</b> <code>" . $NewBlacklistFlag . "</code> (" . self::blacklistFlagToReason($NewBlacklistFlag) . ")\n";
             }
             else
             {
-                $LogMessage .= "<b>Blacklist Flag:</b> <code>" . $TargetUserStatus->BlacklistFlag . "</code> (" . self::blacklistFlagToReason($TargetUserStatus->BlacklistFlag) . ")\n";
+                $LogMessage .= "<b>Blacklist Flag:</b> <code>" . $NewBlacklistFlag. "</code> (" . self::blacklistFlagToReason($NewBlacklistFlag) . ")\n";
             }
 
+            $InlineKeyboard = new InlineKeyboard([
+                [
+                    "text" => "View Target",
+                    "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $targetClient->User->ID
+                ],
+                [
+                    "text" => "View Operator",
+                    "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $operatorUserClient->User->ID
+                ]
+            ]);
+
             return Request::sendMessage([
-                "chat_id" => "@SpamProtectionLogs",
+                "chat_id" => "-497877807",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
+                "reply_markup" => $InlineKeyboard,
                 "parse_mode" => "html",
                 "text" => $LogMessage
             ]);
         }
 
         /**
-         * Determines the target type and applies the appropiate blacklist flag to the client
+         * Determines the target type and applies the appropriate blacklist flag to the client
          *
          * @param TelegramClient $targetClient
          * @param TelegramClient $operatorClient
@@ -492,12 +670,27 @@
             {
                 case TelegramChatType::Group:
                 case TelegramChatType::SuperGroup:
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "You can't blacklist a chat"
-                    ]);
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    if($this->CompleteSilentMode == false)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "parse_mode" => "html",
+                            "text" => "You can't blacklist a chat"
+                        ]);
+                    }
+                    else
+                    {
+                        return null;
+                    }
 
                 case TelegramChatType::Private:
                     return self::blacklistUser($targetClient, $operatorClient, $blacklistFlag, $originalPrivateID);
@@ -506,13 +699,27 @@
                     return self::blacklistChannel($targetClient, $operatorClient, $blacklistFlag);
 
                 default:
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "The entity type '" .  $targetClient->Chat->Type . "' cannot be blacklisted"
-                    ]);
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
 
+                    if($this->CompleteSilentMode == false)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "parse_mode" => "html",
+                            "text" => "The entity type '" .  $targetClient->Chat->Type . "' cannot be blacklisted"
+                        ]);
+                    }
+                    else
+                    {
+                        return null;
+                    }
             }
         }
 
@@ -534,46 +741,31 @@
         {
             if($targetUserClient->Chat->Type !== TelegramChatType::Private)
             {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "This operation is not applicable to this entity."
-                ]);
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->CompleteSilentMode)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => "This operation is not applicable to this entity."
+                    ]);
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             $UserStatus = SettingsManager::getUserStatus($targetUserClient);
             $OriginalUserStatus = SettingsManager::getUserStatus($targetUserClient);
-
-            if($UserStatus->IsOperator)
-            {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "You can't blacklist an operator"
-                ]);
-            }
-
-            if($UserStatus->IsAgent)
-            {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "You can't blacklist an agent"
-                ]);
-            }
-
-            if($UserStatus->IsWhitelisted)
-            {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "You can't blacklist a user who's whitelisted"
-                ]);
-            }
 
             if($UserStatus->IsBlacklisted)
             {
@@ -583,208 +775,334 @@
                     {
                         if($UserStatus->OriginalPrivateID == $originalPrivateID)
                         {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" =>
-                                    "This user is already blacklisted for ban evade with the same ".
-                                    "Original Private ID, you can only update this user's blacklist if the ".
-                                    "Original Private ID is different."
-                            ]);
+                            if($this->PrivateMode)
+                            {
+                                Request::deleteMessage([
+                                    "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                    "message_id" => $this->getMessage()->getMessageId()
+                                ]);
+                            }
+
+                            if($this->CompleteSilentMode == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->DestinationChat->ID,
+                                    "reply_to_message_id" => $this->ReplyToID,
+                                    "parse_mode" => "html",
+                                    "text" =>
+                                        "This user is already blacklisted for ban evade with the same ".
+                                        "Original Private ID, you can only update this user's blacklist if the ".
+                                        "Original Private ID is different."
+                                ]);
+                            }
+                            else
+                            {
+                                return null;
+                            }
                         }
                     }
                     else
                     {
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => "This user is already blacklisted with the same flag."
-                        ]);
+                        if($this->PrivateMode)
+                        {
+                            Request::deleteMessage([
+                                "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+                        }
+
+                        if($this->CompleteSilentMode == false)
+                        {
+                            return Request::sendMessage([
+                                "chat_id" => $this->DestinationChat->ID,
+                                "reply_to_message_id" => $this->ReplyToID,
+                                "parse_mode" => "html",
+                                "text" => "This user is already blacklisted with the same flag."
+                            ]);
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 }
             }
 
-            switch(str_ireplace('X', 'x', strtoupper($blacklistFlag)))
+            try
             {
-                case BlacklistFlag::Special:
-                    if($operatorClient->User->Username !== "IntellivoidSupport")
-                    {
+                switch(str_ireplace('X', 'x', strtoupper($blacklistFlag)))
+                {
+                    case BlacklistFlag::Special:
+                        if($operatorClient->User->Username !== "Netkas")
+                        {
+                            if($this->PrivateMode)
+                            {
+                                Request::deleteMessage([
+                                    "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                    "message_id" => $this->getMessage()->getMessageId()
+                                ]);
+                            }
 
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => "Only IntellivoidSupport can blacklist using the flag 0xSP"
-                        ]);
-                    }
+                            if($this->CompleteSilentMode == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->DestinationChat->ID,
+                                    "reply_to_message_id" => $this->ReplyToID,
+                                    "parse_mode" => "html",
+                                    "text" => "Only IntellivoidSupport can blacklist using the flag 0xSP"
+                                ]);
+                            }
+                            else
+                            {
+                                return null;
+                            }
+                        }
 
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::Special;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
 
-                case BlacklistFlag::Spam:
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::Spam;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
+                        $UserStatus->updateBlacklist($blacklistFlag);
+                        $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
+                        break;
 
-                case BlacklistFlag::Scam:
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::Scam;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
+                    case BlacklistFlag::BanEvade:
+                        if($originalPrivateID == null)
+                        {
+                            if($this->PrivateMode)
+                            {
+                                Request::deleteMessage([
+                                    "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                    "message_id" => $this->getMessage()->getMessageId()
+                                ]);
+                            }
 
-                case BlacklistFlag::Raid:
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::Raid;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
+                            if($this->CompleteSilentMode == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->DestinationChat->ID,
+                                    "reply_to_message_id" => $this->ReplyToID,
+                                    "parse_mode" => "html",
+                                    "text" => "This blacklist flag requires an additional parameter 'Private Telegram ID'"
+                                ]);
+                            }
+                            else
+                            {
+                                return null;
+                            }
+                        }
 
-                case BlacklistFlag::PrivateSpam:
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::PrivateSpam;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
+                        try
+                        {
+                            SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $originalPrivateID);
+                        }
+                        catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                        {
+                            unset($telegramClientNotFoundException);
 
-                case BlacklistFlag::PornographicSpam:
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::PornographicSpam;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
+                            if($this->PrivateMode)
+                            {
+                                Request::deleteMessage([
+                                    "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                    "message_id" => $this->getMessage()->getMessageId()
+                                ]);
+                            }
 
-                case BlacklistFlag::PiracySpam:
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::PiracySpam;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
+                            if($this->CompleteSilentMode == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->DestinationChat->ID,
+                                    "reply_to_message_id" => $this->ReplyToID,
+                                    "parse_mode" => "html",
+                                    "text" => "The given private ID does not exist"
+                                ]);
+                            }
+                            else
+                            {
+                                return null;
+                            }
+                        }
 
-                case BlacklistFlag::Impersonator:
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::Impersonator;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
+                        $UserStatus->updateBlacklist($blacklistFlag, $originalPrivateID);
+                        $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
+                        break;
 
-                case BlacklistFlag::ChildAbuse:
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::ChildAbuse;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
-
-                case BlacklistFlag::BanEvade:
-                    if($originalPrivateID == null)
-                    {
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => "This blacklist flag requires an additional parameter 'Private Telegram ID'"
-                        ]);
-                    }
-
-                    try
-                    {
-                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $originalPrivateID);
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => "The given private ID does not exist"
-                        ]);
-                    }
-
-                    $UserStatus->IsBlacklisted = true;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::BanEvade;
-                    $UserStatus->OriginalPrivateID = $originalPrivateID;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
-
-                case BlacklistFlag::None:
-                    $UserStatus->IsBlacklisted = false;
-                    $UserStatus->BlacklistFlag = BlacklistFlag::None;
-                    $UserStatus->OriginalPrivateID = null;
-                    $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
-                    break;
-
-                default:
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "Invalid blacklist flag <code>" . str_ireplace('X', 'x', strtoupper($blacklistFlag)) . "</code>"
+                    default:
+                        $UserStatus->updateBlacklist($blacklistFlag);
+                        $targetUserClient = SettingsManager::updateUserStatus($targetUserClient, $UserStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetUserClient);
+                        break;
+                }
+            }
+            catch (InvalidBlacklistFlagException $e)
+            {
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
                     ]);
+                }
+
+                if($this->CompleteSilentMode == false)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" =>
+                            "Invalid blacklist flag <code>" . str_ireplace('X', 'x', strtoupper($blacklistFlag)) . "</code>, did you mean <code>" . $e->getBestMatch() . "</code>?"
+                    ]);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (MissingOriginalPrivateIdException $e)
+            {
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->CompleteSilentMode == false)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => "Blacklisting a user for ban evade requires the original private telegram ID parameter (-o, -optid)"
+                    ]);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (PropertyConflictedException $e)
+            {
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->CompleteSilentMode == false)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => $e->getMessage()
+                    ]);
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             if($UserStatus->BlacklistFlag == BlacklistFlag::None)
             {
-                Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "The user <code>" . $targetUserClient->PublicID . "</code> blacklist flag has been removed"
-                ]);
-                return self::logAction(
-                    $targetUserClient, $operatorClient,
-                    true, false, $OriginalUserStatus->BlacklistFlag
-                );
+                if($OriginalUserStatus->BlacklistFlag == BlacklistFlag::None)
+                {
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    if($this->CompleteSilentMode == false)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "parse_mode" => "html",
+                            "text" => "The user " .  WhoisCommand::generateMention($targetUserClient) . " already has no blacklist flag."
+                        ]);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->SilentMode == false)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => "The user " .  WhoisCommand::generateMention($targetUserClient) . " blacklist flag has been removed"
+                    ]);
+                }
+
+                return self::logAction($targetUserClient, $operatorClient, true, false, $OriginalUserStatus->BlacklistFlag);
             }
 
             if($OriginalUserStatus->IsBlacklisted)
             {
-                Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "The user <code>" . $targetUserClient->PublicID . "</code> blacklist flag has been updated from " .
-                        "<code>" . str_ireplace('X', 'x', strtoupper($OriginalUserStatus->BlacklistFlag)) . "</code> to ".
-                        "<code>" . str_ireplace('X', 'x', strtoupper($UserStatus->BlacklistFlag)) . "</code>"
-                ]);
-                return self::logAction(
-                    $targetUserClient, $operatorClient,
-                    false, true, $OriginalUserStatus->BlacklistFlag
-                );
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->SilentMode == false)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" =>
+                            "The user " . WhoisCommand::generateMention($targetUserClient) . " blacklist flag has been updated from " .
+                            "<code>" . str_ireplace('X', 'x', strtoupper($OriginalUserStatus->BlacklistFlag)) . "</code> to ".
+                            "<code>" . str_ireplace('X', 'x', strtoupper($UserStatus->BlacklistFlag)) . "</code>"
+                    ]);
+                }
+
+                return self::logAction($targetUserClient, $operatorClient, false, true, $OriginalUserStatus->BlacklistFlag);
             }
             else
             {
-                Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "The user <code>" . $targetUserClient->PublicID . "</code> has been blacklisted with the flag " .
-                        "<code>" . str_ireplace('X', 'x', strtoupper($UserStatus->BlacklistFlag)) . "</code>"
-                ]);
-                return self::logAction(
-                    $targetUserClient, $operatorClient,
-                    false, false
-                );
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->SilentMode == false)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" =>
+                            "The user " . WhoisCommand::generateMention($targetUserClient) . " has been blacklisted with the flag " .
+                            "<code>" . str_ireplace('X', 'x', strtoupper($UserStatus->BlacklistFlag)) . "</code>"
+                    ]);
+                }
+
+                return self::logAction($targetUserClient, $operatorClient, false, false);
             }
         }
 
@@ -805,12 +1123,27 @@
         {
             if($targetChannelClient->Chat->Type !== TelegramChatType::Channel)
             {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "This operation is not applicable to this entity."
-                ]);
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->CompleteSilentMode == false)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => "This operation is not applicable to this entity."
+                    ]);
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             $ChannelStatus = SettingsManager::getChannelStatus($targetChannelClient);
@@ -818,180 +1151,289 @@
 
             if($ChannelStatus->IsWhitelisted)
             {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "You can't blacklist this channel since it's whitelisted"
-                ]);
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->CompleteSilentMode == false)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => "You can't blacklist this channel since it's whitelisted"
+                    ]);
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             if($ChannelStatus->IsOfficial)
             {
-                Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "Notice! This channel is considered to be official by Intellivoid, nothing is stopping you from blacklisting it."
-                ]);
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->CompleteSilentMode == false)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => "Notice! This channel is considered to be official by Intellivoid, nothing is stopping you from blacklisting it."
+                    ]);
+                }
             }
 
             if($ChannelStatus->IsBlacklisted)
             {
                 if($ChannelStatus->BlacklistFlag == $blacklistFlag)
                 {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "This channel is already blacklisted with the same flag."
-                    ]);
-                }
-            }
-
-            switch(str_ireplace('X', 'x', strtoupper($blacklistFlag)))
-            {
-                case BlacklistFlag::Special:
-                    if($operatorClient->User->Username !== "IntellivoidSupport")
+                    if($this->PrivateMode)
                     {
-
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => "Only IntellivoidSupport can blacklist using the flag 0xSP"
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
                         ]);
                     }
 
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::Special;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
+                    if($this->CompleteSilentMode == false)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "parse_mode" => "html",
+                            "text" => "This channel is already blacklisted with the same flag."
+                        ]);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+            }
 
-                case BlacklistFlag::Spam:
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::Spam;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
+            try
+            {
+                switch(str_ireplace('X', 'x', strtoupper($blacklistFlag)))
+                {
+                    case BlacklistFlag::Special:
+                        if($operatorClient->User->Username !== "Netkas")
+                        {
+                            if($this->PrivateMode)
+                            {
+                                Request::deleteMessage([
+                                    "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                    "message_id" => $this->getMessage()->getMessageId()
+                                ]);
+                            }
 
-                case BlacklistFlag::Scam:
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::Scam;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
+                            if($this->CompleteSilentMode == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->DestinationChat->ID,
+                                    "reply_to_message_id" => $this->ReplyToID,
+                                    "parse_mode" => "html",
+                                    "text" => "Only IntellivoidSupport can blacklist using the flag 0xSP"
+                                ]);
+                            }
+                            else
+                            {
+                                return null;
+                            }
+                        }
 
-                case BlacklistFlag::Raid:
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::Raid;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
+                        $ChannelStatus->updateBlacklist($blacklistFlag);
+                        $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
+                        break;
 
-                case BlacklistFlag::PrivateSpam:
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::PrivateSpam;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
+                    case BlacklistFlag::BanEvade:
+                        if($this->PrivateMode)
+                        {
+                            Request::deleteMessage([
+                                "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+                        }
 
-                case BlacklistFlag::PornographicSpam:
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::PornographicSpam;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
+                        if($this->CompleteSilentMode == false)
+                        {
+                            return Request::sendMessage([
+                                "chat_id" => $this->DestinationChat->ID,
+                                "reply_to_message_id" => $this->ReplyToID,
+                                "parse_mode" => "html",
+                                "text" => "You can't blacklist a channel for ban evade."
+                            ]);
+                        }
+                        else
+                        {
+                            return null;
+                        }
 
-                case BlacklistFlag::PiracySpam:
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::PiracySpam;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
+                    default:
+                        $ChannelStatus->updateBlacklist($blacklistFlag);
+                        $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
+                        break;
+                }
+            }
+            catch (InvalidBlacklistFlagException $e)
+            {
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
 
-                case BlacklistFlag::Impersonator:
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::Impersonator;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
-
-                case BlacklistFlag::ChildAbuse:
-                    $ChannelStatus->IsBlacklisted = true;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::ChildAbuse;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
-
-                case BlacklistFlag::BanEvade:
+                if($this->CompleteSilentMode == false)
+                {
                     return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
                         "parse_mode" => "html",
-                        "text" => "You can't blacklist a channel for ban evade."
+                        "text" =>
+                            "Invalid blacklist flag <code>" . str_ireplace('X', 'x', strtoupper($blacklistFlag)) . "</code>, did you mean <code>" . $e->getBestMatch() . "</code>?"
                     ]);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (PropertyConflictedException $e)
+            {
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
 
-                case BlacklistFlag::None:
-                    $ChannelStatus->IsBlacklisted = false;
-                    $ChannelStatus->BlacklistFlag = BlacklistFlag::None;
-                    $targetChannelClient = SettingsManager::updateChannelStatus($targetChannelClient, $ChannelStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($targetChannelClient);
-                    break;
-
-                default:
+                if($this->CompleteSilentMode == false)
+                {
                     return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "text" => "Invalid blacklist flag <code>" . str_ireplace('X', 'x', strtoupper($blacklistFlag)) . "</code>"
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => $e->getMessage()
                     ]);
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             if($ChannelStatus->BlacklistFlag == BlacklistFlag::None)
             {
-                Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "The channel <code>" . $targetChannelClient->PublicID . "</code> blacklist flag has been removed"
-                ]);
-                return self::logAction(
-                    $targetChannelClient, $operatorClient,
-                    true, false, $OriginalChannelStatus->BlacklistFlag
-                );
+                if($OriginalChannelStatus->BlacklistFlag == BlacklistFlag::None)
+                {
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    if($this->CompleteSilentMode == false)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "parse_mode" => "html",
+                            "text" => "The channel " .  WhoisCommand::generateMention($targetChannelClient) . " already has no blacklist flag."
+                        ]);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->SilentMode == false)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" => "The channel " . WhoisCommand::generateMention($targetChannelClient) . " blacklist flag has been removed"
+                    ]);
+                }
+
+                return self::logAction($targetChannelClient, $operatorClient, true, false, $OriginalChannelStatus->BlacklistFlag);
             }
 
             if($OriginalChannelStatus->IsBlacklisted)
             {
-                Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "The channel <code>" . $targetChannelClient->PublicID . "</code> blacklist flag has been updated from " .
-                        "<code>" . str_ireplace('X', 'x', strtoupper($OriginalChannelStatus->BlacklistFlag)) . "</code> to ".
-                        "<code>" . str_ireplace('X', 'x', strtoupper($ChannelStatus->BlacklistFlag)) . "</code>"
-                ]);
-                return self::logAction(
-                    $targetChannelClient, $operatorClient,
-                    false, true, $OriginalChannelStatus->BlacklistFlag
-                );
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->SilentMode == false)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" =>
+                            "The channel " . WhoisCommand::generateMention($targetChannelClient) . " blacklist flag has been updated from " .
+                            "<code>" . str_ireplace('X', 'x', strtoupper($OriginalChannelStatus->BlacklistFlag)) . "</code> to ".
+                            "<code>" . str_ireplace('X', 'x', strtoupper($ChannelStatus->BlacklistFlag)) . "</code>"
+                    ]);
+                }
+
+                return self::logAction($targetChannelClient, $operatorClient, false, true, $OriginalChannelStatus->BlacklistFlag);
             }
             else
             {
-                Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "The channel <code>" . $targetChannelClient->PublicID . "</code> has been blacklisted with the flag " .
-                        "<code>" . str_ireplace('X', 'x', strtoupper($ChannelStatus->BlacklistFlag)) . "</code>"
-                ]);
-                return self::logAction(
-                    $targetChannelClient, $operatorClient,
-                    false, false
-                );
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
+
+                if($this->SilentMode == false)
+                {
+                    Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "parse_mode" => "html",
+                        "text" =>
+                            "The channel " . WhoisCommand::generateMention($targetChannelClient) . " has been blacklisted with the flag " .
+                            "<code>" . str_ireplace('X', 'x', strtoupper($ChannelStatus->BlacklistFlag)) . "</code>"
+                    ]);
+                }
+
+                return self::logAction($targetChannelClient, $operatorClient, false, false);
             }
         }
 

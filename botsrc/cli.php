@@ -14,11 +14,7 @@
     use BackgroundWorker\BackgroundWorker;
     use Longman\TelegramBot\Exception\TelegramException;
 
-    /** @noinspection PhpIncludeInspection */
-    require("ppm");
-
     // Import all required auto loaders
-<<<<<<< HEAD:botsrc/cli.php
     /** @noinspection PhpIncludeInspection */
     require("ppm");
 
@@ -51,38 +47,6 @@
         exit(255);
     }
 
-=======
-    if(defined("PPM") == false)
-    {
-        /** @noinspection PhpIncludeInspection */
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
-        /** @noinspection PhpIncludeInspection */
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
-    }
-    else
-    {
-        \ppm\ppm::import("net.intellivoid.acm");
-        \ppm\ppm::import("net.intellivoid.background_worker");
-        \ppm\ppm::import("net.intellivoid.coffeehouse");
-        \ppm\ppm::import("net.intellivoid.deepanalytics");
-        \ppm\ppm::import("net.intellivoid.spam_protection");
-        \ppm\ppm::import("net.intellivoid.telegram_client_manager");
-    }
-
-    $current_directory = getcwd();
-
-    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
-    {
-        $current_directory = __DIR__;
-    }
-
-    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
-    {
-        print("Cannot find vendor directory" . PHP_EOL);
-        exit(255);
-    }
-
->>>>>>> master:botsrc/cli.php
     require($current_directory . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
     if(class_exists("SpamProtectionBot") == false)

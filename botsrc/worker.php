@@ -16,11 +16,7 @@
     use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
 
-    /** @noinspection PhpIncludeInspection */
-    require("ppm");
-
     // Import all required auto loaders
-<<<<<<< HEAD:botsrc/worker.php
     /** @noinspection PhpIncludeInspection */
     require("ppm");
 
@@ -59,45 +55,6 @@
         exit(255);
     }
 
-=======
-    if(defined("PPM") == false)
-    {
-        /** @noinspection PhpIncludeInspection */
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
-        /** @noinspection PhpIncludeInspection */
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'CoffeeHouse' . DIRECTORY_SEPARATOR . 'CoffeeHouse.php');
-        /** @noinspection PhpIncludeInspection */
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
-
-        if(class_exists('DeepAnalytics\DeepAnalytics') == false)
-        {
-            /** @noinspection PhpIncludeInspection */
-            include_once(__DIR__ . DIRECTORY_SEPARATOR . 'DeepAnalytics' . DIRECTORY_SEPARATOR . 'DeepAnalytics.php');
-        }
-    }
-    else
-    {
-        \ppm\ppm::import("net.intellivoid.acm");
-        \ppm\ppm::import("net.intellivoid.background_worker");
-        \ppm\ppm::import("net.intellivoid.coffeehouse");
-        \ppm\ppm::import("net.intellivoid.deepanalytics");
-        \ppm\ppm::import("net.intellivoid.spam_protection");
-    }
-
-    $current_directory = getcwd();
-
-    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
-    {
-        $current_directory = __DIR__;
-    }
-
-    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
-    {
-        print("Cannot find vendor directory" . PHP_EOL);
-        exit(255);
-    }
-
->>>>>>> master:botsrc/worker.php
     require($current_directory . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
     if(class_exists("SpamProtectionBot") == false)
