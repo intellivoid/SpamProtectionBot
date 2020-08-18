@@ -6,12 +6,13 @@
 
     namespace Longman\TelegramBot\Commands\UserCommands;
 
-    use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
+    use pop\pop;
     use SpamProtection\Managers\SettingsManager;
+    use SpamProtection\Objects\ChannelStatus;
     use SpamProtection\Objects\ChatSettings;
     use SpamProtection\Objects\UserStatus;
     use SpamProtectionBot;
@@ -20,8 +21,6 @@
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
-    use TelegramClientManager\Objects\TelegramClient\Chat;
-    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Property Editor command
@@ -38,7 +37,7 @@
         /**
          * @var string
          */
-        protected $description = 'Allows the main administrator to get or modify property values of a user or chat';
+        protected $description = 'Allows the main administrator to get or modify property values of a object';
 
         /**
          * @var string
@@ -48,12 +47,20 @@
         /**
          * @var string
          */
-        protected $version = '1.2.0';
+        protected $version = '2.0.0';
 
         /**
          * @var bool
          */
         protected $private_only = false;
+
+        /**
+         * The whois command used for finding targets
+         *
+         * @var WhoisCommand|null
+         */
+        public $WhoisCommand = null;
+
 
         /**
          * Command execute method
@@ -68,81 +75,41 @@
         public function execute()
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
-
-            $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
-
-            try
-            {
-                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
-
-                // Define and update chat client
-                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
-                if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
-                {
-                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
-                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
-                }
-
-                // Define and update user client
-                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
-                if(isset($UserClient->SessionData->Data["user_status"]) == false)
-                {
-                    $UserStatus = SettingsManager::getUserStatus($UserClient);
-                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
-                }
-
-                // Define and update the forwarder if available
-                if($this->getMessage()->getReplyToMessage() !== null)
-                {
-                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
-                    {
-                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
-                        {
-                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
-                        }
-                    }
-
-                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
-                    {
-                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
-                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
-                        {
-                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
-                        }
-                    }
-                }
-            }
-            catch(Exception $e)
-            {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Commands/" . $this->name . ".bin</code>"
-                ]);
-            }
+            $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
+            $this->WhoisCommand->findClients();
 
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'prop_command', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'prop_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
+            $DeepAnalytics->tally('tg_spam_protection', 'prop_command', (int)$this->WhoisCommand->ChatObject->ID);
 
-            if($UserClient->User->Username !== "Netkas")
+            // Ignore forwarded commands
+            if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
+            {
+                return null;
+            }
+
+            // Parse the options
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
+            {
+                $options = pop::parse($this->getMessage()->getText(true));
+
+                if(isset($options["info"]))
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" =>
+                            $this->name . " (v" . $this->version . ")\n" .
+                            " Usage: <code>" . $this->usage . "</code>\n\n" .
+                            "<i>" . $this->description . "</i>"
+                    ]);
+                }
+            }
+
+            if($this->WhoisCommand->UserObject->Username !== "Netkas")
             {
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -152,35 +119,42 @@
                 ]);
             }
 
-            $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-            $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
-
-            if(count($CommandParameters) == 0)
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
             {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "Invalid object type"
-                ]);
-            }
+                $options = pop::parse($this->getMessage()->getText(true));
+                $private_telegram_id = null;
+                $pointer = null;
+                $set_value = null;
 
-            if($CommandParameters[0] == "u")
-            {
-                if(count($CommandParameters) < 2)
+                if(isset($options["ptid"]))
+                {
+                    $private_telegram_id = $options["ptid"];
+                }
+
+                if(isset($options["pointer"]))
+                {
+                    $pointer = $options["pointer"];
+                }
+
+                if(isset($options["set-value"]))
+                {
+                    $set_value = $options["set-value"];
+                }
+
+                if($private_telegram_id == null)
                 {
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "text" => "Missing Private ID parameter"
+                        "text" => "Invalid usage, missing option --ptid"
                     ]);
                 }
 
                 try
                 {
-                    $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                        TelegramClientSearchMethod::byPublicId, $CommandParameters[1]
+                    $TargetClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                        TelegramClientSearchMethod::byPublicId, $private_telegram_id
                     );
                 }
                 catch (TelegramClientNotFoundException $e)
@@ -189,307 +163,212 @@
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "text" => "Invalid Private ID"
+                        "text" => "Property set error, Invalid Private ID"
                     ]);
                 }
 
-                if($TargetUserClient->Chat->Type !== TelegramChatType::Private)
+                switch($TargetClient->Chat->Type)
                 {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "This object is not a user"
-                    ]);
-                }
+                    case TelegramChatType::Private:
+                        $UserStatus = SettingsManager::getUserStatus($TargetClient);
+                        $Bytes = $UserStatus->toArray();
 
-                $TargetUserStatus = SettingsManager::getUserStatus($TargetUserClient);
-
-                if(count($CommandParameters) > 2)
-                {
-                    if(count($CommandParameters) == 3)
-                    {
-                        $Results = $TargetUserStatus->toArray();
-
-                        if(isset($Results[$CommandParameters[2]]))
+                        if($pointer !== null)
                         {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "<code>" . $Results[$CommandParameters[2]] . "</code>"
-                            ]);
+                            if(array_key_exists($pointer, $Bytes) == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property <code>" . $pointer . "</code> not found"
+                                ]);
+                            }
+
+                            if($set_value == null)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "<code>" . json_encode($Bytes[$pointer], JSON_PRETTY_PRINT) . "</code>"
+                                ]);
+                            }
+                            else
+                            {
+                                $Results[$pointer] = $set_value;
+                                $TargetUserStatus = UserStatus::fromArray($TargetClient->User, $Results);
+                                $TargetClient = SettingsManager::updateUserStatus($TargetClient, $TargetUserStatus);
+                                $TelegramClientManager->getTelegramClientManager()->updateClient($TargetClient);
+
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property <code>" . $pointer . "</code> updated successfully"
+                                ]);
+                            }
                         }
                         else
                         {
+                            if($set_value !== null)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property set error, the parameter --set-value requires the parameter --pointer"
+                                ]);
+                            }
+
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                 "parse_mode" => "html",
-                                "text" => "Property <code>" . $CommandParameters[2] . "</code> not found"
+                                "text" => "<code>" . json_encode($Bytes, JSON_PRETTY_PRINT) . "</code>"
                             ]);
                         }
-                    }
+                        break;
 
-                    if(count($CommandParameters) == 4)
-                    {
-                        $Results = $TargetUserStatus->toArray();
+                    case TelegramChatType::Channel:
+                        $ChannelStatus = SettingsManager::getChannelStatus($TargetClient);
+                        $Bytes = $ChannelStatus->toArray();
 
-                        if(isset($Results[$CommandParameters[2]]) == false)
+                        if($pointer !== null)
                         {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "Property <code>" . $CommandParameters[2] . "</code> not found"
-                            ]);
-                        }
+                            if(array_key_exists($pointer, $Bytes) == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property <code>" . $pointer . "</code> not found"
+                                ]);
+                            }
 
-                        $Results[$CommandParameters[2]] = $CommandParameters[3];
-                        $TargetUserStatus = UserStatus::fromArray($TargetUserClient->User, $Results);
-                        $TargetUserClient = SettingsManager::updateUserStatus($TargetUserClient, $TargetUserStatus);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetUserClient);
+                            if($set_value == null)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "<code>" . json_encode($Bytes[$pointer], JSON_PRETTY_PRINT) . "</code>"
+                                ]);
+                            }
+                            else
+                            {
+                                $Bytes[$pointer] = $set_value;
+                                $TargetChannelStatus = ChannelStatus::fromArray($TargetClient->Chat, $Bytes);
+                                $TargetChannelClient = SettingsManager::updateChannelStatus($TargetClient, $TargetChannelStatus);
+                                $TelegramClientManager->getTelegramClientManager()->updateClient($TargetChannelClient);
 
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => "Property <code>" . $CommandParameters[2] . "</code> updated successfully"
-                        ]);
-                    }
-                }
-                else
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "<code>" . json_encode($TargetUserStatus->toArray(), JSON_PRETTY_PRINT) . "</code>"
-                    ]);
-                }
-
-            }
-            elseif($CommandParameters[0] == "c")
-            {
-                if(count($CommandParameters) < 2)
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "Missing Private Chat ID parameter"
-                    ]);
-                }
-
-                try
-                {
-                    $TargetChatClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                        TelegramClientSearchMethod::byPublicId, $CommandParameters[1]
-                    );
-                }
-                catch (TelegramClientNotFoundException $e)
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "Invalid Private ID"
-                    ]);
-                }
-
-                if($TargetChatClient->Chat->Type !== TelegramChatType::Group)
-                {
-                    if($TargetChatClient->Chat->Type !== TelegramChatType::SuperGroup)
-                    {
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => "This object is not a group or supergroup"
-                        ]);
-                    }
-                }
-
-                $TargetChatSettings = SettingsManager::getChatSettings($TargetChatClient);
-
-                if(count($CommandParameters) > 2)
-                {
-                    if(count($CommandParameters) == 3)
-                    {
-                        $Results = $TargetChatSettings->toArray();
-
-                        if(isset($Results[$CommandParameters[2]]))
-                        {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "<code>" . $Results[$CommandParameters[2]] . "</code>"
-                            ]);
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property <code>" . $pointer . "</code> updated successfully"
+                                ]);
+                            }
                         }
                         else
                         {
+                            if($set_value !== null)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property set error, the parameter --set-value requires the parameter --pointer"
+                                ]);
+                            }
+
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                 "parse_mode" => "html",
-                                "text" => "Property <code>" . $CommandParameters[2] . "</code> not found"
+                                "text" => "<code>" . json_encode($Bytes, JSON_PRETTY_PRINT) . "</code>"
                             ]);
                         }
-                    }
+                        break;
 
-                    if(count($CommandParameters) == 4)
-                    {
-                        $Results = $TargetChatSettings->toArray();
+                    case TelegramChatType::Group:
+                    case TelegramChatType::SuperGroup:
+                        $ChatStatus = SettingsManager::getChatSettings($TargetClient);
+                        $Bytes = $ChatStatus->toArray();
 
-                        if(isset($Results[$CommandParameters[2]]) == false)
+                        if($pointer !== null)
                         {
+                            if(array_key_exists($pointer, $Bytes) == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property <code>" . $pointer . "</code> not found"
+                                ]);
+                            }
 
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "Property <code>" . $CommandParameters[2] . "</code> not found"
-                            ]);
-                        }
+                            if($set_value == null)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "<code>" . json_encode($Bytes[$pointer], JSON_PRETTY_PRINT) . "</code>"
+                                ]);
+                            }
+                            else
+                            {
+                                $Bytes[$pointer] = $set_value;
+                                $TargetChatSettings = ChatSettings::fromArray($TargetClient->Chat, $Bytes);
+                                $TargetChatClient = SettingsManager::updateChatSettings($TargetClient, $TargetChatSettings);
+                                $TelegramClientManager->getTelegramClientManager()->updateClient($TargetChatClient);
 
-                        $Results[$CommandParameters[2]] = $CommandParameters[3];
-                        $TargetChatSettings = ChatSettings::fromArray($TargetChatClient->Chat, $Results);
-                        $TargetChatClient = SettingsManager::updateChatSettings($TargetChatClient, $TargetChatSettings);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetChatClient);
-
-                        return Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => "Property <code>" . $CommandParameters[2] . "</code> updated successfully"
-                        ]);
-                    }
-                }
-                else
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "<code>" . json_encode($TargetChatSettings->toArray(), JSON_PRETTY_PRINT) . "</code>"
-                    ]);
-                }
-            }
-            elseif($CommandParameters[0] == "ch")
-            {
-                if(count($CommandParameters) < 2)
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "Missing Private Channel ID parameter"
-                    ]);
-                }
-
-                try
-                {
-                    $TargetChannelClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                        TelegramClientSearchMethod::byPublicId, $CommandParameters[1]
-                    );
-                }
-                catch (TelegramClientNotFoundException $e)
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "Invalid Private ID"
-                    ]);
-                }
-
-                if($TargetChannelClient->Chat->Type !== TelegramChatType::Channel)
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "This object is not a channel"
-                    ]);
-                }
-
-                $TargetChannelSettings = SettingsManager::getChannelStatus($TargetChannelClient);
-
-                if(count($CommandParameters) > 2)
-                {
-                    if(count($CommandParameters) == 3)
-                    {
-                        $Results = $TargetChannelSettings->toArray();
-
-                        if(isset($Results[$CommandParameters[2]]))
-                        {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "<code>" . $Results[$CommandParameters[2]] . "</code>"
-                            ]);
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property <code>" . $pointer . "</code> updated successfully"
+                                ]);
+                            }
                         }
                         else
                         {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "Property <code>" . $CommandParameters[2] . "</code> not found"
-                            ]);
-                        }
-                    }
-
-                    if(count($CommandParameters) == 4)
-                    {
-                        $Results = $TargetChannelSettings->toArray();
-
-                        if(isset($Results[$CommandParameters[2]]) == false)
-                        {
+                            if($set_value !== null)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Property set error, the parameter --set-value requires the parameter --pointer"
+                                ]);
+                            }
 
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                 "parse_mode" => "html",
-                                "text" => "Property <code>" . $CommandParameters[2] . "</code> not found"
+                                "text" => "<code>" . json_encode($Bytes, JSON_PRETTY_PRINT) . "</code>"
                             ]);
                         }
+                        break;
 
-                        $Results[$CommandParameters[2]] = $CommandParameters[3];
-                        $TargetChannelSettings = ChatSettings::fromArray($TargetChannelClient->Chat, $Results);
-                        $TargetChannelClient = SettingsManager::updateChatSettings($TargetChannelClient, $TargetChannelSettings);
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetChannelClient);
-
+                    default:
                         return Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
                             "parse_mode" => "html",
-                            "text" => "Property <code>" . $CommandParameters[2] . "</code> updated successfully"
+                            "text" => "Property set error, this object type contains no properties that can be modified."
                         ]);
-                    }
                 }
-                else
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "<code>" . json_encode($TargetChannelSettings->toArray(), JSON_PRETTY_PRINT) . "</code>"
-                    ]);
-                }
-            }
-            else
-            {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "Invalid object type"
-                ]);
             }
 
-            return null;
+            return Request::sendMessage([
+                "chat_id" => $this->getMessage()->getChat()->getId(),
+                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                "parse_mode" => "html",
+                "text" => "Invalid usage, missing arguments"
+            ]);
         }
+
     }
