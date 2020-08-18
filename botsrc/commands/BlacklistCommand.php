@@ -117,10 +117,7 @@
         {
             // Find clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
-            $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
-            $this->WhoisCommand->findClients();
-            $this->DestinationChat = $this->WhoisCommand->ChatObject;
-            $this->ReplyToID = $this->getMessage()->getMessageId();
+            $this->subExecute();
 
             // Tally DeepAnalytics
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
@@ -133,59 +130,6 @@
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
                 return null;
-            }
-
-            // Parse the options
-            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
-            {
-                $options = pop::parse($this->getMessage()->getText(true));
-
-                if(isset($options["p"]) == true || isset($options["private"]) == true)
-                {
-                    if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::Private)
-                    {
-                        $this->PrivateMode = true;
-                        $this->DestinationChat = new TelegramClient\Chat();
-                        $this->DestinationChat->ID = $this->WhoisCommand->UserObject->ID;
-                        $this->DestinationChat->Type = TelegramChatType::Private;
-                        $this->DestinationChat->FirstName = $this->WhoisCommand->UserObject->FirstName;
-                        $this->DestinationChat->LastName = $this->WhoisCommand->UserObject->LastName;
-                        $this->DestinationChat->Username = $this->WhoisCommand->UserObject->Username;
-                        $this->ReplyToID = null;
-                    }
-                }
-
-                if(isset($options["s"]) == true || isset($options["silent"]) == true)
-                {
-                    $this->SilentMode = true;
-                }
-
-                if(isset($options["cs"]) == true || isset($options["complete-silent"]) == true)
-                {
-                    $this->SilentMode = true;
-                    $this->CompleteSilentMode = true;
-                }
-
-                if(isset($options["info"]))
-                {
-                    if($this->PrivateMode)
-                    {
-                        Request::deleteMessage([
-                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
-                            "message_id" => $this->getMessage()->getMessageId()
-                        ]);
-                    }
-
-                    return Request::sendMessage([
-                        "chat_id" => $this->DestinationChat->ID,
-                        "parse_mode" => "html",
-                        "reply_to_message_id" => $this->ReplyToID,
-                        "text" =>
-                            $this->name . " (v" . $this->version . ")\n" .
-                            " Usage: <code>" . $this->usage . "</code>\n\n" .
-                            "<i>" . $this->description . "</i>"
-                    ]);
-                }
             }
 
             // Check if permissions are applicable
@@ -306,8 +250,6 @@
                         {
                             return null;
                         }
-
-
                     }
 
                     // If it contains the original user ID
@@ -472,6 +414,74 @@
             }
 
             return self::displayUsage($this->getMessage(), "Missing user parameter");
+        }
+
+        /**
+         * @return ServerResponse|null
+         * @throws TelegramException
+         * @noinspection DuplicatedCode
+         */
+        public function subExecute()
+        {
+            $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
+            $this->WhoisCommand->findClients();
+            $this->DestinationChat = $this->WhoisCommand->ChatObject;
+            $this->ReplyToID = $this->getMessage()->getMessageId();
+
+            // Parse the options
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
+            {
+                $options = pop::parse($this->getMessage()->getText(true));
+
+                if(isset($options["p"]) == true || isset($options["private"]) == true)
+                {
+                    if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::Private)
+                    {
+                        $this->PrivateMode = true;
+                        $this->DestinationChat = new TelegramClient\Chat();
+                        $this->DestinationChat->ID = $this->WhoisCommand->UserObject->ID;
+                        $this->DestinationChat->Type = TelegramChatType::Private;
+                        $this->DestinationChat->FirstName = $this->WhoisCommand->UserObject->FirstName;
+                        $this->DestinationChat->LastName = $this->WhoisCommand->UserObject->LastName;
+                        $this->DestinationChat->Username = $this->WhoisCommand->UserObject->Username;
+                        $this->ReplyToID = null;
+                    }
+                }
+
+                if(isset($options["s"]) == true || isset($options["silent"]) == true)
+                {
+                    $this->SilentMode = true;
+                }
+
+                if(isset($options["cs"]) == true || isset($options["complete-silent"]) == true)
+                {
+                    $this->SilentMode = true;
+                    $this->CompleteSilentMode = true;
+                }
+
+                if(isset($options["info"]))
+                {
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" =>
+                            $this->name . " (v" . $this->version . ")\n" .
+                            " Usage: <code>" . $this->usage . "</code>\n\n" .
+                            "<i>" . $this->description . "</i>"
+                    ]);
+                }
+            }
+
+            return null;
         }
 
         /**
@@ -642,7 +652,7 @@
             ]);
 
             return Request::sendMessage([
-                "chat_id" => "-497877807",
+                "chat_id" => "-1001234603629",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "reply_markup" => $InlineKeyboard,

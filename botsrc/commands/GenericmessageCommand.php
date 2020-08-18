@@ -1213,7 +1213,7 @@
             }
 
             $Response = Request::sendMessage([
-                "chat_id" => "-497877807",
+                "chat_id" => "-1001234603629",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",

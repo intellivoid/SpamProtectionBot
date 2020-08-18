@@ -415,8 +415,8 @@
                 {
                     if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
                     {
-                        $this->ReplyToUserForwardChannelObject = TelegramClient\User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                        $this->ReplyToUserForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->ReplyToUserForwardChannelObject);
+                        $this->ReplyToUserForwardChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
+                        $this->ReplyToUserForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->ReplyToUserForwardChannelObject);
 
                         if(isset($this->ReplyToUserForwardChannelClient->SessionData->Data["user_status"]) == false)
                         {
