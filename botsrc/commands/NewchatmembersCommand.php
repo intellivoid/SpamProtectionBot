@@ -16,6 +16,8 @@
     use SpamProtection\Exceptions\TelegramClientNotFoundException;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtectionBot;
+    use TelegramClientManager\Exceptions\DatabaseException;
+    use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Objects\TelegramClient;
 
     /**
@@ -50,11 +52,15 @@
          *
          * @return ServerResponse
          * @throws TelegramException
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws \TelegramClientManager\Exceptions\TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
         public function execute()
         {
             // Find all clients
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
             $this->WhoisCommand->findClients();
 
@@ -64,8 +70,22 @@
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
             $DeepAnalytics->tally('tg_spam_protection', 'new_member', (int)$this->WhoisCommand->ChatObject->ID);
 
-            $UserObject = $this->WhoisCommand->NewChatMembersObjects[array_keys($this->WhoisCommand->NewChatMembersObjects)[0]];
-            $UserClient = $this->WhoisCommand->NewChatMembersClients[array_keys($this->WhoisCommand->NewChatMembersClients)[0]];
+            if(isset($this->getMessage()->getNewChatMembers()[0]))
+            {
+                $UserObject = TelegramClient\User::fromArray($this->getMessage()->getNewChatMembers()[0]->getRawData());
+                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
+
+                if(isset($UserClient->SessionData->Data["user_status"]) == false)
+                {
+                    $UserStatus = SettingsManager::getUserStatus($UserClient);
+                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
+                }
+            }
+            else
+            {
+                return null;
+            }
 
             if($UserObject->Username == TELEGRAM_BOT_NAME)
             {
@@ -134,14 +154,14 @@
                         }
                         else
                         {
-                            $Response = WhoisCommand::generateMention($userClient) . " has been detected as a potential spammer, Spam Protection Bot has insufficient privileges to ban this user.\n\n";
+                            $Response = WhoisCommand::generateMention($userClient) . " has been detected to be a potential spammer, Spam Protection Bot has insufficient privileges to ban this user.\n\n";
                         }
 
                         $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n\n";
-                        $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else";
-                        $Response .= "If you think this is a mistake, let us know in @SpamProtectionSupport</i>";
+                        $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else ";
+                        $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
-                        if($ChatSettings->GeneralAlertsEnabled == false)
+                        if($ChatSettings->GeneralAlertsEnabled)
                         {
                             return Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -202,10 +222,10 @@
                             break;
                     }
 
-                    $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else";
-                    $Response .= "If you think this is a mistake, let us know in @SpamProtectionSupport</i>";
+                    $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else ";
+                    $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
-                    if($ChatSettings->GeneralAlertsEnabled == false)
+                    if($ChatSettings->GeneralAlertsEnabled)
                     {
                         return Request::sendMessage([
                             "chat_id" => $this->getMessage()->getChat()->getId(),

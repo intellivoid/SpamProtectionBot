@@ -72,6 +72,10 @@
         },
         {
             "required": true,
+            "file": "commands/BakaMitaiCommand.php"
+        },
+        {
+            "required": true,
             "file": "commands/BlacklistCommand.php"
         },
         {
