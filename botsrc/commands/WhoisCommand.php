@@ -178,6 +178,20 @@
         public $MentionUserClients = null;
 
         /**
+         * Array of new chat members (objects) that has been added to the chat
+         *
+         * @var TelegramClient\User|null
+         */
+        public $NewChatMembersObjects = null;
+
+        /**
+         * Array of new chat members (clients) that has been added to the chat
+         *
+         * @var TelegramClient[]|null
+         */
+        public $NewChatMembersClients = null;
+
+        /**
          * When enabled, the results will be sent privately and
          * the message will be deleted
          *
@@ -497,6 +511,50 @@
                                     $this->MentionUserClients[$MentionUserObject->ID] = $MentionUserClient;
                                 }
                             }
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::mentions.bin</code>"
+                ]);
+            }
+
+            try
+            {
+                $this->NewChatMembersObjects = array();
+                $this->NewChatMembersClients = array();
+
+                // The message in general
+                if($this->getMessage()->getNewChatMembers() !== null)
+                {
+                    foreach($this->getMessage()->getNewChatMembers() as $chatMember)
+                    {
+                        /** @noinspection DuplicatedCode */
+                        if($chatMember->getUser() !== null)
+                        {
+                            $NewUserObject = TelegramClient\User::fromArray($chatMember->getUser()->getRawData());
+                            /** @noinspection DuplicatedCode */
+                            $NewUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($NewUserObject);
+                            if(isset($NewUserClient->SessionData->Data["user_status"]) == false)
+                            {
+                                $UserStatus = SettingsManager::getUserStatus($NewUserClient);
+                                $NewUserClient = SettingsManager::updateUserStatus($NewUserClient, $UserStatus);
+                                $TelegramClientManager->getTelegramClientManager()->updateClient($NewUserClient);
+                            }
+
+                            $this->NewChatMembersObjects[$NewUserObject->ID] = $NewUserObject;
+                            $this->NewChatMembersClients[$NewUserObject->ID] = $NewUserClient;
                         }
                     }
                 }
