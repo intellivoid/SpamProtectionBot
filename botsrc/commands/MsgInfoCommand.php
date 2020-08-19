@@ -6,19 +6,18 @@
 
     namespace Longman\TelegramBot\Commands\UserCommands;
 
-    use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
+    use pop\pop;
     use SpamProtection\Exceptions\DatabaseException;
     use SpamProtection\Exceptions\MessageLogNotFoundException;
-    use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
+    use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Objects\TelegramClient\Chat;
-    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Message Information command
@@ -35,7 +34,7 @@
         /**
          * @var string
          */
-        protected $description = 'Allows further details about the message hash to be returned';
+        protected $description = 'Returns further details about the message hash';
 
         /**
          * @var string
@@ -45,12 +44,41 @@
         /**
          * @var string
          */
-        protected $version = '1.0.0';
+        protected $version = '2.0.0';
 
         /**
          * @var bool
          */
         protected $private_only = false;
+
+        /**
+         * The whois command used for finding targets
+         *
+         * @var WhoisCommand|null
+         */
+        public $WhoisCommand = null;
+
+        /**
+         * When enabled, the results will be sent privately and
+         * the message will be deleted
+         *
+         * @var bool
+         */
+        public $PrivateMode = false;
+
+        /**
+         * The destination chat relative to the private mode
+         *
+         * @var Chat|null
+         */
+        public $DestinationChat = null;
+
+        /**
+         * The message ID to reply to
+         *
+         * @var int|null
+         */
+        public $ReplyToID = null;
 
         /**
          * Command execute method
@@ -62,116 +90,99 @@
          */
         public function execute()
         {
-            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            // Find all clients
+            $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
+            $this->WhoisCommand->findClients();
+            $this->DestinationChat = $this->WhoisCommand->ChatObject;
+            $this->ReplyToID = $this->getMessage()->getMessageId();
 
-            $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
-
-            try
-            {
-                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
-
-                // Define and update chat client
-                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
-                if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
-                {
-                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
-                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
-                }
-
-                // Define and update user client
-                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
-                if(isset($UserClient->SessionData->Data["user_status"]) == false)
-                {
-                    $UserStatus = SettingsManager::getUserStatus($UserClient);
-                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
-                }
-
-                // Define and update the forwarder if available
-                if($this->getMessage()->getReplyToMessage() !== null)
-                {
-                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
-                    {
-                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
-                        {
-                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
-                        }
-                    }
-
-                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
-                    {
-                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
-                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
-                        {
-                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
-                        }
-                    }
-                }
-            }
-            catch(Exception $e)
-            {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Commands/" . $this->name . ".bin</code>"
-                ]);
-            }
-
+            // Tally DeepAnalytics
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'msginfo_command', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'msginfo_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
+            $DeepAnalytics->tally('tg_spam_protection', 'msginfo_command', (int)$this->WhoisCommand->ChatObject->ID);
+
+            // Ignore forwarded commands
+            if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
+            {
+                return null;
+            }
+
+            // Parse the options
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
+            {
+                $options = pop::parse($this->getMessage()->getText(true));
+
+                if(isset($options["p"]) == true || isset($options["private"]))
+                {
+                    if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::Private)
+                    {
+                        $this->PrivateMode = true;
+                        $this->DestinationChat = new Chat();
+                        $this->DestinationChat->ID = $this->WhoisCommand->UserObject->ID;
+                        $this->DestinationChat->Type = TelegramChatType::Private;
+                        $this->DestinationChat->FirstName = $this->WhoisCommand->UserObject->FirstName;
+                        $this->DestinationChat->LastName = $this->WhoisCommand->UserObject->LastName;
+                        $this->DestinationChat->Username = $this->WhoisCommand->UserObject->Username;
+                        $this->ReplyToID = null;
+                    }
+                }
+
+                if(isset($options["info"]))
+                {
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" =>
+                            $this->name . " (v" . $this->version . ")\n" .
+                            " Usage: <code>" . $this->usage . "</code>\n\n" .
+                            "<i>" . $this->description . "</i>"
+                    ]);
+                }
+            }
 
             if($this->getMessage()->getText(true) !== null)
             {
                 if(strlen($this->getMessage()->getText(true)) > 0)
                 {
-                    $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-                    $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
-                    $TargetMessageParameter = null;
+                    $options = pop::parse($this->getMessage()->getText(true));
+                    $TargetMessageParameter = array_values($options)[(count($options)-1)];
 
-                    if(count($CommandParameters) . 0)
+                    if(is_bool($TargetMessageParameter))
                     {
-                        $TargetMessageParameter = $CommandParameters[0];
-                        $Results = $this->lookupMessageInfo($TargetMessageParameter);
+                        $TargetMessageParameter = array_keys($options)[(count($options)-1)];
+                    }
 
-                        if($Results == null)
+                    $Results = $this->lookupMessageInfo($TargetMessageParameter);
+
+                    if($Results == null)
+                    {
+                        if($this->PrivateMode)
                         {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "text" => "Unable to resolve the query '$TargetMessageParameter'!"
+                            Request::deleteMessage([
+                                "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                                "message_id" => $this->getMessage()->getMessageId()
                             ]);
                         }
 
-                        return $Results;
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "reply_to_message_id" => $this->ReplyToID,
+                            "text" => "Unable to resolve the query '$TargetMessageParameter'!"
+                        ]);
                     }
 
-                    if($TargetMessageParameter == null)
-                    {
-                        $TargetMessageParameter = "No Input";
-                    }
-
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "text" => "Unable to resolve the query '$TargetMessageParameter'!"
-                    ]);
+                    return $Results;
                 }
             }
 
@@ -279,10 +290,17 @@
                     );
                 }
 
+                if($this->PrivateMode)
+                {
+                    Request::deleteMessage([
+                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
+                    ]);
+                }
 
                 return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "chat_id" => $this->DestinationChat->ID,
+                    "reply_to_message_id" => $this->ReplyToID,
                     "reply_markup" => $InlineKeyboard,
                     "parse_mode" => "html",
                     "text" => $Response
@@ -305,9 +323,17 @@
          */
         public function displayUsage(string $error="Missing parameter")
         {
+            if($this->PrivateMode)
+            {
+                Request::deleteMessage([
+                    "chat_id" => $this->WhoisCommand->ChatObject->ID,
+                    "message_id" => $this->getMessage()->getMessageId()
+                ]);
+            }
+
             return Request::sendMessage([
-                "chat_id" => $this->getMessage()->getChat()->getId(),
-                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                "chat_id" => $this->DestinationChat->ID,
+                "reply_to_message_id" => $this->ReplyToID,
                 "parse_mode" => "html",
                 "text" =>
                     "$error\n\n" .
