@@ -180,7 +180,7 @@
         /**
          * Array of new chat members (objects) that has been added to the chat
          *
-         * @var TelegramClient\User|null
+         * @var TelegramClient\User[]|null
          */
         public $NewChatMembersObjects = null;
 
