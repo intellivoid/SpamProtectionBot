@@ -81,9 +81,6 @@
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
             $DeepAnalytics->tally('tg_spam_protection', 'start_command', (int)$this->WhoisCommand->ChatObject->ID);
 
-
-            var_dump($this->getMessage()->getRawData());
-
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
@@ -100,8 +97,6 @@
                             return $this->whoisLookup((int)mb_substr($this->getMessage()->getText(true), 3));
                     }
                 }
-
-                var_dump(strtolower($this->getMessage()->getText(true)));
 
                 switch(strtolower($this->getMessage()->getText(true)))
                 {
