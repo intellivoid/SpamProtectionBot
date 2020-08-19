@@ -6,21 +6,19 @@
 
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
-    use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
+    use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
-    use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
+    use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
-    use TelegramClientManager\Objects\TelegramClient\Chat;
-    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Start command
@@ -47,12 +45,19 @@
         /**
          * @var string
          */
-        protected $version = '1.0.2';
+        protected $version = '2.0.0';
 
         /**
          * @var bool
          */
         protected $private_only = false;
+
+        /**
+         * The whois command used for finding targets
+         *
+         * @var WhoisCommand|null
+         */
+        public $WhoisCommand = null;
 
         /**
          * Command execute method
@@ -65,80 +70,25 @@
          */
         public function execute()
         {
-            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            // Find all clients
+            $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
+            $this->WhoisCommand->findClients();
 
-            $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
-
-            try
-            {
-                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
-
-                // Define and update chat client
-                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
-                if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
-                {
-                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
-                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
-                }
-
-                // Define and update user client
-                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
-                if(isset($UserClient->SessionData->Data["user_status"]) == false)
-                {
-                    $UserStatus = SettingsManager::getUserStatus($UserClient);
-                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
-                }
-
-                // Define and update the forwarder if available
-                if($this->getMessage()->getReplyToMessage() !== null)
-                {
-                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
-                    {
-                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
-                        {
-                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
-                        }
-                    }
-
-                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
-                    {
-                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
-                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
-                        {
-                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
-                        }
-                    }
-                }
-            }
-            catch(Exception $e)
-            {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Commands/" . $this->name . ".bin</code>"
-                ]);
-            }
-
+            // Tally DeepAnalytics
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'start_command', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'start_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
+            $DeepAnalytics->tally('tg_spam_protection', 'start_command', (int)$this->WhoisCommand->ChatObject->ID);
+
+
+            var_dump($this->getMessage()->getRawData());
+
+            // Ignore forwarded commands
+            if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
+            {
+                return null;
+            }
 
             if($this->getMessage()->getText(true) !== null)
             {
@@ -150,14 +100,90 @@
                             return $this->whoisLookup((int)mb_substr($this->getMessage()->getText(true), 3));
                     }
                 }
+
+                var_dump(strtolower($this->getMessage()->getText(true)));
+
+                switch(strtolower($this->getMessage()->getText(true)))
+                {
+                    case "help":
+                        $HelpCommand = new HelpCommand($this->getTelegram(), $this->getUpdate());
+                        return $HelpCommand->execute();
+
+                    case "add":
+                        if($this->WhoisCommand->ChatObject->Type == TelegramChatType::Group || $this->WhoisCommand->ChatObject->Type == TelegramChatType::SuperGroup)
+                        {
+                            $InlineKeyboard = new InlineKeyboard([
+                                [
+                                    "text" => "Help",
+                                    "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=help"
+                                ]
+                            ]);
+
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "reply_markup" => $InlineKeyboard,
+                                "parse_mode" => "html",
+                                "text" =>
+                                    "Thanks for adding me! Remember to give me the following permissions\n\n".
+                                    " - <code>Delete Messages</code>\n".
+                                    " - <code>Ban Users</code>\n\n".
+                                    "If you need help with setting this up bot, see the help command\n\n".
+                                    "I will actively detect and remove spam and I will ban blacklisted users such as spammers, ".
+                                    "scammers and raiders, if you need any help then feel free to reach out to us at @SpamProtectionSupport"
+                            ]);
+                        }
+                }
             }
 
-            return Request::sendMessage([
-                "chat_id" => $this->getMessage()->getChat()->getId(),
-                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "text" => "Hey there! Looking for help? send /help@SpamProtectionBot"
-            ]);
+            switch($this->WhoisCommand->ChatObject->Type)
+            {
+                case TelegramChatType::SuperGroup:
+                case TelegramChatType::Group:
+                    $InlineKeyboard = new InlineKeyboard([
+                        [
+                            "text" => "Help",
+                            "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=start"
+                        ]
+                    ]);
 
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "reply_markup" => $InlineKeyboard,
+                        "parse_mode" => "html",
+                        "text" => "Hey there! Looking for help?"
+                    ]);
+
+                case TelegramChatType::Private:
+                    $InlineKeyboard = new InlineKeyboard(
+                        [
+                            ["text" => "Help", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=help"],
+                            ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                            ["text" => "Support", "url" => "https://t.me/SpamProtectionSupport"]
+                        ],
+                        [
+                            ["text" => "Add to group", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?startgroup=add"]
+                        ]
+                    );
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "reply_markup" => $InlineKeyboard,
+                        "parse_mode" => "html",
+                        "text" =>
+                            "<b>SpamProtectionBot</b>\n\n" .
+                            "Using machine learning, this bot is capable of detecting and deleting spam from your chat ".
+                            "and stop unwanted users from having the chance to post spam in your chat.\n\n".
+                            "if you notice any mistakes or issues then feel free to report it to the official support chat"
+                    ]);
+
+                default:
+                    break;
+            }
+
+            return null;
         }
 
         /**

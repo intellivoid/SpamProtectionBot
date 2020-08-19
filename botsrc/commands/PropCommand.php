@@ -61,7 +61,6 @@
          */
         public $WhoisCommand = null;
 
-
         /**
          * Command execute method
          *
