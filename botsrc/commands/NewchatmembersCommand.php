@@ -9,6 +9,7 @@
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Commands\UserCommands\BlacklistCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
+    use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
@@ -167,6 +168,13 @@
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                 "parse_mode" => "html",
+                                "reply_markup" => new InlineKeyboard(
+                                    [
+                                        ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
+                                        ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
+                                    ]
+                                ),
                                 "text" => $Response
                             ]);
                         }
@@ -231,6 +239,13 @@
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
                             "parse_mode" => "html",
+                            "reply_markup" => new InlineKeyboard(
+                                [
+                                    ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                    ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
+                                    ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
+                                ]
+                            ),
                             "text" => $Response
                         ]);
                     }
