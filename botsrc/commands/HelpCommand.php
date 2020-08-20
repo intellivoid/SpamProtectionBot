@@ -6,7 +6,6 @@
 
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
-    use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
