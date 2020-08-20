@@ -6,7 +6,6 @@
 
     namespace Longman\TelegramBot\Commands\UserCommands;
 
-    use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -19,8 +18,6 @@
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
-    use TelegramClientManager\Objects\TelegramClient\Chat;
-    use TelegramClientManager\Objects\TelegramClient\User;
 
     /**
      * Settings Command
@@ -47,12 +44,19 @@
         /**
          * @var string
          */
-        protected $version = '1.0.1';
+        protected $version = '2.0.0';
 
         /**
          * @var bool
          */
         protected $private_only = false;
+
+        /**
+         * The whois command used for finding targets
+         *
+         * @var WhoisCommand|null
+         */
+        public $WhoisCommand = null;
 
         /**
          * Command execute method
@@ -66,103 +70,35 @@
          */
         public function execute()
         {
+            // Find clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
-
-            $ChatObject = Chat::fromArray($this->getMessage()->getChat()->getRawData());
-            $UserObject = User::fromArray($this->getMessage()->getFrom()->getRawData());
-
-            try
-            {
-                $TelegramClient = $TelegramClientManager->getTelegramClientManager()->registerClient($ChatObject, $UserObject);
-
-                // Define and update chat client
-                $ChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ChatObject);
-                if(isset($UserClient->SessionData->Data["chat_settings"]) == false)
-                {
-                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
-                    $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
-                }
-
-                // Define and update user client
-                $UserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($UserObject);
-                if(isset($UserClient->SessionData->Data["user_status"]) == false)
-                {
-                    $UserStatus = SettingsManager::getUserStatus($UserClient);
-                    $UserClient = SettingsManager::updateUserStatus($UserClient, $UserStatus);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($UserClient);
-                }
-
-                // Define and update the forwarder if available
-                if($this->getMessage()->getReplyToMessage() !== null)
-                {
-                    if($this->getMessage()->getReplyToMessage()->getForwardFrom() !== null)
-                    {
-                        $ForwardUserObject = User::fromArray($this->getMessage()->getReplyToMessage()->getForwardFrom()->getRawData());
-                        $ForwardUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($ForwardUserObject);
-                        if(isset($ForwardUserClient->SessionData->Data["user_status"]) == false)
-                        {
-                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardUserClient);
-                        }
-                    }
-
-                    if($this->getMessage()->getReplyToMessage()->getForwardFromChat() !== null)
-                    {
-                        $ForwardChannelObject = Chat::fromArray($this->getMessage()->getReplyToMessage()->getForwardFromChat()->getRawData());
-                        $ForwardChannelClient = $TelegramClientManager->getTelegramClientManager()->registerChat($ForwardChannelObject);
-                        if(isset($ForwardChannelClient->SessionData->Data["channel_status"]) == false)
-                        {
-                            $ForwardChannelStatus = SettingsManager::getChannelStatus($ForwardChannelClient);
-                            $ForwardChannelClient = SettingsManager::updateChannelStatus($ForwardChannelClient, $ForwardChannelStatus);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ForwardChannelClient);
-                        }
-                    }
-                }
-            }
-            catch(Exception $e)
-            {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Commands/" . $this->name . ".bin</code>"
-                ]);
-            }
+            $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
+            $this->WhoisCommand->findClients();
 
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'settings_command', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$TelegramClient->getChatId());
-            $DeepAnalytics->tally('tg_spam_protection', 'settings_command', (int)$TelegramClient->getChatId());
+            $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
+            $DeepAnalytics->tally('tg_spam_protection', 'settings_command', (int)$this->WhoisCommand->ChatObject->ID);
 
-            if($ChatObject->Type !== TelegramChatType::Group)
+            if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::Group || $this->WhoisCommand->ChatObject->Type !== TelegramChatType::SuperGroup)
             {
-                if($ChatObject->Type !== TelegramChatType::SuperGroup)
-                {
-
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "This command can only be used in group chats!"
-                    ]);
-                }
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" => "This command can only be used in group chats!"
+                ]);
             }
 
+            // Verify if the user is an administrator
             $UserChatMember = Request::getChatMember([
-                "user_id" => $UserObject->ID,
-                "chat_id" => $ChatObject->ID
+                "user_id" => $this->WhoisCommand->UserObject->ID,
+                "chat_id" => $this->WhoisCommand->ChatObject->ID
             ]);
 
             if($UserChatMember->isOk() == false)
             {
-
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -175,7 +111,6 @@
             {
                 if($UserChatMember->getResult()->status !== "administrator")
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -189,7 +124,6 @@
             {
                 if($UserChatMember->getResult()->status !== "creator")
                 {
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
@@ -199,6 +133,7 @@
                 }
             }
 
+            // Parse the text
             if($this->getMessage()->getText(true) !== null)
             {
                 if (strlen($this->getMessage()->getText(true)) > 0)
@@ -215,14 +150,14 @@
                     $TargetOptionParameter = $CommandParameters[0];
                     $TargetValueParameter = $CommandParameters[1];
 
-                    $ChatSettings = SettingsManager::getChatSettings($ChatClient);
+                    $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
 
                     switch(strtolower($TargetOptionParameter))
                     {
                         case "detect_spam":
                             $ChatSettings->DetectSpamEnabled = self::isEnabledValue($TargetValueParameter);
-                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
 
                             if($ChatSettings->DetectSpamEnabled)
                             {
@@ -317,8 +252,8 @@
                             }
 
                             $ChatSettings->DetectSpamAction = self::actionFromString($TargetValueParameter);
-                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
 
                             if($ChatSettings->DetectSpamEnabled == false)
                             {
@@ -396,8 +331,8 @@
 
                         case "blacklists":
                             $ChatSettings->BlacklistProtectionEnabled = self::isEnabledValue($TargetValueParameter);
-                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
 
                             if($ChatSettings->BlacklistProtectionEnabled)
                             {
@@ -421,8 +356,8 @@
 
                         case "general_alerts":
                             $ChatSettings->GeneralAlertsEnabled = self::isEnabledValue($TargetValueParameter);
-                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
 
                             if($ChatSettings->GeneralAlertsEnabled)
                             {
@@ -444,18 +379,18 @@
                             }
                             break;
 
-                        case "active_spammer_alert":
-                            $ChatSettings->ActiveSpammerAlertEnabled = self::isEnabledValue($TargetValueParameter);
-                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+                        case "potential_spammer_protection":
+                            $ChatSettings->ActiveSpammerProtectionEnabled = self::isEnabledValue($TargetValueParameter);
+                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
 
-                            if($ChatSettings->ActiveSpammerAlertEnabled)
+                            if($ChatSettings->ActiveSpammerProtectionEnabled)
                             {
                                 return Request::sendMessage([
                                     "chat_id" => $this->getMessage()->getChat()->getId(),
                                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                     "parse_mode" => "html",
-                                    "text" => "Success! When an active spammer joins this chat then an alert will be shown"
+                                    "text" => "Success! The bot will ban potential spammers from this chat"
                                 ]);
                             }
                             else
@@ -464,15 +399,23 @@
                                     "chat_id" => $this->getMessage()->getChat()->getId(),
                                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                     "parse_mode" => "html",
-                                    "text" => "Success! When an active spammer joins this chat then no alert will be shown"
+                                    "text" => "Success! The bot will not ban any potential spammers from this chat"
                                 ]);
                             }
                             break;
 
+                        case "active_spammer_alert":
+                            return Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "parse_mode" => "html",
+                                "text" => "This feature is deprecated, use `potential_spammer_protection` instead."
+                            ]);
+
                         case "delete_old_messages":
                             $ChatSettings->DeleteOlderMessages = self::isEnabledValue($TargetValueParameter);
-                            $ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($ChatClient);
+                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
 
                             if($ChatSettings->DeleteOlderMessages)
                             {
@@ -506,7 +449,7 @@
                                     "   <code>detect_spam_action</code>\n".
                                     "   <code>blacklists</code>\n".
                                     "   <code>general_alerts</code>\n".
-                                    "   <code>active_spammer_alert</code>\n\n".
+                                    "   <code>potential_spammer_protection</code>\n".
                                     "   <code>delete_old_messages</code>\n\n".
                                     "For further information, send <code>/help settings</code>"
                             ]);
@@ -590,7 +533,7 @@
                     "   <b>/settings</b> <code>detect_spam_action</code> <code>[Nothing/Delete/Kick/Ban]</code>\n".
                     "   <b>/settings</b> <code>blacklists</code> <code>[On/Off/Enable/Disable]</code>\n".
                     "   <b>/settings</b> <code>general_alerts</code> <code>[On/Off/Enable/Disable]</code>\n".
-                    "   <b>/settings</b> <code>active_spammer_alert</code> <code>[On/Off/Enable/Disable]</code>\n".
+                    "   <b>/settings</b> <code>potential_spammer_protection</code> <code>[On/Off/Enable/Disable]</code>\n".
                     "   <b>/settings</b> <code>delete_old_messages</code> <code>[On/Off/Enable/Disable]</code>\n\n".
                     "For more information send <code>/help settings</code>"
             ]);
