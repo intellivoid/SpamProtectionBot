@@ -1,0 +1,38 @@
+<b>Chat Settings Command</b>
+This command will allow chat administrators to alter the spam protection settings for the given chat
+
+Usage Example:
+   <code>/settings</code> [<code>Option</code>] [<code>Value</code>]
+   <code>/settings</code> <code>detect_spam</code> [<code>On</code>/<code>Off</code>/<code>Enable</code>/<code>Disable</code>]
+   <code>/settings</code> <code>detect_spam_action</code> [<code>Nothing</code>/<code>Delete</code>/<code>Kick</code>/<code>Ban</code>]
+   <code>/settings</code> <code>blacklists</code> [<code>On</code>/<code>Off</code>/<code>Enable</code>/<code>Disable</code>]
+   <code>/settings</code> <code>general_alerts</code> [<code>On</code>/<code>Off</code>/<code>Enable</code>/<code>Disable</code>]
+   <code>/settings</code> <code>potential_spammer_protection</code> [<code>On</code>/<code>Off</code>/<code>Enable</code>/<code>Disable</code>]
+   <code>/settings</code> <code>delete_old_messages</code> [<code>On</code>/<code>Off</code>/<code>Enable</code>/<code>Disable</code>]
+
+<i>Enable Spam Protection</i>
+You can enable spam protection in your group by sending the following commands
+<code>/settings detect_spam on</code>
+<code>/settings detect_spam_action delete</code>
+This will detect spam in your chat and remove it accordingly without affecting the user
+
+<i>How do i protect my group from unwanted users?</i>
+You can protect your group from blacklisted users and potential spammers by sending the following commands
+<code>/settings potential_spammer_protection on</code>
+<code>/settings blacklists on</code>
+
+<i>What are potential spammers?</i>
+These are users that the bot believes are spammers due to their recent activities in other groups
+
+<i>What are blacklisted users?</i>
+These are users blacklisted by volunteers from the Telegram community because of abusive behavior
+
+<i>How do i disable alerts?</i>
+<code>/general_alerts on</code>
+
+<i>How can i let blacklisted users join?</i>
+<code>/setting blacklists off</code>
+
+<i>How can i let potential spammers join?</i>
+<code>/settings potential_spammer_protection off</code>
+

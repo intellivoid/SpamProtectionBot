@@ -81,14 +81,23 @@
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
             $DeepAnalytics->tally('tg_spam_protection', 'settings_command', (int)$this->WhoisCommand->ChatObject->ID);
 
-            if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::Group || $this->WhoisCommand->ChatObject->Type !== TelegramChatType::SuperGroup)
+            // Ignore forwarded commands
+            if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "This command can only be used in group chats!"
-                ]);
+                return null;
+            }
+
+            if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::Group)
+            {
+                if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::SuperGroup)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => "This command can only be used in group chats!"
+                    ]);
+                }
             }
 
             // Verify if the user is an administrator
@@ -409,7 +418,7 @@
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                 "parse_mode" => "html",
-                                "text" => "This feature is deprecated, use `potential_spammer_protection` instead."
+                                "text" => "This feature is deprecated, use <code>potential_spammer_protection</code> instead."
                             ]);
 
                         case "delete_old_messages":
