@@ -109,6 +109,7 @@
             if($this->handleBlacklistedUser($ChatSettings, $UserStatus, $this->WhoisCommand->UserClient, $this->WhoisCommand->ChatClient))
             {
                 // No need to continue any further if the user got banned
+                $this->handleLanguageDetection();
                 return null;
             }
 
@@ -117,6 +118,7 @@
             if($this->handlePotentialSpammer($ChatSettings, $UserStatus, $this->WhoisCommand->UserClient, $this->WhoisCommand->ChatClient))
             {
                 // No need to continue any further if the user got banned
+                $this->handleLanguageDetection();
                 return null;
             }
 
@@ -128,14 +130,108 @@
                 if($this->handleBlacklistedChannel($ChatSettings, $ForwardChannelStatus, $ForwardChannelClient, $this->WhoisCommand->UserClient, $this->WhoisCommand->ChatClient))
                 {
                     // No need to continue any further if the channel message got deleted
+                    $this->handleLanguageDetection();
                     return null;
                 }
             }
 
             // Handles the message to detect if it's spam or not
             $this->handleMessage($this->WhoisCommand->ChatClient, $this->WhoisCommand->UserClient, $this->WhoisCommand->DirectClient);
-
+            $this->handleLanguageDetection();
             return null;
+        }
+
+
+        /**
+         * Handles language prediction
+         *
+         * @return bool
+         */
+        public function handleLanguageDetection()
+        {
+            $CoffeeHouse = SpamProtectionBot::getCoffeeHouse();
+
+            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
+            {
+                // Is the message from the same bot?
+                if($this->getMessage()->getForwardFrom() !== null)
+                {
+                    if($this->getMessage()->getForwardFrom()->getUsername() == TELEGRAM_BOT_NAME)
+                    {
+                        return false;
+                    }
+                }
+
+                try
+                {
+                    $TargetUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
+                    $Results = $CoffeeHouse->getLanguagePrediction()->predict($this->getMessage()->getText(true), true, true, true);
+
+                    /** @noinspection DuplicatedCode */
+                    $Generalized = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetUserStatus->LargeLanguageGeneralizedID, 100, false);
+
+                    // Update the target user's language prediction
+                    $TargetUserStatus->LargeLanguageGeneralizedID = $Generalized->PublicID;
+                    $TargetUserStatus->GeneralizedLanguage = $Generalized->TopLabel;
+                    $TargetUserStatus->GeneralizedLanguageProbability = $Generalized->TopProbability;
+                    $this->WhoisCommand->UserClient = SettingsManager::updateUserStatus($this->WhoisCommand->UserClient, $TargetUserStatus);
+                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->UserClient);
+
+                    // Predict the language of the chat
+                    if($this->WhoisCommand->ChatClient !== null)
+                    {
+                        $TargetChatStatus = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
+
+                        /** @noinspection DuplicatedCode */
+                        $GeneralizedChat = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetChatStatus->LargeLanguageGeneralizedID, 100, false);
+
+                        // Update the target user's language prediction
+                        $TargetChatStatus->LargeLanguageGeneralizedID = $GeneralizedChat->PublicID;
+                        $TargetChatStatus->GeneralizedLanguage = $GeneralizedChat->TopLabel;
+                        $TargetChatStatus->GeneralizedLanguageProbability = $GeneralizedChat->TopProbability;
+                        $this->WhoisCommand->ChatClient = SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $TargetChatStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
+                    }
+
+                    // Predict the language for the forwarded user client
+                    if($this->WhoisCommand->ForwardUserClient !== null)
+                    {
+                        $TargetForwardUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->ForwardUserClient);
+
+                        /** @noinspection DuplicatedCode */
+                        $GeneralizedForward = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetForwardUserStatus->LargeLanguageGeneralizedID, 100, false);
+
+                        // Update the target user's language prediction
+                        $TargetForwardUserStatus->LargeLanguageGeneralizedID = $GeneralizedForward->PublicID;
+                        $TargetForwardUserStatus->GeneralizedLanguage = $GeneralizedForward->TopLabel;
+                        $TargetForwardUserStatus->GeneralizedLanguageProbability = $GeneralizedForward->TopProbability;
+                        $this->WhoisCommand->ForwardUserClient = SettingsManager::updateUserStatus($this->WhoisCommand->ForwardUserClient, $TargetForwardUserStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->ForwardUserClient);
+                    }
+
+                    // Predict the language for the forwarded channel client
+                    if($this->WhoisCommand->ForwardChannelClient !== null)
+                    {
+                        $TargetForwardChannelStatus = SettingsManager::getChannelStatus($this->WhoisCommand->ForwardChannelClient);
+
+                        /** @noinspection DuplicatedCode */
+                        $GeneralizedChannelForward = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetForwardChannelStatus->LargeLanguageGeneralizedID, 100, false);
+
+                        // Update the target user's language prediction
+                        $TargetForwardChannelStatus->LargeLanguageGeneralizedID = $GeneralizedChannelForward->PublicID;
+                        $TargetForwardChannelStatus->GeneralizedLanguage = $GeneralizedChannelForward->TopLabel;
+                        $TargetForwardChannelStatus->GeneralizedLanguageProbability = $GeneralizedChannelForward->TopProbability;
+                        $this->WhoisCommand->ForwardChannelClient = SettingsManager::updateChannelStatus($this->WhoisCommand->ForwardChannelClient, $TargetForwardChannelStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->ForwardChannelClient);
+                    }
+                }
+                catch(Exception $e)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /**

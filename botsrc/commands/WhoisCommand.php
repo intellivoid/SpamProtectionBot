@@ -1203,6 +1203,11 @@
                 $Response .= "<b>Trust Prediction:</b> <code>" . $UserStatus->GeneralizedHam . "/" . $UserStatus->GeneralizedSpam . "</code>\n";
             }
 
+            if($UserStatus->LargeLanguageGeneralizedID !== null)
+            {
+                $Response .= "<b>Language Prediction:</b> <code>" . $UserStatus->GeneralizedLanguage . "</code> (<code>" . $UserStatus->GeneralizedLanguageProbability . "</code>)\n";
+            }
+
             if($UserStatus->GeneralizedSpam > 0)
             {
                 if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
@@ -1361,6 +1366,11 @@
                 $Response .= "<b>Delete Older Messages:</b> <code>False</code>\n";
             }
 
+            if($ChatSettings->LargeLanguageGeneralizedID !== null)
+            {
+                $Response .= "<b>Language Prediction:</b> <code>" . $ChatSettings->GeneralizedLanguage . "</code> (<code>" . $ChatSettings->GeneralizedLanguageProbability . "</code>)\n";
+            }
+
             return $Response;
         }
 
@@ -1425,56 +1435,20 @@
 
                 switch($ChannelStatus->BlacklistFlag)
                 {
-                    case BlacklistFlag::None:
-                        $Response .= "<b>Blacklist Reason:</b> <code>None</code>\n";
-                        break;
-
-                    case BlacklistFlag::Spam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion</code>\n";
-                        break;
-
                     case BlacklistFlag::BanEvade:
                         $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
                         $Response .= "<b>Original Private ID:</b> Not applicable to channels\n";
                         break;
 
-                    case BlacklistFlag::ChildAbuse:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Child Pornography / Child Abuse</code>\n";
-                        break;
-
-                    case BlacklistFlag::Impersonator:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Malicious Impersonator</code>\n";
-                        break;
-
-                    case BlacklistFlag::PiracySpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam Pirated Content</code>\n";
-                        break;
-
-                    case BlacklistFlag::PornographicSpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Promotes/Spam NSFW Content</code>\n";
-                        break;
-
-                    case BlacklistFlag::PrivateSpam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Spam / Unwanted Promotion via a unsolicited private message</code>\n";
-                        break;
-
-                    case BlacklistFlag::Raid:
-                        $Response .= "<b>Blacklist Reason:</b> <code>RAID Initializer / Participator</code>\n";
-                        break;
-
-                    case BlacklistFlag::Scam:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Scamming</code>\n";
-                        break;
-
-                    case BlacklistFlag::Special:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Special Reason, consult @IntellivoidSupport</code>\n";
-                        break;
-
                     default:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Unknown</code>\n";
+                        $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($ChannelStatus->BlacklistFlag) . "</code>\n";
                         break;
                 }
+            }
 
+            if($ChannelStatus->LargeLanguageGeneralizedID !== null)
+            {
+                $Response .= "<b>Language Prediction:</b> <code>" . $ChannelStatus->GeneralizedLanguage . "</code> (<code>" . $ChannelStatus->GeneralizedLanguageProbability . "</code>)\n";
             }
 
             return $Response;
