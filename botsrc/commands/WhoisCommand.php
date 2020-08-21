@@ -1200,7 +1200,10 @@
 
             if($user_client->User->IsBot == false)
             {
-                $Response .= "<b>Trust Prediction:</b> <code>" . $UserStatus->GeneralizedHam . "/" . $UserStatus->GeneralizedSpam . "</code>\n";
+                if($UserStatus->GeneralizedHam > 0 && $UserStatus->GeneralizedSpam > 0)
+                {
+                    $Response .= "<b>Trust Prediction:</b> <code>" . $UserStatus->GeneralizedHam . "/" . $UserStatus->GeneralizedSpam . "</code>\n";
+                }
             }
 
             if($UserStatus->LargeLanguageGeneralizedID !== null)
