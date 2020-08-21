@@ -1148,12 +1148,15 @@
                 $Response .= "\u{2705} This user's Telegram account is verified by Intellivoid Accounts\n";
             }
 
-            if($UserStatus->GeneralizedSpam > 0)
+            if($user_client->User->IsBot == false)
             {
-                if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
+                if($UserStatus->GeneralizedSpam > 0)
                 {
-                    $RequiresExtraNewline = true;
-                    $Response .= "\u{26A0} <b>This user may be an active spammer</b>\n";
+                    if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
+                    {
+                        $RequiresExtraNewline = true;
+                        $Response .= "\u{26A0} <b>This user may be an active spammer</b>\n";
+                    }
                 }
             }
 
