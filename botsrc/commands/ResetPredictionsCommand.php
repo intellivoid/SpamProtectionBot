@@ -7,7 +7,6 @@
     namespace Longman\TelegramBot\Commands\UserCommands;
 
     use Longman\TelegramBot\Commands\UserCommand;
-    use Longman\TelegramBot\Entities\Chat;
     use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
@@ -23,26 +22,26 @@
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
 
     /**
-     * Create Invite Command
+     * Reset Predictions Command
      *
-     * Allows an operator or agent to generate an invite for a private chat
+     * Allows an operator or agent to reset the current prediction values for a user, chat or channel.
      */
-    class CreateInviteCommand extends UserCommand
+    class ResetPredictionsCommand extends UserCommand
     {
         /**
          * @var string
          */
-        protected $name = 'CreateInvite';
+        protected $name = 'ResetPredictions';
 
         /**
          * @var string
          */
-        protected $description = 'Allows an operator or agent to generate an invite link for a private chat';
+        protected $description = 'Allows an operator or agent to reset the current prediction values for a user, chat or channel.';
 
         /**
          * @var string
          */
-        protected $usage = '/CreateInvite [ID/PTID/Username]';
+        protected $usage = '/ResetPredictions [ID/PTID/Username]';
 
         /**
          * @var string
@@ -61,7 +60,6 @@
          */
         public $WhoisCommand = null;
 
-
         /**
          * Command execute method
          *
@@ -69,6 +67,7 @@
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramException
+         * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
         public function execute()
@@ -181,64 +180,60 @@
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "text" => "Unable to find the chat '" . self::escapeHTML($TargetTelegramParameter) . "'"
-                    ]);
-                }
-                else
-                {
-                    if($TargetTelegramClient->Chat->Type !== TelegramChatType::SuperGroup)
-                    {
-                        if($TargetTelegramClient->Chat->Type !== TelegramChatType::Group)
-                        {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "This command is only applicable to groups or super groups"
-                            ]);
-                        }
-                    }
-                }
-
-                $ExportResults = Request::exportChatInviteLink(["chat_id" => $TargetTelegramClient->Chat->ID]);
-                if($ExportResults->isOk() == false)
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "Cannot export chat invite link, " . $ExportResults->getDescription()
+                        "text" => "Unable to find the client '" . self::escapeHTML($TargetTelegramParameter) . "'"
                     ]);
                 }
 
-                $GetChatResults = Request::getChat(["chat_id" => $TargetTelegramClient->Chat->ID]);
-                if($GetChatResults->isOk() == false)
+                switch($TargetTelegramClient->Chat->Type)
                 {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "Cannot get chat, " . $GetChatResults->getDescription()
-                    ]);
-                }
+                    case TelegramChatType::Private:
+                        $UserStatus = SettingsManager::getUserStatus($TargetTelegramClient);
+                        $UserStatus->GeneralizedID = "None";
+                        $UserStatus->GeneralizedHam = 0;
+                        $UserStatus->GeneralizedSpam = 0;
+                        $UserStatus->LargeLanguageGeneralizedID = null;
+                        $UserStatus->GeneralizedLanguage = "Unknown";
+                        $UserStatus->GeneralizedLanguageProbability = 0;
+                        $TargetTelegramClient = SettingsManager::updateUserStatus($TargetTelegramClient, $UserStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetTelegramClient);
+                        break;
 
-                /** @var Chat $ChatResults */
-                $ChatResults = $GetChatResults->getResult();
-                if($ChatResults->getInviteLink() == null)
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "The invitation link isn't available for this chat"
-                    ]);
+                    case TelegramChatType::SuperGroup:
+                    case TelegramChatType::Group:
+                        $ChatSettings = SettingsManager::getChatSettings($TargetTelegramClient);
+                        $ChatSettings->LargeLanguageGeneralizedID = null;
+                        $ChatSettings->GeneralizedLanguage = "Unknown";
+                        $ChatSettings->GeneralizedLanguageProbability = 0;
+                        $TargetTelegramClient = SettingsManager::updateChatSettings($TargetTelegramClient, $ChatSettings);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetTelegramClient);
+                        break;
+
+                    case TelegramChatType::Channel:
+                        $ChannelStatus = SettingsManager::getChannelStatus($TargetTelegramClient);
+                        $ChannelStatus->LargeLanguageGeneralizedID = null;
+                        $ChannelStatus->GeneralizedLanguage = "Unknown";
+                        $ChannelStatus->GeneralizedLanguageProbability = 0;
+                        $ChannelStatus->GeneralizedID = "None";
+                        $ChannelStatus->GeneralizedHam = 0;
+                        $ChannelStatus->GeneralizedSpam = 0;
+                        $TargetTelegramClient = SettingsManager::updateChannelStatus($TargetTelegramClient, $ChannelStatus);
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($TargetTelegramClient);
+                        break;
+
+                    default:
+                        return Request::sendMessage([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            "text" => "This command is not applicable to this entity type"
+                        ]);
                 }
 
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
-                    "text" => $ChatResults->getInviteLink()
+                    "text" => "Success, all prediction values has been set back to the default values"
                 ]);
             }
 
@@ -262,8 +257,8 @@
                 "text" =>
                     "$error\n\n" .
                     "Usage:\n" .
-                    "   <b>/createinvite</b> -c [PTID/ID/Username]\n".
-                    "For further instructions, send /help createinvite"
+                    "   <b>/resetpredictions</b> -c [PTID/ID/Username]\n".
+                    "For further instructions, send /help resetpredictions"
             ]);
         }
 
