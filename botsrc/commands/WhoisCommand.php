@@ -1162,14 +1162,30 @@
 
             if($UserStatus->IsBlacklisted)
             {
-                $RequiresExtraNewline = true;
-                $Response .= "\u{26A0} <b>This user is blacklisted!</b>\n";
+                if($user_client->User->IsBot)
+                {
+                    $RequiresExtraNewline = true;
+                    $Response .= "\u{26A0} <b>This bot is blacklisted!</b>\n";
+                }
+                else
+                {
+                    $RequiresExtraNewline = true;
+                    $Response .= "\u{26A0} <b>This user is blacklisted!</b>\n";
+                }
             }
 
             if($UserStatus->IsAgent)
             {
-                $RequiresExtraNewline = true;
-                $Response .= "\u{1F46E} This user is an agent who actively reports spam automatically\n";
+                if($user_client->User->IsBot)
+                {
+                    $RequiresExtraNewline = true;
+                    $Response .= "\u{1F46E} This bot is an agent who actively reports spam automatically\n";
+                }
+                else
+                {
+                    $RequiresExtraNewline = true;
+                    $Response .= "\u{1F46E} This user is an agent who actively reports spam automatically\n";
+                }
             }
 
             if($UserStatus->IsOperator)
@@ -1184,7 +1200,14 @@
             }
 
             $Response .= "<b>Private ID:</b> <code>" . $user_client->PublicID . "</code>\n";
-            $Response .= "<b>User ID:</b> <code>" . $user_client->User->ID . "</code>\n";
+            if($user_client->User->IsBot)
+            {
+                $Response .= "<b>Bot ID:</b> <code>" . $user_client->User->ID . "</code>\n";
+            }
+            else
+            {
+                $Response .= "<b>User ID:</b> <code>" . $user_client->User->ID . "</code>\n";
+            }
 
             if($user_client->User->FirstName !== null)
             {
