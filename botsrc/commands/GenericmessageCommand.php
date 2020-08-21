@@ -115,12 +115,12 @@
 
             // Ban the user from the chat if the chat has potential spammer protection enabled
             // and the user is a potential spammer.
-            if($this->handlePotentialSpammer($ChatSettings, $UserStatus, $this->WhoisCommand->UserClient, $this->WhoisCommand->ChatClient))
-            {
-                // No need to continue any further if the user got banned
-                $this->handleLanguageDetection();
-                return null;
-            }
+            //if($this->handlePotentialSpammer($ChatSettings, $UserStatus, $this->WhoisCommand->UserClient, $this->WhoisCommand->ChatClient))
+            //{
+            //    // No need to continue any further if the user got banned
+            //    $this->handleLanguageDetection();
+            //    return null;
+            //}
 
             // Remove the message if it came from a blacklisted channel
             if($this->getMessage()->getForwardFromChat() !== null)
@@ -681,6 +681,11 @@
         {
             /** @noinspection DuplicatedCode */
             if($userStatus->IsWhitelisted)
+            {
+                return false;
+            }
+
+            if($userClient->User->IsBot)
             {
                 return false;
             }

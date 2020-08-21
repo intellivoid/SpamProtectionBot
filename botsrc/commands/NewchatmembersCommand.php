@@ -131,9 +131,15 @@
          * @param TelegramClient $userClient
          * @return ServerResponse|null
          * @throws TelegramException
+         * @noinspection DuplicatedCode
          */
         public function handleActiveSpammer(TelegramClient $userClient)
         {
+            if($userClient->User->IsBot)
+            {
+                return null;
+            }
+
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
             $UserStatus = SettingsManager::getUserStatus($userClient);
 
@@ -191,6 +197,7 @@
          * @param TelegramClient $userClient
          * @return ServerResponse|null
          * @throws TelegramException
+         * @noinspection DuplicatedCode
          */
         public function handleBlacklist(TelegramClient $userClient)
         {
