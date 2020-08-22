@@ -1136,7 +1136,7 @@
             $RequiresExtraNewline = false;
             $Response = "<b>$title</b>\n\n";
 
-            if($user_client->User->Username == "Netkas")
+            if($user_client->User->Username == MAIN_OPERATOR_USERNAME)
             {
                 $RequiresExtraNewline = true;
                 $Response .= "\u{2705} This user is the main operator\n";

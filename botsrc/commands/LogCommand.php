@@ -654,7 +654,7 @@
                         }
 
                         Request::sendMessage([
-                            "chat_id" => "@SpamProtectionLogs",
+                            "chat_id" => LOG_CHANNEL,
                             "disable_web_page_preview" => true,
                             "disable_notification" => true,
                             "reply_markup" => $InlineKeyboard,
@@ -669,7 +669,7 @@
                 {
 
                     Request::sendPhoto([
-                        "chat_id" => "@SpamProtectionLogs",
+                        "chat_id" => "@" . LOG_CHANNEL,
                         "photo" => $MessageLogObject->PhotoSize->FileID,
                         "disable_notification" => true,
                         "reply_markup" => $InlineKeyboard,
@@ -681,7 +681,7 @@
                 }
 
                 Request::sendMessage([
-                    "chat_id" => "@SpamProtectionLogs",
+                    "chat_id" => "@" . LOG_CHANNEL,
                     "disable_web_page_preview" => true,
                     "disable_notification" => true,
                     "reply_markup" => $InlineKeyboard,

@@ -119,13 +119,13 @@
                 }
             }
 
-            if($this->WhoisCommand->UserClient->User->Username !== "Netkas")
+            if($this->WhoisCommand->UserClient->User->Username !== MAIN_OPERATOR_USERNAME)
             {
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
-                    "text" => "This command can only be used by @IntellivoidSupport"
+                    "text" => "This command can only be used by @" . MAIN_OPERATOR_USERNAME
                 ]);
             }
 

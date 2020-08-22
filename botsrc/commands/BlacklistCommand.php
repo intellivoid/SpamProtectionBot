@@ -568,7 +568,7 @@
                     return "Scamming";
 
                 case BlacklistFlag::Special:
-                    return "Special Reason, consult @IntellivoidSupport";
+                    return "Special Reason, consult @" . MAIN_OPERATOR_USERNAME;
 
                 case BlacklistFlag::MassAdding:
                     return "Mass adding users to groups/channels";
@@ -652,7 +652,7 @@
             ]);
 
             return Request::sendMessage([
-                "chat_id" => "@SpamProtectionLogs",
+                "chat_id" => "@" . LOG_CHANNEL,
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "reply_markup" => $InlineKeyboard,
@@ -843,7 +843,7 @@
                 switch(str_ireplace('X', 'x', strtoupper($blacklistFlag)))
                 {
                     case BlacklistFlag::Special:
-                        if($operatorClient->User->Username !== "Netkas")
+                        if($operatorClient->User->Username !== MAIN_OPERATOR_USERNAME)
                         {
                             if($this->PrivateMode)
                             {
@@ -859,7 +859,7 @@
                                     "chat_id" => $this->DestinationChat->ID,
                                     "reply_to_message_id" => $this->ReplyToID,
                                     "parse_mode" => "html",
-                                    "text" => "Only IntellivoidSupport can blacklist using the flag 0xSP"
+                                    "text" => "Only " . MAIN_OPERATOR_USERNAME . " can blacklist using the flag 0xSP"
                                 ]);
                             }
                             else
@@ -1238,7 +1238,7 @@
                 switch(str_ireplace('X', 'x', strtoupper($blacklistFlag)))
                 {
                     case BlacklistFlag::Special:
-                        if($operatorClient->User->Username !== "Netkas")
+                        if($operatorClient->User->Username !== MAIN_OPERATOR_USERNAME)
                         {
                             if($this->PrivateMode)
                             {
@@ -1254,7 +1254,7 @@
                                     "chat_id" => $this->DestinationChat->ID,
                                     "reply_to_message_id" => $this->ReplyToID,
                                     "parse_mode" => "html",
-                                    "text" => "Only IntellivoidSupport can blacklist using the flag 0xSP"
+                                    "text" => "Only " . MAIN_OPERATOR_USERNAME . " can blacklist using the flag 0xSP"
                                 ]);
                             }
                             else

@@ -176,7 +176,7 @@
                                 "parse_mode" => "html",
                                 "reply_markup" => new InlineKeyboard(
                                     [
-                                        ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
+                                        ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
                                         ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                         ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
                                     ]
@@ -248,7 +248,7 @@
                             "parse_mode" => "html",
                             "reply_markup" => new InlineKeyboard(
                                 [
-                                    ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
+                                    ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
                                     ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                     ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
                                 ]

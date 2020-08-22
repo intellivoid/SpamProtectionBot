@@ -74,6 +74,8 @@
     // Create the Telegram Bot instance (NO SQL)
 
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName'], false);
+    define("LOG_CHANNEL", "SpamProtectionLogs");
+    define("MAIN_OPERATOR_USERNAME", "IntellivoidSupport");
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
     {

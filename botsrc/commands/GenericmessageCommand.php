@@ -638,7 +638,7 @@
                                 "parse_mode" => "html",
                                 "reply_markup" => new InlineKeyboard(
                                     [
-                                        ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
+                                        ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
                                         ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $channelClient->User->ID],
                                         ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                     ],
@@ -758,7 +758,7 @@
                                     "parse_mode" => "html",
                                     "reply_markup" => new InlineKeyboard(
                                         [
-                                            ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
+                                            ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
                                             ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                             ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
                                         ]
@@ -874,7 +874,7 @@
                                 "parse_mode" => "html",
                                 "reply_markup" => new InlineKeyboard(
                                     [
-                                        ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
+                                        ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
                                         ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                         ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
                                     ]
@@ -1292,7 +1292,7 @@
             }
 
             $Response = Request::sendMessage([
-                "chat_id" => "@SpamProtectionLogs",
+                "chat_id" => "@" . LOG_CHANNEL,
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",

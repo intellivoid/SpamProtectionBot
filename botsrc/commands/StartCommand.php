@@ -154,7 +154,7 @@
                     $InlineKeyboard = new InlineKeyboard(
                         [
                             ["text" => "Help", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=help"],
-                            ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
+                            ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
                             ["text" => "Support", "url" => "https://t.me/SpamProtectionSupport"]
                         ],
                         [
