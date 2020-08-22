@@ -165,7 +165,7 @@
                         }
 
                         $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n\n";
-                        $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else ";
+                        $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @@SpamProtectionLogs else ";
                         $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
                         if($ChatSettings->GeneralAlertsEnabled)
@@ -176,7 +176,7 @@
                                 "parse_mode" => "html",
                                 "reply_markup" => new InlineKeyboard(
                                     [
-                                        ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                        ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
                                         ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                         ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
                                     ]
@@ -237,7 +237,7 @@
                             break;
                     }
 
-                    $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else ";
+                    $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @@SpamProtectionLogs else ";
                     $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
                     if($ChatSettings->GeneralAlertsEnabled)
@@ -248,7 +248,7 @@
                             "parse_mode" => "html",
                             "reply_markup" => new InlineKeyboard(
                                 [
-                                    ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                    ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
                                     ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                     ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
                                 ]

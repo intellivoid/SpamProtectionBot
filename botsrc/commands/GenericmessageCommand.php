@@ -630,7 +630,7 @@
                                     break;
                             }
 
-                            $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else ";
+                            $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @@SpamProtectionLogs else ";
                             $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
                             $MessageServerResponse = Request::sendMessage([
@@ -638,7 +638,7 @@
                                 "parse_mode" => "html",
                                 "reply_markup" => new InlineKeyboard(
                                     [
-                                        ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                        ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
                                         ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $channelClient->User->ID],
                                         ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                     ],
@@ -749,7 +749,7 @@
                             {
                                 $Response = WhoisCommand::generateMention($userClient) . " has been banned because they might be an active spammer\n\n";
                                 $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n\n";
-                                $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else ";
+                                $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @@SpamProtectionLogs else ";
                                 $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
                                 Request::sendMessage([
@@ -758,7 +758,7 @@
                                     "parse_mode" => "html",
                                     "reply_markup" => new InlineKeyboard(
                                         [
-                                            ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                            ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
                                             ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                             ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
                                         ]
@@ -865,7 +865,7 @@
                                     break;
                             }
 
-                            $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @SpamProtectionLogs else ";
+                            $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @@SpamProtectionLogs else ";
                             $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
                             Request::sendMessage([
@@ -874,7 +874,7 @@
                                 "parse_mode" => "html",
                                 "reply_markup" => new InlineKeyboard(
                                     [
-                                        ["text" => "Logs", "url" => "https://t.me/SpamProtectionLogs"],
+                                        ["text" => "Logs", "url" => "https://t.me/@SpamProtectionLogs"],
                                         ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
                                         ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
                                     ]
@@ -1292,7 +1292,7 @@
             }
 
             $Response = Request::sendMessage([
-                "chat_id" => "SpamProtectionLogs",
+                "chat_id" => "@SpamProtectionLogs",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "parse_mode" => "html",
@@ -1308,7 +1308,7 @@
             /** @var \Longman\TelegramBot\Entities\Message $LoggedMessage */
             $LoggedMessage = $Response->getResult();
 
-            return "https://t.me/SpamProtectionLogs/" . $LoggedMessage->getMessageId();
+            return "https://t.me/@SpamProtectionLogs/" . $LoggedMessage->getMessageId();
         }
 
         /**
