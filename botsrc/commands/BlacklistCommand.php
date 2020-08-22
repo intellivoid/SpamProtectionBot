@@ -513,7 +513,7 @@
                         "Usage:\n" .
                         "   <b>/blacklist</b> (In reply to target user) <code>-r [Blacklist Flag]</code>\n" .
                         "   <b>/blacklist</b> (In reply to forwarded content/channel content) -f <code>-r [Blacklist Flag]</code>\n" .
-                        "   <b>/blacklist</b> <code>-u [Private Telegram ID]</code> <code>-r [Blacklist Flag]</code>\n" .
+                        "   <b>/blacklist</b> <code>-u=[Private Telegram ID]</code> <code>-r [Blacklist Flag]</code>\n" .
                         "   <b>/blacklist</b> <code>-u [User/Channel ID]</code> <code>-r [Blacklist Flag]</code>\n" .
                         "   <b>/blacklist</b> <code>-u [Username]</code> <code>-r [Blacklist Flag]</code>\n" .
                         "   <b>/blacklist</b> (Mention) <code>-r [Blacklist Flag]</code>\n\n" .
