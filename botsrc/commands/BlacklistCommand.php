@@ -652,7 +652,7 @@
             ]);
 
             return Request::sendMessage([
-                "chat_id" => "-1001234603629",
+                "chat_id" => "SpamProtectionLogs",
                 "disable_web_page_preview" => true,
                 "disable_notification" => true,
                 "reply_markup" => $InlineKeyboard,
