@@ -654,7 +654,7 @@
                         }
 
                         Request::sendMessage([
-                            "chat_id" => LOG_CHANNEL,
+                            "chat_id" => "@" . LOG_CHANNEL,
                             "disable_web_page_preview" => true,
                             "disable_notification" => true,
                             "reply_markup" => $InlineKeyboard,
