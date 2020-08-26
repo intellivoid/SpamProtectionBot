@@ -165,7 +165,7 @@
                         }
 
                         $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n\n";
-                        $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @@SpamProtectionLogs else ";
+                        $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @" . LOG_CHANNEL . " else ";
                         $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
                         if($ChatSettings->GeneralAlertsEnabled)
@@ -237,7 +237,7 @@
                             break;
                     }
 
-                    $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @@SpamProtectionLogs else ";
+                    $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @" . LOG_CHANNEL . " else ";
                     $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
 
                     if($ChatSettings->GeneralAlertsEnabled)
