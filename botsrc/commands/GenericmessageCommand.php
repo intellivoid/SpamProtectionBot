@@ -164,15 +164,22 @@
 
                 try
                 {
-                    $Results = $CoffeeHouse->getLanguagePrediction()->predict($this->getMessage()->getText(true), true, true, true);
+                    $Results = $CoffeeHouse->getLanguagePrediction()->predict($this->getMessage()->getText(true), true, true, true, true);
+                }
+                catch(Exception $e)
+                {
+                    return false;
+                }
 
+                try
+                {
                     // Predict the language of the chat
                     if($this->WhoisCommand->ChatClient !== null)
                     {
                         $TargetChatStatus = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
 
                         /** @noinspection DuplicatedCode */
-                        $GeneralizedChat = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetChatStatus->LargeLanguageGeneralizedID, 100, false);
+                        $GeneralizedChat = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetChatStatus->LargeLanguageGeneralizedID, 50, false);
 
                         // Update the target user's language prediction
                         $TargetChatStatus->LargeLanguageGeneralizedID = $GeneralizedChat->PublicID;
@@ -181,14 +188,21 @@
                         $this->WhoisCommand->ChatClient = SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $TargetChatStatus);
                         SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
                     }
+                }
+                catch(Exception $e)
+                {
+                    unset($e);
+                }
 
+                try
+                {
                     // Predict the language for the forwarded user client
                     if($this->WhoisCommand->ForwardUserClient !== null)
                     {
                         $TargetForwardUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->ForwardUserClient);
 
                         /** @noinspection DuplicatedCode */
-                        $GeneralizedForward = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetForwardUserStatus->LargeLanguageGeneralizedID, 100, false);
+                        $GeneralizedForward = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetForwardUserStatus->LargeLanguageGeneralizedID, 50, false);
 
                         // Update the target user's language prediction
                         $TargetForwardUserStatus->LargeLanguageGeneralizedID = $GeneralizedForward->PublicID;
@@ -203,7 +217,7 @@
                         $TargetForwardChannelStatus = SettingsManager::getChannelStatus($this->WhoisCommand->ForwardChannelClient);
 
                         /** @noinspection DuplicatedCode */
-                        $GeneralizedChannelForward = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetForwardChannelStatus->LargeLanguageGeneralizedID, 100, false);
+                        $GeneralizedChannelForward = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetForwardChannelStatus->LargeLanguageGeneralizedID, 50, false);
 
                         // Update the target user's language prediction
                         $TargetForwardChannelStatus->LargeLanguageGeneralizedID = $GeneralizedChannelForward->PublicID;
@@ -217,7 +231,7 @@
                         $TargetUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
 
                         /** @noinspection DuplicatedCode */
-                        $Generalized = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetUserStatus->LargeLanguageGeneralizedID, 100, false);
+                        $Generalized = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetUserStatus->LargeLanguageGeneralizedID, 50, false);
 
                         // Update the target user's language prediction
                         $TargetUserStatus->LargeLanguageGeneralizedID = $Generalized->PublicID;
@@ -229,7 +243,7 @@
                 }
                 catch(Exception $e)
                 {
-                    return false;
+                    unset($e);
                 }
             }
 
