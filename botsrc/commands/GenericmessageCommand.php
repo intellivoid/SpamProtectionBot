@@ -6,6 +6,8 @@
 
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
+    use CoffeeHouse\Abstracts\LargeGeneralizedClassificationSearchMethod;
+    use CoffeeHouse\Exceptions\NoResultsFoundException;
     use CoffeeHouse\Objects\Results\SpamPredictionResults;
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
@@ -60,7 +62,7 @@
         /**
          * @var string
          */
-        protected $version = '2.0.0';
+        protected $version = '2.0.1';
 
         /**
          * The whois command used for finding targets
@@ -177,9 +179,28 @@
                     if($this->WhoisCommand->ChatClient !== null)
                     {
                         $TargetChatStatus = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
+                        $GeneralizedChat = null;
+
+                        if($TargetChatStatus->LargeLanguageGeneralizedID == null)
+                        {
+                            $GeneralizedChat = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(35);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                $GeneralizedChat = $CoffeeHouse->getLargeGeneralizedClassificationManager()->get(
+                                    LargeGeneralizedClassificationSearchMethod::byPublicID, $TargetChatStatus->LargeLanguageGeneralizedID
+                                );
+                            }
+                            catch(NoResultsFoundException $e)
+                            {
+                                $GeneralizedChat = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(35);
+                            }
+                        }
 
                         /** @noinspection DuplicatedCode */
-                        $GeneralizedChat = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetChatStatus->LargeLanguageGeneralizedID, 50, false);
+                        $GeneralizedChat = $CoffeeHouse->getLanguagePrediction()->generalize($GeneralizedChat, $Results);
 
                         // Update the target user's language prediction
                         $TargetChatStatus->LargeLanguageGeneralizedID = $GeneralizedChat->PublicID;
@@ -200,9 +221,28 @@
                     if($this->WhoisCommand->ForwardUserClient !== null)
                     {
                         $TargetForwardUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->ForwardUserClient);
+                        $GeneralizedForward = null;
+
+                        if($TargetForwardUserStatus->LargeLanguageGeneralizedID == null)
+                        {
+                            $GeneralizedForward = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(25);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                $GeneralizedForward = $CoffeeHouse->getLargeGeneralizedClassificationManager()->get(
+                                    LargeGeneralizedClassificationSearchMethod::byPublicID, $TargetForwardUserStatus->LargeLanguageGeneralizedID
+                                );
+                            }
+                            catch(NoResultsFoundException $e)
+                            {
+                                $GeneralizedForward = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(25);
+                            }
+                        }
 
                         /** @noinspection DuplicatedCode */
-                        $GeneralizedForward = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetForwardUserStatus->LargeLanguageGeneralizedID, 50, false);
+                        $GeneralizedForward = $CoffeeHouse->getLanguagePrediction()->generalize($GeneralizedForward, $Results);
 
                         // Update the target user's language prediction
                         $TargetForwardUserStatus->LargeLanguageGeneralizedID = $GeneralizedForward->PublicID;
@@ -215,9 +255,28 @@
                     elseif($this->WhoisCommand->ForwardChannelClient !== null)
                     {
                         $TargetForwardChannelStatus = SettingsManager::getChannelStatus($this->WhoisCommand->ForwardChannelClient);
+                        $GeneralizedChannelForward = null;
+
+                        if($TargetForwardChannelStatus->LargeLanguageGeneralizedID == null)
+                        {
+                            $GeneralizedChannelForward = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(35);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                $GeneralizedChannelForward = $CoffeeHouse->getLargeGeneralizedClassificationManager()->get(
+                                    LargeGeneralizedClassificationSearchMethod::byPublicID, $TargetForwardChannelStatus->LargeLanguageGeneralizedID
+                                );
+                            }
+                            catch(NoResultsFoundException $e)
+                            {
+                                $GeneralizedChannelForward = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(35);
+                            }
+                        }
 
                         /** @noinspection DuplicatedCode */
-                        $GeneralizedChannelForward = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetForwardChannelStatus->LargeLanguageGeneralizedID, 50, false);
+                        $GeneralizedChannelForward = $CoffeeHouse->getLanguagePrediction()->generalize($GeneralizedChannelForward, $Results);
 
                         // Update the target user's language prediction
                         $TargetForwardChannelStatus->LargeLanguageGeneralizedID = $GeneralizedChannelForward->PublicID;
@@ -229,9 +288,28 @@
                     else
                     {
                         $TargetUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
+                        $Generalized = null;
+
+                        if($TargetUserStatus->LargeLanguageGeneralizedID == null)
+                        {
+                            $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(25);
+                        }
+                        else
+                        {
+                            try
+                            {
+                                $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->get(
+                                    LargeGeneralizedClassificationSearchMethod::byPublicID, $TargetUserStatus->LargeLanguageGeneralizedID
+                                );
+                            }
+                            catch(NoResultsFoundException $e)
+                            {
+                                $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(25);
+                            }
+                        }
 
                         /** @noinspection DuplicatedCode */
-                        $Generalized = $CoffeeHouse->getLanguagePrediction()->generalize($Results, $TargetUserStatus->LargeLanguageGeneralizedID, 50, false);
+                        $Generalized = $CoffeeHouse->getLanguagePrediction()->generalize($Generalized, $Results);
 
                         // Update the target user's language prediction
                         $TargetUserStatus->LargeLanguageGeneralizedID = $Generalized->PublicID;
