@@ -16,6 +16,7 @@
 use ppm\ppm;
 use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
+use VerboseAdventure\Abstracts\EventType;
 use VerboseAdventure\VerboseAdventure;
 
 // Import all required auto loaders
