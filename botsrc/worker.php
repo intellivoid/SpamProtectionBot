@@ -17,6 +17,7 @@ use ppm\ppm;
 use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
 use VerboseAdventure\Abstracts\EventType;
+use VerboseAdventure\Classes\ErrorHandler;
 use VerboseAdventure\VerboseAdventure;
 
 // Import all required auto loaders
@@ -45,6 +46,8 @@ use VerboseAdventure\VerboseAdventure;
     ppm::import("net.intellivoid.verbose_adventure");
 
     $current_directory = getcwd();
+    VerboseAdventure::setStdout(true); // Enable stdout
+    ErrorHandler::registerHandlers(); // Register error handlers
 
     if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
     {
