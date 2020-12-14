@@ -11,47 +11,56 @@
             {
                 "package": "net.intellivoid.acm",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/acm"
             },
             {
                 "package": "net.intellivoid.background_worker",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/BackgroundWorker"
             },
             {
                 "package": "net.intellivoid.coffeehouse",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/coffeehouse"
             },
             {
                 "package": "net.intellivoid.deepanalytics",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/DeepAnalytics"
             },
             {
                 "package": "net.intellivoid.spam_protection",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/SpamProtection"
             },
             {
                 "package": "net.intellivoid.telegram_client_manager",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/IVA-Telegram"
             },
             {
                 "package": "net.intellivoid.pop",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/pop"
             },
             {
                 "package": "net.intellivoid.msqg",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/msqg"
             },
             {
                 "package": "net.intellivoid.ziproto",
                 "version": "latest",
-                "required": true
+                "required": true,
+                "source": "default@github/intellivoid/ziproto"
             }
         ],
         "configuration": {

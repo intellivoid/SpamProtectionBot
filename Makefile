@@ -13,7 +13,7 @@ build:
 
 install:
 	# Installs the compiled package to the system
-	ppm --fix-conflict --no-prompt --install="build/net.intellivoid.spam_protection_bot.ppm"
+	ppm --fix-conflict --no-prompt --install="build/net.intellivoid.spam_protection_bot.ppm" --branch="production"
 
 run:
 	# Runs the bot
