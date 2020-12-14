@@ -45,7 +45,7 @@ class GroupchatcreatedCommand extends SystemCommand
         //$message = $this->getMessage();
         //$group_chat_created = $message->getGroupChatCreated();
 
-        trigger_error(__CLASS__ . ' is deprecated and will be removed and handled by ' . GenericmessageCommand::class . ' by default in a future release.', E_USER_DEPRECATED);
+        //trigger_error(__CLASS__ . ' is deprecated and will be removed and handled by ' . GenericmessageCommand::class . ' by default in a future release.', E_USER_DEPRECATED);
 
         return parent::execute();
     }

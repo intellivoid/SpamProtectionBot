@@ -45,7 +45,7 @@ class DeletechatphotoCommand extends SystemCommand
         //$message = $this->getMessage();
         //$delete_chat_photo = $message->getDeleteChatPhoto();
 
-        trigger_error(__CLASS__ . ' is deprecated and will be removed and handled by ' . GenericmessageCommand::class . ' by default in a future release.', E_USER_DEPRECATED);
+        //trigger_error(__CLASS__ . ' is deprecated and will be removed and handled by ' . GenericmessageCommand::class . ' by default in a future release.', E_USER_DEPRECATED);
 
         return parent::execute();
     }

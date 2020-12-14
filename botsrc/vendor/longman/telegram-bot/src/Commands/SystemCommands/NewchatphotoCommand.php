@@ -45,7 +45,7 @@ class NewchatphotoCommand extends SystemCommand
         //$message = $this->getMessage();
         //$new_chat_photo = $message->getNewChatPhoto();
 
-        trigger_error(__CLASS__ . ' is deprecated and will be removed and handled by ' . GenericmessageCommand::class . ' by default in a future release.', E_USER_DEPRECATED);
+        //trigger_error(__CLASS__ . ' is deprecated and will be removed and handled by ' . GenericmessageCommand::class . ' by default in a future release.', E_USER_DEPRECATED);
 
         return parent::execute();
     }
