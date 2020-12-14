@@ -590,13 +590,14 @@
             {
                 if($this->CompleteSilentMode == false)
                 {
+                    $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                     return Request::sendMessage([
                         "chat_id" => $this->DestinationChat->ID,
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
                         "text" =>
                             "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                            "Error Code: <code>" . $e->getCode() . "</code>\n" .
+                            "Error Code: <code>" . $ReferenceID . "</code>\n" .
                             "Object: <code>Commands/log.bin</code>"
                     ]);
                 }

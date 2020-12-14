@@ -61,6 +61,12 @@
                 "version": "latest",
                 "required": true,
                 "source": "default@github/intellivoid/ziproto"
+            },
+            {
+                "package": "net.intellivoid.verbose_adventure",
+                "version": "latest",
+                "required": true,
+                "source": "default@github/intellivoid/VerboseAdventure"
             }
         ],
         "configuration": {
@@ -145,15 +151,7 @@
         },
         {
             "required": true,
-            "file": "index.php"
-        },
-        {
-            "required": true,
             "file": "SpamProtectionBot.php"
-        },
-        {
-            "required": true,
-            "file": "TgFileLogging.php"
         },
         {
             "required": true,

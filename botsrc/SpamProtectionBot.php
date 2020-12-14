@@ -7,8 +7,9 @@
     use DeepAnalytics\DeepAnalytics;
     use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
+use VerboseAdventure\VerboseAdventure;
 
-    /**
+/**
      * Class SpamProtectionBot
      */
     class SpamProtectionBot
@@ -37,6 +38,12 @@
          * @var BackgroundWorker
          */
         public static $BackgroundWorker;
+
+
+        /**
+         * @var VerboseAdventure
+         */
+        public static $LogHandler;
 
         /**
          * Auto configures ACM
@@ -143,5 +150,21 @@
         public static function getBackgroundWorker(): BackgroundWorker
         {
             return self::$BackgroundWorker;
+        }
+
+        /**
+         * @return VerboseAdventure
+         */
+        public static function getLogHandler(): VerboseAdventure
+        {
+            return self::$LogHandler;
+        }
+
+        /**
+         * @param VerboseAdventure $LogHandler
+         */
+        public static function setLogHandler(VerboseAdventure $LogHandler): void
+        {
+            self::$LogHandler = $LogHandler;
         }
     }

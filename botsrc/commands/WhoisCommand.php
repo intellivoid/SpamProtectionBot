@@ -232,7 +232,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -258,7 +258,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -284,7 +284,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -314,7 +314,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -344,7 +344,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -377,7 +377,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -410,7 +410,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -443,7 +443,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -517,7 +517,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -561,7 +561,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -719,7 +719,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = TgFileLogging::dumpException($e, TELEGRAM_BOT_NAME, $this->name);
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),

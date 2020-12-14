@@ -13,36 +13,35 @@
     use DeepAnalytics\DeepAnalytics;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Entities\Update;
-    use SpamProtection\SpamProtection;
+use ppm\ppm;
+use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
+use VerboseAdventure\VerboseAdventure;
 
-    // Import all required auto loaders
+// Import all required auto loaders
     /** @noinspection PhpIncludeInspection */
     require("ppm");
 
-    if(defined("PPM") == false)
-    {
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'BackgroundWorker' . DIRECTORY_SEPARATOR . 'BackgroundWorker.php');
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'CoffeeHouse' . DIRECTORY_SEPARATOR . 'CoffeeHouse.php');
-        include_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtection' . DIRECTORY_SEPARATOR . 'SpamProtection.php');
-
-        if(class_exists('DeepAnalytics\DeepAnalytics') == false)
-        {
-            include_once(__DIR__ . DIRECTORY_SEPARATOR . 'DeepAnalytics' . DIRECTORY_SEPARATOR . 'DeepAnalytics.php');
-        }
-    }
-    else
-    {
-        \ppm\ppm::import("net.intellivoid.acm");
-        \ppm\ppm::import("net.intellivoid.background_worker");
-        \ppm\ppm::import("net.intellivoid.coffeehouse");
-        \ppm\ppm::import("net.intellivoid.deepanalytics");
-        \ppm\ppm::import("net.intellivoid.telegram_client_manager");
-        \ppm\ppm::import("net.intellivoid.spam_protection");
-        \ppm\ppm::import("net.intellivoid.pop");
-        \ppm\ppm::import("net.intellivoid.msqg");
-        \ppm\ppm::import("net.intellivoid.ziproto");
-    }
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.acm");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.background_worker");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.coffeehouse");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.deepanalytics");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.telegram_client_manager");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.spam_protection");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.pop");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.msqg");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.ziproto");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.verbose_adventure");
 
     $current_directory = getcwd();
 
@@ -64,11 +63,6 @@
         include_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
     }
 
-    if(class_exists("TgFileLogging") == false)
-    {
-        include_once($current_directory . DIRECTORY_SEPARATOR . 'TgFileLogging.php');
-    }
-
     // Load all required configurations
 
     /** @noinspection PhpUnhandledExceptionInspection */
@@ -82,9 +76,10 @@
 
     // Define and create the Telegram Bot instance (SQL)
 
-    define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName'], false);
+    define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName']);
     define("LOG_CHANNEL", "SpamProtectionLogs");
     define("MAIN_OPERATOR_USERNAME", "IntellivoidSupport");
+    SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
     {
@@ -105,18 +100,7 @@
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Telegram Exception Raised: " . $e->getMessage()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Line: " . $e->getLine()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "File: " . $e->getFile()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Trace: " . json_encode($e->getTrace())
-        );
+        SpamProtectionBot::getLogHandler()->logException($e, "Worker");
         exit(255);
     }
 
@@ -132,60 +116,33 @@
     }
     catch(Exception $e)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Telegram Database Exception Raised: " . $e->getMessage()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Line: " . $e->getLine()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "File: " . $e->getFile()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Trace: " . json_encode($e->getTrace())
-        );
+        SpamProtectionBot::getLogHandler()->logException($e, "Worker");
         exit(255);
     }
 
     // Start the worker instance
-
-    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
-        "Starting worker"
-    );
-
+    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Starting Worker", "Worker");
     SpamProtectionBot::$DeepAnalytics = new DeepAnalytics();
 
     // Create the database connections
     SpamProtectionBot::$TelegramClientManager = new TelegramClientManager();
     if(SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Failed to initialize TelegramClientManager, " .
-            SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error
-        );
-
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, "Failed to initialize TelegramClientManager, " . SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error, "Worker");
         exit(255);
     }
 
     SpamProtectionBot::$SpamProtection = new SpamProtection();
     if(SpamProtectionBot::$SpamProtection->getDatabase()->connect_error)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Failed to initialize SpamProtection, " .
-            SpamProtectionBot::$SpamProtection->getDatabase()->connect_error
-        );
-
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, "Failed to initialize SpamProtection, " . SpamProtectionBot::$SpamProtection->getDatabase()->connect_error, "Worker");
         exit(255);
     }
 
     SpamProtectionBot::$CoffeeHouse = new CoffeeHouse();
     if(SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Failed to initialize CoffeeHouse, " .
-            SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error
-        );
-
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, "Failed to initialize CoffeeHouse, " . SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error, "Worker");
         exit(255);
     }
 
@@ -199,21 +156,7 @@
     }
     catch(Exception $e)
     {
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "BackgroundWorker Exception Raised: " . $e->getMessage()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Line: " . $e->getLine()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "File: " . $e->getFile()
-        );
-        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-            "Trace: " . json_encode($e->getTrace())
-        );
-        TgFileLogging::writeLog(TgFileLogging::WARNING, TELEGRAM_BOT_NAME . "_worker",
-            "Make sure Gearman is running!"
-        );
+        SpamProtectionBot::getLogHandler()->logException($e, "Worker");
         exit(255);
     }
 
@@ -227,70 +170,32 @@
 
             if($UpdateCount > 0)
             {
-                if($UpdateCount == 1)
-                {
-                    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
-                        "Processing one update"
-                    );
-                }
-                else
-                {
-                    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
-                        "Processing batch of $UpdateCount updates"
-                    );
-                }
+                SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processing $UpdateCount update(s)", "Worker");
 
                 /** @var Update $result */
                 foreach ($ServerResponse->getResult() as $result)
                 {
                     try
                     {
-                        TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
-                            "Processing update " . $result->getUpdateId()
-                        );
+                        SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processing update ID " . $result->getUpdateId(), "Worker");
                         $telegram->processUpdate($result);
                     }
                     catch(Exception $e)
                     {
-                        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                            "Exception Raised: " . $e->getMessage()
-                        );
-                        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                            "Line: " . $e->getLine()
-                        );
-                        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                            "File: " . $e->getFile()
-                        );
-                        TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                            "Trace: " . json_encode($e->getTrace())
-                        );
+                        SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                     }
                 }
             }
         }
         catch(Exception $e)
         {
-            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                "Worker Exception Raised: " . $e->getMessage()
-            );
-            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                "Line: " . $e->getLine()
-            );
-            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                "File: " . $e->getFile()
-            );
-            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                "Trace: " . json_encode($e->getTrace())
-            );
+            SpamProtectionBot::getLogHandler()->logException($e, "Worker");
         }
 
     });
 
     // Start working
-
-    TgFileLogging::writeLog(TgFileLogging::INFO, TELEGRAM_BOT_NAME . "_worker",
-        "Worker started successfully"
-    );
+    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Worker started successfully", "Worker");
 
     while(true)
     {
@@ -300,17 +205,6 @@
         }
         catch(Exception $e)
         {
-            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                "Worker Exception Raised: " . $e->getMessage()
-            );
-            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                "Line: " . $e->getLine()
-            );
-            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                "File: " . $e->getFile()
-            );
-            TgFileLogging::writeLog(TgFileLogging::ERROR, TELEGRAM_BOT_NAME . "_worker",
-                "Trace: " . json_encode($e->getTrace())
-            );
+            SpamProtectionBot::getLogHandler()->logException($e, "Worker");
         }
     }
