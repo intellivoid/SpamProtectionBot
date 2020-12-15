@@ -557,8 +557,18 @@
                         unset($exception);
                     }
 
+
                     $SpamProtection = SpamProtectionBot::getSpamProtection();
-                    $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage($MessageObject, $Results->SpamPrediction, $Results->HamPrediction);
+
+                    try
+                    {
+                        $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage($MessageObject, $Results->SpamPrediction, $Results->HamPrediction);
+                    }
+                    catch(Exception $exception)
+                    {
+                        unset($exception);
+                        return false;
+                    }
 
                     // Update the target user's trust prediction
                     $TargetUserStatus->GeneralizedSpam = $Results->GeneralizedSpam;
