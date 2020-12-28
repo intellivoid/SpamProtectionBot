@@ -4,6 +4,7 @@
         "ext-gearman": "*",
         "ext-json": "*",
         "ext-mysqli": "*",
-        "ext-mbstring": "*"
+        "ext-mbstring": "*",
+          "ext-pdo": "*"
     }
 }

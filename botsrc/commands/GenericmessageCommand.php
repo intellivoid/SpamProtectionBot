@@ -373,12 +373,9 @@
          * @param TelegramClient $userClient
          * @param TelegramClient $telegramClient
          * @return bool
-         * @throws DatabaseException
          * @throws InvalidSearchMethod
-         * @throws MessageLogNotFoundException
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws UnsupportedMessageException
          * @throws \TelegramClientManager\Exceptions\DatabaseException
          */
         public function handleMessage(TelegramClient $chatClient, TelegramClient $userClient, TelegramClient $telegramClient): bool
