@@ -23,6 +23,7 @@ use PDO;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RegexIterator;
+use VerboseAdventure\Abstracts\EventType;
 
 class Telegram
 {
@@ -410,6 +411,7 @@ class Telegram
         //Take custom input into account.
         if ($custom_input = $this->getCustomInput())
         {
+            \SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "Executing Custom Input");
             $response = new ServerResponse(json_decode($custom_input, true), $this->bot_username);
         }
         else
@@ -417,6 +419,9 @@ class Telegram
             if ($this->last_update_id !== null) {
                 $offset = $this->last_update_id + 1;    //As explained in the telegram bot API documentation
             }
+
+            \SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "Fetching from offset '$offset'");
+
 
             $response = Request::getUpdates(
                 [
@@ -427,7 +432,12 @@ class Telegram
             );
         }
 
+        \SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "Updates fetched OK");
+
         if ($response->isOk()) {
+
+            \SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "Response OK, pushing to workers");
+
             $results = $response->getResult();
 
             /** @var Update $latest_update */
@@ -435,13 +445,21 @@ class Telegram
             {
                 $latest_update = $results[(count($results) - 1)];
                 $this->last_update_id = $latest_update->getUpdateId();
-            }
+                \SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "Setting offset '" . $this->last_update_id . "'");
 
-            // Send the updates to be processed in the background by a worker immedietaly
-            $backgroundWorker->getClient()->getGearmanClient()->doBackground(
-                "process_batch",  $response->toJson()
-            );
+            }
         }
+        else
+        {
+            \SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "Response NOT OK, pushing to workers");
+        }
+
+        // Send the updates to be processed in the background by a worker immedietaly
+        $backgroundWorker->getClient()->getGearmanClient()->doBackground(
+            "process_batch",  $response->toJson()
+        );
+
+        \SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "OK, Job pushed to workers.");
 
         return $response;
     }

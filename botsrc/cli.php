@@ -131,13 +131,13 @@
     }
 
     // Start listening to updates
-
     while(true)
     {
         try
         {
             SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Listen for updates", "Main");
             $server_response = $telegram->handleBackgroundUpdates(SpamProtectionBot::getBackgroundWorker());
+
             if ($server_response->isOk())
             {
                 $update_count = count($server_response->getResult());
