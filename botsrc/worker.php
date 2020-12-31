@@ -204,31 +204,31 @@ use VerboseAdventure\VerboseAdventure;
 
     while(true)
     {
-        try
-        {
-            try
-            {
-                DB::getPdo()->query('SELECT 1');
-            }
-            catch (PDOException $e)
-            {
-                $telegram->enableMySql(array(
-                    'host' => $DatabaseConfiguration['Host'],
-                    'port' => $DatabaseConfiguration['Port'],
-                    'user' => $DatabaseConfiguration['Username'],
-                    'password' => $DatabaseConfiguration['Password'],
-                    'database' => $DatabaseConfiguration['Database'],
-                ));
-            }
+        //try
+        //{
+            //try
+            //{
+            //    DB::getPdo()->query('SELECT 1');
+            //}
+            //catch (PDOException $e)
+            //{
+            //    $telegram->enableMySql(array(
+            //        'host' => $DatabaseConfiguration['Host'],
+            //        'port' => $DatabaseConfiguration['Port'],
+            //        'user' => $DatabaseConfiguration['Username'],
+            //       'password' => $DatabaseConfiguration['Password'],
+            //        'database' => $DatabaseConfiguration['Database'],
+            //    ));
+            //}
 
-            SpamProtectionBot::$CoffeeHouse->getDatabase()->ping();
-            SpamProtectionBot::$SpamProtection->getDatabase()->ping();
-            SpamProtectionBot::$TelegramClientManager->getDatabase()->ping();
-        }
-        catch(Exception $e)
-        {
-            SpamProtectionBot::getLogHandler()->logException($e, "Worker");
-        }
+            //SpamProtectionBot::$CoffeeHouse->getDatabase()->ping();
+            //SpamProtectionBot::$SpamProtection->getDatabase()->ping();
+            //SpamProtectionBot::$TelegramClientManager->getDatabase()->ping();
+        //}
+        //catch(Exception $e)
+        //{
+        //    SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+        //}
 
         try
         {
