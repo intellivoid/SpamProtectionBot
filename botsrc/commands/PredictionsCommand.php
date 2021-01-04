@@ -9,14 +9,8 @@
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Entities\ServerResponse;
-    use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
-    use pop\pop;
-    use SpamProtection\Managers\SettingsManager;
-    use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
-    use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
-    use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
@@ -64,10 +58,6 @@
          * Command execute method
          *
          * @return ServerResponse
-         * @throws DatabaseException
-         * @throws InvalidSearchMethod
-         * @throws TelegramException
-         * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
         public function execute()
@@ -110,23 +100,11 @@
 
                     try
                     {
-                        $LangResults = $CoffeeHouse->getLanguagePrediction()->predict(
-                            $this->getMessage()->getReplyToMessage()->getText(false),
-                            true, true, true, true
-                        );
-                    }
-                    catch(Exception $e)
-                    {
-                        $LangResults = null;
-                    }
-
-                    try
-                    {
                         $SpamResults = $CoffeeHouse->getSpamPrediction()->predict(
                             $this->getMessage()->getReplyToMessage()->getText(false), false
                         );
                     }
-                    catch(Exception $e)
+                    catch(\Exception $e)
                     {
                         $SpamResults = null;
                     }
@@ -137,17 +115,24 @@
                     {
                         $CombinedResults = $LangResults->combineResults();
 
-                        $ReturnMessage .= "LangDetect CLD: " . $LangResults->CLD_Results[0]->Language . " (" . ($LangResults->CLD_Results[0]->Probability * 100) . ")\n";
-                        $ReturnMessage .= "LangDetect LD: " . $LangResults->LD_Results[0]->Language . " (" . ($LangResults->LD_Results[0]->Probability * 100) . ")\n";
-                        $ReturnMessage .= "LangDetect DLTC: " . $LangResults->DLTC_Results[0]->Language . " (" . ($LangResults->DLTC_Results[0]->Probability * 100) . ")\n";
-                        $ReturnMessage .= "LangDetect Combined: " . $CombinedResults[0]->Language . " (" . ($CombinedResults[0]->Probability * 100) . ")\n\n";
+                        $ReturnMessage .= "LangDetect CLD: " . strtoupper($LangResults->CLD_Results[0]->Language) . " (<code>" . ($LangResults->CLD_Results[0]->Probability * 100) . "</code>)\n";
+                        $ReturnMessage .= "LangDetect LD: " . strtoupper($LangResults->LD_Results[0]->Language) . " (<code>" . ($LangResults->LD_Results[0]->Probability * 100) . "</code>)\n";
+                        $ReturnMessage .= "LangDetect DLTC: " . strtoupper($LangResults->DLTC_Results[0]->Language) . " (<code>" . ($LangResults->DLTC_Results[0]->Probability * 100) . "</code>)\n";
+                        $ReturnMessage .= "LangDetect Combined: " . strtoupper($CombinedResults[0]->Language) . " (<code>" . ($CombinedResults[0]->Probability * 100) . "</code>)\n\n";
                     }
 
                     if($SpamResults !== null)
                     {
-                        $ReturnMessage .= "SpamDetect Ham: " . ($SpamResults->HamPrediction * 100) . "\n";
-                        $ReturnMessage .= "SpamDetect Spam: " . ($SpamResults->SpamPrediction * 100) . "\n";
-                        $ReturnMessage .= "SpamDetect IsSpam: " . $SpamResults->isSpam();
+                        $IsSpam = "False";
+
+                        if($SpamResults->isSpam())
+                        {
+                            $IsSpam = "True";
+                        }
+
+                        $ReturnMessage .= "SpamDetect Ham: <code>" . ($SpamResults->HamPrediction * 100) . "</code>\n";
+                        $ReturnMessage .= "SpamDetect Spam:<code> " . ($SpamResults->SpamPrediction * 100) . "</code>\n";
+                        $ReturnMessage .= "SpamDetect IsSpam: <code>" . $IsSpam . "</code>";
                     }
 
                     /** @var Message $Message */
