@@ -94,14 +94,6 @@
             {
                 if($this->getMessage()->getReplyToMessage()->getText(false) !== null && strlen($this->getMessage()->getReplyToMessage()->getText(false)) > 0)
                 {
-                    /** @var Message $Message */
-                    $Message = Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "parse_mode" => "html",
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "text" => "Processing message"
-                    ]);
-
                     $CoffeeHouse = SpamProtectionBot::getCoffeeHouse();
 
                     try
@@ -158,10 +150,11 @@
                         $ReturnMessage .= "SpamDetect IsSpam: " . $SpamResults->isSpam();
                     }
 
-                    return Request::editMessageText([
-                        "chat_id" => $Message->getChat()->getId(),
-                        "message_id" => $Message->getMessageId(),
+                    /** @var Message $Message */
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
                         "parse_mode" => "html",
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "text" => $ReturnMessage
                     ]);
                 }
