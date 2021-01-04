@@ -6,14 +6,13 @@
 
     namespace Longman\TelegramBot\Commands\UserCommands;
 
+    use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Entities\ServerResponse;
+    use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtectionBot;
-    use TelegramClientManager\Exceptions\DatabaseException;
-    use TelegramClientManager\Exceptions\InvalidSearchMethod;
-    use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
 
     /**
      * Predictions Command
@@ -59,6 +58,7 @@
          *
          * @return ServerResponse
          * @noinspection DuplicatedCode
+         * @throws TelegramException
          */
         public function execute()
         {
@@ -104,7 +104,7 @@
                             $this->getMessage()->getReplyToMessage()->getText(false), false
                         );
                     }
-                    catch(\Exception $e)
+                    catch(Exception $e)
                     {
                         $SpamResults = null;
                     }
