@@ -226,8 +226,8 @@
 
                 if($MessageLog->SpamPrediction > 0 && $MessageLog->HamPrediction > 0)
                 {
-                    $Response .= "<b>Ham Prediction:</b> <code>" . $MessageLog->HamPrediction . "</code>\n";
-                    $Response .= "<b>Spam Prediction:</b> <code>" . $MessageLog->SpamPrediction . "</code>\n";
+                    $Response .= "<b>Ham Prediction:</b> <code>" . ($MessageLog->HamPrediction * 100) . "</code>\n";
+                    $Response .= "<b>Spam Prediction:</b> <code>" . ($MessageLog->SpamPrediction * 100) . "</code>\n";
 
                     if($MessageLog->SpamPrediction > $MessageLog->HamPrediction)
                     {

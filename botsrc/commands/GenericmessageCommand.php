@@ -1330,7 +1330,7 @@
             $Response = "\u{26A0} <b>SPAM DETECTED</b> \u{26A0}\n\n";
             $Response .= "<b>User:</b> $Mention (<code>" . $userClient->PublicID . "</code>)\n";
             $Response .= "<b>Message Hash:</b> <code>" . $messageLog->MessageHash . "</code>\n";
-            $Response .= "<b>Spam Probability:</b> <code>" . $spamPredictionResults->SpamPrediction . "%</code>";
+            $Response .= "<b>Spam Probability:</b> <code>" . ($spamPredictionResults->SpamPrediction * 100) . "%</code>";
 
             return $Response;
         }
@@ -1356,7 +1356,7 @@
                 $LogMessage .= "<b>Channel PTID:</b> <code>" . $channelClient->PublicID . "</code>\n";
             }
 
-            $LogMessage .= "<b>Prediction Results:</b> <code>" . $messageLog->SpamPrediction . "</code>\n";
+            $LogMessage .= "<b>Prediction Results:</b> <code>" . ($messageLog->SpamPrediction * 100) . "</code>\n";
             $LogMessage .= "<b>Message Hash:</b> <code>" . $messageLog->MessageHash . "</code>\n";
             $LogMessage .= "<b>Timestamp:</b> <code>" . $messageLog->Timestamp . "</code>";
 

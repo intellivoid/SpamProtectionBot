@@ -234,15 +234,17 @@
             {
                 $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Events/generic_request::direct.bin</code>"
-                ]);
+                //return Request::sendMessage([
+                //    "chat_id" => $this->getMessage()->getChat()->getId(),
+                //    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                //    "parse_mode" => "html",
+                //    "text" =>
+                //        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                //        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                //        "Object: <code>Events/generic_request::direct.bin</code>"
+                //]);
+
+                return null;
             }
 
             // Define and update chat client
@@ -260,15 +262,17 @@
             {
                 $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Events/generic_request::chat_client.bin</code>"
-                ]);
+                //return Request::sendMessage([
+                //    "chat_id" => $this->getMessage()->getChat()->getId(),
+                //    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                //    "parse_mode" => "html",
+                //    "text" =>
+                //        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                //        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                //        "Object: <code>Events/generic_request::chat_client.bin</code>"
+                //]);
+
+                return null;
             }
 
             // Define and update user client
@@ -286,15 +290,17 @@
             {
                 $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 /** @noinspection PhpUnhandledExceptionInspection */
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" =>
-                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                        "Object: <code>Events/generic_request::user_client.bin</code>"
-                ]);
+                //return Request::sendMessage([
+                //    "chat_id" => $this->getMessage()->getChat()->getId(),
+                //    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                //    "parse_mode" => "html",
+                //    "text" =>
+                //        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                //        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                //        "Object: <code>Events/generic_request::user_client.bin</code>"
+                //]);
+
+                return null;
             }
 
             // Define and update the forwarder if available
@@ -1228,13 +1234,13 @@
             {
                 if($UserStatus->GeneralizedHam > 0 && $UserStatus->GeneralizedSpam > 0)
                 {
-                    $Response .= "<b>Trust Prediction:</b> <code>" . $UserStatus->GeneralizedHam . "/" . $UserStatus->GeneralizedSpam . "</code>\n";
+                    $Response .= "<b>Trust Prediction:</b> <code>" . ($UserStatus->GeneralizedHam * 100) . "/" . ($UserStatus->GeneralizedSpam * 100) . "</code>\n";
                 }
             }
 
             if($UserStatus->LargeLanguageGeneralizedID !== null)
             {
-                $Response .= "<b>Language Prediction:</b> <code>" . $UserStatus->GeneralizedLanguage . "</code> (<code>" . $UserStatus->GeneralizedLanguageProbability . "</code>)\n";
+                $Response .= "<b>Language Prediction:</b> <code>" . $UserStatus->GeneralizedLanguage . "</code> (<code>" . ($UserStatus->GeneralizedLanguageProbability * 100) . "</code>)\n";
             }
 
             if($UserStatus->GeneralizedSpam > 0)
@@ -1397,7 +1403,7 @@
 
             if($ChatSettings->LargeLanguageGeneralizedID !== null)
             {
-                $Response .= "<b>Language Prediction:</b> <code>" . $ChatSettings->GeneralizedLanguage . "</code> (<code>" . $ChatSettings->GeneralizedLanguageProbability . "</code>)\n";
+                $Response .= "<b>Language Prediction:</b> <code>" . $ChatSettings->GeneralizedLanguage . "</code> (<code>" . ($ChatSettings->GeneralizedLanguageProbability * 100) . "</code>)\n";
             }
 
             return $Response;
@@ -1477,7 +1483,7 @@
 
             if($ChannelStatus->LargeLanguageGeneralizedID !== null)
             {
-                $Response .= "<b>Language Prediction:</b> <code>" . $ChannelStatus->GeneralizedLanguage . "</code> (<code>" . $ChannelStatus->GeneralizedLanguageProbability . "</code>)\n";
+                $Response .= "<b>Language Prediction:</b> <code>" . $ChannelStatus->GeneralizedLanguage . "</code> (<code>" . ($ChannelStatus->GeneralizedLanguageProbability * 100) . "</code>)\n";
             }
 
             return $Response;
