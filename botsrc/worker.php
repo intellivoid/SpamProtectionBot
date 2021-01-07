@@ -160,6 +160,7 @@ use VerboseAdventure\VerboseAdventure;
             $BackgroundWorkerConfiguration["Host"],
             (int)$BackgroundWorkerConfiguration["Port"]
         );
+        $BackgroundWorker->getWorker()->getGearmanWorker()->setTimeout(5000);
     }
     catch(Exception $e)
     {
