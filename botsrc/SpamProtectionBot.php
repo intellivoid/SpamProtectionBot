@@ -7,6 +7,7 @@
     use DeepAnalytics\DeepAnalytics;
     use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
+use VerboseAdventure\Abstracts\EventType;
 use VerboseAdventure\VerboseAdventure;
 
 /**
@@ -14,6 +15,20 @@ use VerboseAdventure\VerboseAdventure;
      */
     class SpamProtectionBot
     {
+        /**
+         * The last Unix Timestamp when the worker was invoked
+         *
+         * @var int
+         */
+        public static $LastWorkerActivity;
+
+        /**
+         * Indicates if this worker is sleeping
+         *
+         * @var bool
+         */
+        public static $IsSleeping;
+
         /**
          * @var TelegramClientManager
          */
@@ -166,5 +181,70 @@ use VerboseAdventure\VerboseAdventure;
         public static function setLogHandler(VerboseAdventure $LogHandler): void
         {
             self::$LogHandler = $LogHandler;
+        }
+
+        /**
+         * @return int
+         */
+        public static function getLastWorkerActivity(): int
+        {
+            return self::$LastWorkerActivity;
+        }
+
+        /**
+         * @param int $LastWorkerActivity
+         */
+        public static function setLastWorkerActivity(int $LastWorkerActivity): void
+        {
+            self::$LastWorkerActivity = $LastWorkerActivity;
+        }
+
+        /**
+         * @return bool
+         */
+        public static function isSleeping(): bool
+        {
+            return self::$IsSleeping;
+        }
+
+        /**
+         * @param bool $IsSleeping
+         */
+        public static function setIsSleeping(bool $IsSleeping): void
+        {
+            self::$IsSleeping = $IsSleeping;
+        }
+
+        /**
+         * Determines if this current worker should save resources by going to sleep or wake up depending on the
+         * last activity cycle
+         */
+        public static function processSleepCycle()
+        {
+            if(time() - self::getLastWorkerActivity() > 60)
+            {
+                if(self::isSleeping() == false)
+                {
+                    self::getLogHandler()->log(EventType::INFO, "Worker hasn't been active the last 60 seconds, going to sleep.");
+
+                    self::getSpamProtection()->disconnectDatabase();
+                    self::getCoffeeHouse()->disconnectDatabase();
+                    self::getTelegramClientManager()->disconnectDatabase();
+                    self::setIsSleeping(true);
+                }
+            }
+            else
+            {
+                if(self::isSleeping() == true)
+                {
+                    self::getLogHandler()->log(EventType::INFO, "Worker is active, awaking from sleep mode");
+
+                    self::getSpamProtection()->connectDatabase();
+                    self::getCoffeeHouse()->connectDatabase();
+                    self::getTelegramClientManager()->connectDatabase();
+
+                    self::setIsSleeping(false);
+                }
+            }
         }
     }

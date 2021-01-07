@@ -2,7 +2,7 @@
     "package": {
         "package_name": "net.intellivoid.spam_protection_bot",
         "name": "Telegram SpamProtectionBot",
-        "version": "2.0.0.3",
+        "version": "2.0.0.4",
         "author": "Zi Xing Narrakas",
         "organization": "Intellivoid",
         "description": "Protects your group from unwanted spam using machine learning from CoffeeHouse.",
