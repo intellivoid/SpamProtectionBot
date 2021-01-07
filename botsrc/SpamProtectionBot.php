@@ -225,7 +225,7 @@ use VerboseAdventure\VerboseAdventure;
             {
                 if(self::isSleeping() == false)
                 {
-                    self::getLogHandler()->log(EventType::INFO, "Worker hasn't been active the last 60 seconds, going to sleep.");
+                    self::getLogHandler()->log(EventType::INFO, "Worker hasn't been active the last 60 seconds, going to sleep.", "Worker");
 
                     self::getSpamProtection()->disconnectDatabase();
                     self::getCoffeeHouse()->disconnectDatabase();
@@ -237,7 +237,7 @@ use VerboseAdventure\VerboseAdventure;
             {
                 if(self::isSleeping() == true)
                 {
-                    self::getLogHandler()->log(EventType::INFO, "Worker is active, awaking from sleep mode");
+                    self::getLogHandler()->log(EventType::INFO, "Worker is active, awaking from sleep mode", "Worker");
 
                     self::getSpamProtection()->connectDatabase();
                     self::getCoffeeHouse()->connectDatabase();

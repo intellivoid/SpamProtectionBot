@@ -85,6 +85,8 @@ use VerboseAdventure\VerboseAdventure;
     define("LOG_CHANNEL", "SpamProtectionLogs");
     define("MAIN_OPERATOR_USERNAME", "IntellivoidSupport");
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
+    SpamProtectionBot::setLastWorkerActivity((int)time());
+    SpamProtectionBot::setIsSleeping(false);
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
     {
@@ -235,6 +237,7 @@ use VerboseAdventure\VerboseAdventure;
 
         try
         {
+            SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "!!!", "Worker");
             $BackgroundWorker->getWorker()->work();
             SpamProtectionBot::processSleepCycle(); // Go to sleep if there's no activity
         }
