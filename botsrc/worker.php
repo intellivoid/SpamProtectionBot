@@ -237,6 +237,7 @@ use VerboseAdventure\VerboseAdventure;
 
         try
         {
+            SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "!!!", "Worker");
             $BackgroundWorker->getWorker()->work();
             SpamProtectionBot::processSleepCycle(); // Go to sleep if there's no activity
         }
