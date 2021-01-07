@@ -160,7 +160,6 @@ use VerboseAdventure\VerboseAdventure;
             $BackgroundWorkerConfiguration["Host"],
             (int)$BackgroundWorkerConfiguration["Port"]
         );
-        $BackgroundWorker->getWorker()->getGearmanWorker()->setTimeout(5000);
     }
     catch(Exception $e)
     {
@@ -208,42 +207,29 @@ use VerboseAdventure\VerboseAdventure;
     // Start working
     SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Worker started successfully", "Worker");
 
+    // Set the timeout to 5 seconds
+    $BackgroundWorker->getWorker()->getGearmanWorker()->setTimeout(5000);
+
     while(true)
     {
-        //try
-        //{
-            //try
-            //{
-            //    DB::getPdo()->query('SELECT 1');
-            //}
-            //catch (PDOException $e)
-            //{
-            //    $telegram->enableMySql(array(
-            //        'host' => $DatabaseConfiguration['Host'],
-            //        'port' => $DatabaseConfiguration['Port'],
-            //        'user' => $DatabaseConfiguration['Username'],
-            //       'password' => $DatabaseConfiguration['Password'],
-            //        'database' => $DatabaseConfiguration['Database'],
-            //    ));
-            //}
-
-            //SpamProtectionBot::$CoffeeHouse->getDatabase()->ping();
-            //SpamProtectionBot::$SpamProtection->getDatabase()->ping();
-            //SpamProtectionBot::$TelegramClientManager->getDatabase()->ping();
-        //}
-        //catch(Exception $e)
-        //{
-        //    SpamProtectionBot::getLogHandler()->logException($e, "Worker");
-        //}
-
-        try
+        while(
+            @$BackgroundWorker->getWorker()->getGearmanWorker()->work() ||
+            $BackgroundWorker->getWorker()->getGearmanWorker()->returnCode() == GEARMAN_TIMEOUT
+        )
         {
-            SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "!!!", "Worker");
-            $BackgroundWorker->getWorker()->work();
-            SpamProtectionBot::processSleepCycle(); // Go to sleep if there's no activity
-        }
-        catch(Exception $e)
-        {
-            SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+            if ($BackgroundWorker->getWorker()->getGearmanWorker()->returnCode() == GEARMAN_TIMEOUT)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::VERBOSE, "!!!", "Worker");
+                SpamProtectionBot::processSleepCycle(); // Go to sleep if there's no activity
+                continue;
+            }
+
+            if ($BackgroundWorker->getWorker()->getGearmanWorker()->returnCode() != GEARMAN_SUCCESS)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "Gearman returned error code " . $BackgroundWorker->getWorker()->getGearmanWorker()->returnCode(), "Worker");
+                break;
+            }
         }
     }
+
+
