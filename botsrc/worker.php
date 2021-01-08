@@ -208,7 +208,7 @@ use VerboseAdventure\VerboseAdventure;
     SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Worker started successfully", "Worker");
 
     // Set the timeout to 5 seconds
-    $BackgroundWorker->getWorker()->getGearmanWorker()->setTimeout(5);
+    $BackgroundWorker->getWorker()->getGearmanWorker()->setTimeout(5000);
 
     while(true)
     {
