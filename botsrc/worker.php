@@ -172,8 +172,8 @@ use VerboseAdventure\VerboseAdventure;
     {
         try
         {
-            //SpamProtectionBot::setLastWorkerActivity((int)time()); // Set the last activity timestamp
-            //SpamProtectionBot::processSleepCycle(); // Wake worker if it's sleeping
+            SpamProtectionBot::setLastWorkerActivity((int)time()); // Set the last activity timestamp
+            SpamProtectionBot::processSleepCycle(); // Wake worker if it's sleeping
 
             $ServerResponse = new ServerResponse(json_decode($job->workload(), true), TELEGRAM_BOT_NAME);
             $UpdateCount = count($ServerResponse->getResult());
@@ -220,7 +220,7 @@ use VerboseAdventure\VerboseAdventure;
 
             if ($BackgroundWorker->getWorker()->getGearmanWorker()->returnCode() == GEARMAN_TIMEOUT)
             {
-                //SpamProtectionBot::processSleepCycle(); // Go to sleep if there's no activity
+                SpamProtectionBot::processSleepCycle(); // Go to sleep if there's no activity
                 continue;
             }
 
