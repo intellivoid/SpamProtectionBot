@@ -70,7 +70,7 @@
             }
         ],
         "configuration": {
-            "autoload_method": "generated_spl",
+            "autoload_method": "indexed",
             "main": {
                 "execution_point": "cli.php",
                 "create_symlink": false,
