@@ -83,379 +83,7 @@
     "components": [
         {
             "required": true,
-            "file": "SpamProtectionBot.php"
-        },
-        {
-            "required": true,
-            "file": "cli.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/AggregateException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/FulfilledPromise.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/PromisorInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/EachPromise.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/RejectionException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/functions.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/functions_include.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/CancellationException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/TaskQueue.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/Promise.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/TaskQueueInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/Coroutine.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/PromiseInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/promises/src/RejectedPromise.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/ServerRequest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/LazyOpenStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/InflateStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/LimitStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/UriResolver.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/BufferStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/Request.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/functions.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/NoSeekStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/Stream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/Uri.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/Rfc7230.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/AppendStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/functions_include.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/PumpStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/UriNormalizer.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/StreamWrapper.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/Response.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/DroppingStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/UploadedFile.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/MultipartStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/FnStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/MessageTrait.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/StreamDecoratorTrait.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/psr7/src/CachingStream.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Pool.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Cookie/CookieJar.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Cookie/SessionCookieJar.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Cookie/CookieJarInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Cookie/FileCookieJar.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Cookie/SetCookie.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/ConnectException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/TransferException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/GuzzleException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/SeekException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/BadResponseException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/TooManyRedirectsException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/ClientException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/ServerException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/RequestException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Exception/InvalidArgumentException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Client.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/MessageFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/RetryMiddleware.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/functions.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/RequestOptions.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/UriTemplate.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/TransferStats.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/functions_include.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/HandlerStack.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/PrepareBodyMiddleware.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Middleware.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/RedirectMiddleware.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/ClientInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Handler/EasyHandle.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Handler/StreamHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Handler/CurlFactoryInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Handler/MockHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Handler/Proxy.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Handler/CurlMultiHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/guzzlehttp/guzzle/src/Handler/CurlHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/ErrorHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/LogglyFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/FormatterInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/ScalarFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/ChromePHPFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/LogstashFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/WildfireFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/LineFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/MongoDBFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/GelfMessageFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/HtmlFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/FlowdockFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/ElasticaFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/JsonFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/NormalizerFormatter.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Formatter/FluentdFormatter.php"
+            "file": "vendor/monolog/monolog/src/Monolog/SignalHandler.php"
         },
         {
             "required": true,
@@ -463,23 +91,19 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/SignalHandler.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Logger.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Registry.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Processor/UidProcessor.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Processor/TagProcessor.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Processor/WebProcessor.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Processor/MemoryPeakUsageProcessor.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Processor/MercurialProcessor.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Processor/ProcessIdProcessor.php"
         },
         {
             "required": true,
@@ -491,7 +115,11 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Processor/UidProcessor.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Processor/MemoryProcessor.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Processor/MercurialProcessor.php"
         },
         {
             "required": true,
@@ -499,7 +127,15 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Processor/WebProcessor.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Processor/GitProcessor.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Processor/TagProcessor.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Processor/MemoryPeakUsageProcessor.php"
         },
         {
             "required": true,
@@ -507,35 +143,23 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Processor/MemoryProcessor.php"
+            "file": "vendor/monolog/monolog/src/Monolog/ResettableInterface.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Processor/ProcessIdProcessor.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/FilterHandler.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Processor/GitProcessor.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/SyslogUdp/UdpSocket.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Logger.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/AbstractProcessingHandler.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/ZendMonitorHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/RavenHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/FingersCrossedHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/SyslogUdpHandler.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/PHPConsoleHandler.php"
         },
         {
             "required": true,
@@ -543,31 +167,7 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/PsrHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/MongoDBHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/ErrorLogHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/HipChatHandler.php"
-        },
-        {
-            "required": true,
             "file": "vendor/monolog/monolog/src/Monolog/Handler/FirePHPHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/LogglyHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/SlackHandler.php"
         },
         {
             "required": true,
@@ -575,11 +175,19 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/ProcessableHandlerInterface.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/RotatingFileHandler.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/NullHandler.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/FleepHookHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/ChromePHPHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/SlackWebhookHandler.php"
         },
         {
             "required": true,
@@ -587,11 +195,71 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/TestHandler.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/FormattableHandlerInterface.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/DoctrineCouchDBHandler.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/ZendMonitorHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/ProcessableHandlerTrait.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/MissingExtensionException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/NullHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/SocketHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/BrowserConsoleHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/MandrillHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/SwiftMailerHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/SamplingHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/InsightOpsHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/HipChatHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/HandlerInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/HandlerWrapper.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/CouchDBHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/PushoverHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/GroupHandler.php"
         },
         {
             "required": true,
@@ -607,11 +275,15 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/FormattableHandlerInterface.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/BufferHandler.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/PushoverHandler.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/MongoDBHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/FingersCrossedHandler.php"
         },
         {
             "required": true,
@@ -619,139 +291,11 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/FleepHookHandler.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/RavenHandler.php"
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/AbstractSyslogHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/BrowserConsoleHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/ElasticSearchHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/StreamHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/SyslogHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/MailHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/ChromePHPHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/DeduplicationHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/SwiftMailerHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/CouchDBHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/InsightOpsHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/AbstractProcessingHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/NativeMailerHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/WhatFailureGroupHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/RotatingFileHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/SocketHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/AmqpHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/MandrillHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/FlowdockHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/NewRelicHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/SlackWebhookHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/GroupHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/SamplingHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/MissingExtensionException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/HandlerInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/SyslogUdp/UdpSocket.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/HandlerWrapper.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/ProcessableHandlerTrait.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/IFTTTHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/GelfHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/BufferHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/AbstractHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/LogEntriesHandler.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/ProcessableHandlerInterface.php"
         },
         {
             "required": true,
@@ -759,19 +303,31 @@
         },
         {
             "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/IFTTTHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/TestHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/SlackHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/DeduplicationHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/WhatFailureGroupHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/SyslogUdpHandler.php"
+        },
+        {
+            "required": true,
             "file": "vendor/monolog/monolog/src/Monolog/Handler/CubeHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/FilterHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/RedisHandler.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/Handler/PHPConsoleHandler.php"
         },
         {
             "required": true,
@@ -779,7 +335,443 @@
         },
         {
             "required": true,
-            "file": "vendor/monolog/monolog/src/Monolog/ResettableInterface.php"
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/ErrorLogHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/LogglyHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/SyslogHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/NativeMailerHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/RedisHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/PsrHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/AbstractHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/AbstractSyslogHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/LogEntriesHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/ElasticSearchHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/FlowdockHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/DoctrineCouchDBHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/NewRelicHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/MailHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/AmqpHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/StreamHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Handler/GelfHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/ErrorHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/LineFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/ChromePHPFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/NormalizerFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/GelfMessageFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/MongoDBFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/LogstashFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/JsonFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/FluentdFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/ElasticaFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/FlowdockFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/ScalarFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/HtmlFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/WildfireFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/FormatterInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Formatter/LogglyFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/monolog/monolog/src/Monolog/Registry.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/AggregateException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/FulfilledPromise.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/Promise.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/Coroutine.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/PromisorInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/CancellationException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/TaskQueue.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/EachPromise.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/TaskQueueInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/functions.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/RejectionException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/functions_include.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/PromiseInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/promises/src/RejectedPromise.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Middleware.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/ClientInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Cookie/CookieJarInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Cookie/FileCookieJar.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Cookie/CookieJar.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Cookie/SetCookie.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Cookie/SessionCookieJar.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/HandlerStack.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Pool.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/RedirectMiddleware.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/MessageFormatter.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/RequestOptions.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Client.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/functions.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/RetryMiddleware.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Handler/CurlHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Handler/Proxy.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Handler/CurlFactoryInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Handler/CurlMultiHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Handler/EasyHandle.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Handler/MockHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Handler/StreamHandler.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/functions_include.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/ConnectException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/RequestException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/BadResponseException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/TooManyRedirectsException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/ClientException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/TransferException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/SeekException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/ServerException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/InvalidArgumentException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/Exception/GuzzleException.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/UriTemplate.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/TransferStats.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/guzzle/src/PrepareBodyMiddleware.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/Stream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/CachingStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/Rfc7230.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/UriNormalizer.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/Response.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/MessageTrait.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/NoSeekStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/StreamWrapper.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/Uri.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/BufferStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/PumpStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/MultipartStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/Request.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/LazyOpenStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/FnStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/functions.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/functions_include.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/ServerRequest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/UriResolver.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/UploadedFile.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/StreamDecoratorTrait.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/LimitStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/DroppingStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/AppendStream.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/guzzlehttp/psr7/src/InflateStream.php"
         },
         {
             "required": true,
@@ -787,31 +779,7 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Botan.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Exception/TelegramLogException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Exception/TelegramException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Exception/InvalidBotTokenException.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/ChatAction.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Conversation.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/AdminCommand.php"
+            "file": "vendor/longman/telegram-bot/src/DB.php"
         },
         {
             "required": true,
@@ -819,95 +787,7 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/Command.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/StartCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/SupergroupchatcreatedCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/DeletechatphotoCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/EditedchannelpostCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/MigratefromchatidCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/NewchattitleCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/LeftchatmemberCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/InlinequeryCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/ChannelpostCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/EditedmessageCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/GroupchatcreatedCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/NewchatmembersCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/PinnedmessageCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/ChoseninlineresultCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/NewchatphotoCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/GenericmessageCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/CallbackqueryCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/ChannelchatcreatedCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/MigratetochatidCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/GenericCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/UserCommand.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/AdminCommands/WhoisCommand.php"
+            "file": "vendor/longman/telegram-bot/src/Commands/AdminCommands/ChatsCommand.php"
         },
         {
             "required": true,
@@ -919,19 +799,115 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/AdminCommands/SendtoallCommand.php"
-        },
-        {
-            "required": true,
             "file": "vendor/longman/telegram-bot/src/Commands/AdminCommands/CleanupCommand.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Commands/AdminCommands/ChatsCommand.php"
+            "file": "vendor/longman/telegram-bot/src/Commands/AdminCommands/WhoisCommand.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Request.php"
+            "file": "vendor/longman/telegram-bot/src/Commands/AdminCommands/SendtoallCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/Command.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/UserCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/AdminCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/DeletechatphotoCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/EditedmessageCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/LeftchatmemberCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/NewchattitleCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/MigratetochatidCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/ChannelpostCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/GenericmessageCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/GroupchatcreatedCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/ChannelchatcreatedCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/GenericCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/NewchatmembersCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/MigratefromchatidCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/EditedchannelpostCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/PinnedmessageCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/InlinequeryCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/StartCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/ChoseninlineresultCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/CallbackqueryCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/NewchatphotoCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Commands/SystemCommands/SupergroupchatcreatedCommand.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/ChatAction.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Telegram.php"
         },
         {
             "required": true,
@@ -939,39 +915,35 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/DB.php"
+            "file": "vendor/longman/telegram-bot/src/Botan.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/File.php"
+            "file": "vendor/longman/telegram-bot/src/ConversationDB.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/ServerResponse.php"
+            "file": "vendor/longman/telegram-bot/src/Request.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Update.php"
+            "file": "vendor/longman/telegram-bot/src/BotanDB.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/VideoNote.php"
+            "file": "vendor/longman/telegram-bot/src/Exception/TelegramException.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/StickerSet.php"
+            "file": "vendor/longman/telegram-bot/src/Exception/InvalidBotTokenException.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineKeyboard.php"
+            "file": "vendor/longman/telegram-bot/src/Exception/TelegramLogException.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/MessageEntity.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Document.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/EditedChannelPost.php"
         },
         {
             "required": true,
@@ -979,19 +951,7 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Message.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Chat.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Voice.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Games/CallbackGame.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/Games/GameHighScore.php"
         },
         {
             "required": true,
@@ -999,91 +959,7 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Games/GameHighScore.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Payments/SuccessfulPayment.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Payments/OrderInfo.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Payments/ShippingQuery.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Payments/Invoice.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Payments/ShippingOption.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Payments/ShippingAddress.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Payments/LabeledPrice.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Payments/PreCheckoutQuery.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputMessageContent.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputTextMessageContent.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputVenueMessageContent.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputLocationMessageContent.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputContactMessageContent.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/PhotoSize.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/WebhookInfo.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaDocument.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaPhoto.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaVideo.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMedia.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaAnimation.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaAudio.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/Games/CallbackGame.php"
         },
         {
             "required": true,
@@ -1091,179 +967,11 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/ChatMember.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/EncryptedCredentials.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/EditedMessage.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Sticker.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/CallbackQuery.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Entity.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Poll.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Video.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultVideo.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultPhoto.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultDocument.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultArticle.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedVoice.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedMpeg4Gif.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultContact.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultVenue.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedSticker.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultGif.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineEntity.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultVoice.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedVideo.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedPhoto.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedDocument.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedAudio.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultAudio.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultGame.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResult.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultLocation.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedGif.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultMpeg4Gif.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/ChannelPost.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/ReplyToMessage.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/User.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Keyboard.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Venue.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/InlineKeyboardButton.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/MaskPosition.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Audio.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Animation.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/PollOption.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/UserProfilePhotos.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorReverseSide.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorDataField.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorFile.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorFiles.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportData.php"
         },
         {
             "required": true,
@@ -1275,15 +983,15 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorUnspecified.php"
-        },
-        {
-            "required": true,
             "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementError.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorTranslationFiles.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorDataField.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorFiles.php"
         },
         {
             "required": true,
@@ -1291,11 +999,19 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/EncryptedCredentials.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorTranslationFiles.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportFile.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorUnspecified.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorReverseSide.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportElementError/PassportElementErrorFile.php"
         },
         {
             "required": true,
@@ -1303,11 +1019,199 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportData.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/TelegramPassport/PassportFile.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/EditedChannelPost.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/EditedMessage.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineKeyboard.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Audio.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/PollOption.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineKeyboardButton.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Payments/Invoice.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Payments/PreCheckoutQuery.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Payments/OrderInfo.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Payments/SuccessfulPayment.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Payments/LabeledPrice.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Payments/ShippingAddress.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Payments/ShippingOption.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Payments/ShippingQuery.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Video.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/UserProfilePhotos.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/ServerResponse.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Voice.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/WebhookInfo.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResult.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultVoice.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultVideo.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedAudio.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedPhoto.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedVoice.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultArticle.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultMpeg4Gif.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedSticker.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultGame.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultPhoto.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedGif.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedMpeg4Gif.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultDocument.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultContact.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultGif.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultLocation.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultVenue.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedVideo.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultCachedDocument.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineQueryResultAudio.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InlineQuery/InlineEntity.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Update.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Venue.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaDocument.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMedia.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaVideo.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaAnimation.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaPhoto.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMedia/InputMediaAudio.php"
         },
         {
             "required": true,
@@ -1315,11 +1219,11 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/ChatPhoto.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/Document.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Entities/Location.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/MessageEntity.php"
         },
         {
             "required": true,
@@ -1327,23 +1231,111 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/ConversationDB.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/File.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/Telegram.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/Entity.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/src/BotanDB.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/ChatMember.php"
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/TelegramLogTest.php"
+            "file": "vendor/longman/telegram-bot/src/Entities/VideoNote.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Chat.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputMessageContent.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputVenueMessageContent.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputTextMessageContent.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputContactMessageContent.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/InputMessageContent/InputLocationMessageContent.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Location.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/PhotoSize.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Animation.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Sticker.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/ChannelPost.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/StickerSet.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Keyboard.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Message.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/ReplyToMessage.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/Poll.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/MaskPosition.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/User.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/ChatPhoto.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Entities/CallbackQuery.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/src/Conversation.php"
         },
         {
             "required": true,
             "file": "vendor/longman/telegram-bot/tests/unit/Commands/CommandTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Commands/CommandTestCase.php"
         },
         {
             "required": true,
@@ -1355,75 +1347,7 @@
         },
         {
             "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Commands/CommandTestCase.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/ConversationTest.php"
-        },
-        {
-            "required": true,
             "file": "vendor/longman/telegram-bot/tests/unit/TestCase.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/InlineKeyboardButtonTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/LocationTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/ServerResponseTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/ChatTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/KeyboardTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/FileTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/UserTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/InlineKeyboardTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/KeyboardButtonTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/AudioTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/ReplyToMessageTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/UpdateTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/MessageTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/Entities/WebhookInfoTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/longman/telegram-bot/tests/unit/TelegramTest.php"
         },
         {
             "required": true,
@@ -1431,15 +1355,79 @@
         },
         {
             "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/TelegramLogTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/ServerResponseTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/KeyboardButtonTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/ChatTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/UpdateTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/KeyboardTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/UserTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/MessageTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/InlineKeyboardButtonTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/InlineKeyboardTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/AudioTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/FileTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/LocationTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/WebhookInfoTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/Entities/ReplyToMessageTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/ConversationTest.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/longman/telegram-bot/tests/unit/TelegramTest.php"
+        },
+        {
+            "required": true,
             "file": "vendor/longman/telegram-bot/tests/bootstrap.php"
         },
         {
             "required": true,
-            "file": "vendor/psr/http-message/src/ResponseInterface.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/psr/http-message/src/RequestInterface.php"
+            "file": "vendor/ralouphie/getallheaders/src/getallheaders.php"
         },
         {
             "required": true,
@@ -1447,11 +1435,19 @@
         },
         {
             "required": true,
-            "file": "vendor/psr/http-message/src/UriInterface.php"
+            "file": "vendor/psr/http-message/src/RequestInterface.php"
         },
         {
             "required": true,
             "file": "vendor/psr/http-message/src/ServerRequestInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/psr/http-message/src/UriInterface.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/psr/http-message/src/ResponseInterface.php"
         },
         {
             "required": true,
@@ -1463,7 +1459,7 @@
         },
         {
             "required": true,
-            "file": "vendor/psr/log/Psr/Log/LoggerTrait.php"
+            "file": "vendor/psr/log/Psr/Log/Test/LoggerInterfaceTest.php"
         },
         {
             "required": true,
@@ -1471,19 +1467,7 @@
         },
         {
             "required": true,
-            "file": "vendor/psr/log/Psr/Log/Test/LoggerInterfaceTest.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/psr/log/Psr/Log/NullLogger.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/psr/log/Psr/Log/LogLevel.php"
-        },
-        {
-            "required": true,
-            "file": "vendor/psr/log/Psr/Log/AbstractLogger.php"
+            "file": "vendor/psr/log/Psr/Log/LoggerTrait.php"
         },
         {
             "required": true,
@@ -1491,11 +1475,19 @@
         },
         {
             "required": true,
-            "file": "vendor/psr/log/Psr/Log/LoggerInterface.php"
+            "file": "vendor/psr/log/Psr/Log/NullLogger.php"
         },
         {
             "required": true,
-            "file": "vendor/psr/log/Psr/Log/LoggerAwareTrait.php"
+            "file": "vendor/psr/log/Psr/Log/AbstractLogger.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/psr/log/Psr/Log/LogLevel.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/psr/log/Psr/Log/LoggerInterface.php"
         },
         {
             "required": true,
@@ -1503,11 +1495,15 @@
         },
         {
             "required": true,
-            "file": "vendor/composer/autoload_static.php"
+            "file": "vendor/psr/log/Psr/Log/LoggerAwareTrait.php"
         },
         {
             "required": true,
-            "file": "vendor/composer/autoload_psr4.php"
+            "file": "vendor/autoload.php"
+        },
+        {
+            "required": true,
+            "file": "vendor/composer/autoload_classmap.php"
         },
         {
             "required": true,
@@ -1515,7 +1511,7 @@
         },
         {
             "required": true,
-            "file": "vendor/composer/autoload_real.php"
+            "file": "vendor/composer/autoload_psr4.php"
         },
         {
             "required": true,
@@ -1527,15 +1523,19 @@
         },
         {
             "required": true,
-            "file": "vendor/composer/autoload_classmap.php"
+            "file": "vendor/composer/autoload_static.php"
         },
         {
             "required": true,
-            "file": "vendor/ralouphie/getallheaders/src/getallheaders.php"
+            "file": "vendor/composer/autoload_real.php"
         },
         {
             "required": true,
-            "file": "vendor/autoload.php"
+            "file": "SpamProtectionBot.php"
+        },
+        {
+            "required": true,
+            "file": "cli.php"
         },
         {
             "required": true,
@@ -1543,63 +1543,7 @@
         },
         {
             "required": true,
-            "file": "commands/MsgInfoCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/WhoisCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/StartCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/BlacklistCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/LogCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/HelpCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/SettingsCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/BakaMitaiCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/NewchatmembersCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/StatsCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/LCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/PropCommand.php"
-        },
-        {
-            "required": true,
             "file": "commands/CreateInviteCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/GenericmessageCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/ResetPredictionsCommand.php"
         },
         {
             "required": true,
@@ -1607,92 +1551,148 @@
         },
         {
             "required": true,
+            "file": "commands/PropCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/HelpCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/GenericmessageCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/SettingsCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/NewchatmembersCommand.php"
+        },
+        {
+            "required": true,
             "file": "commands/PredictionsCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/BakaMitaiCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/StartCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/LogCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/StatsCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/WhoisCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/MsgInfoCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/BlacklistCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/LCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/ResetPredictionsCommand.php"
         }
     ],
     "files": [
-        "composer.json",
-        ".htaccess",
+        "package.json",
         "composer.lock",
-        "vendor/guzzlehttp/promises/composer.json",
-        "vendor/guzzlehttp/promises/Makefile",
-        "vendor/guzzlehttp/promises/README.md",
-        "vendor/guzzlehttp/promises/CHANGELOG.md",
-        "vendor/guzzlehttp/promises/LICENSE",
-        "vendor/guzzlehttp/psr7/composer.json",
-        "vendor/guzzlehttp/psr7/README.md",
-        "vendor/guzzlehttp/psr7/CHANGELOG.md",
-        "vendor/guzzlehttp/psr7/LICENSE",
-        "vendor/guzzlehttp/guzzle/composer.json",
-        "vendor/guzzlehttp/guzzle/Dockerfile",
-        "vendor/guzzlehttp/guzzle/UPGRADING.md",
-        "vendor/guzzlehttp/guzzle/README.md",
-        "vendor/guzzlehttp/guzzle/CHANGELOG.md",
-        "vendor/guzzlehttp/guzzle/LICENSE",
-        "vendor/guzzlehttp/guzzle/.php_cs",
-        "vendor/monolog/monolog/composer.json",
+        "composer.json",
         "vendor/monolog/monolog/README.md",
+        "vendor/monolog/monolog/composer.json",
         "vendor/monolog/monolog/CHANGELOG.md",
         "vendor/monolog/monolog/LICENSE",
-        "vendor/longman/telegram-bot/composer.json",
-        "vendor/longman/telegram-bot/phpunit.xml.dist",
-        "vendor/longman/telegram-bot/phpcs.xml",
-        "vendor/longman/telegram-bot/.gitignore",
-        "vendor/longman/telegram-bot/utils/db-schema-update/0.52.0-0.53.0.sql",
-        "vendor/longman/telegram-bot/utils/db-schema-update/0.53.0-0.54.0.sql",
-        "vendor/longman/telegram-bot/utils/db-schema-update/unreleased.sql",
-        "vendor/longman/telegram-bot/utils/db-schema-update/0.44.1-0.45.0.sql",
-        "vendor/longman/telegram-bot/utils/db-schema-update/0.56.0-0.57.0.sql",
-        "vendor/longman/telegram-bot/utils/db-schema-update/0.47.1-0.48.0.sql",
-        "vendor/longman/telegram-bot/utils/db-schema-update/0.54.1-0.55.0.sql",
-        "vendor/longman/telegram-bot/utils/db-schema-update/0.50.0-0.51.0.sql",
-        "vendor/longman/telegram-bot/doc/01-utils.md",
-        "vendor/longman/telegram-bot/composer.lock",
-        "vendor/longman/telegram-bot/LICENSE.md",
-        "vendor/longman/telegram-bot/CREDITS",
-        "vendor/longman/telegram-bot/.scrutinizer.yml",
-        "vendor/longman/telegram-bot/.editorconfig",
+        "vendor/guzzlehttp/promises/README.md",
+        "vendor/guzzlehttp/promises/Makefile",
+        "vendor/guzzlehttp/promises/composer.json",
+        "vendor/guzzlehttp/promises/CHANGELOG.md",
+        "vendor/guzzlehttp/promises/LICENSE",
+        "vendor/guzzlehttp/guzzle/Dockerfile",
+        "vendor/guzzlehttp/guzzle/README.md",
+        "vendor/guzzlehttp/guzzle/composer.json",
+        "vendor/guzzlehttp/guzzle/CHANGELOG.md",
+        "vendor/guzzlehttp/guzzle/.php_cs",
+        "vendor/guzzlehttp/guzzle/LICENSE",
+        "vendor/guzzlehttp/guzzle/UPGRADING.md",
+        "vendor/guzzlehttp/psr7/README.md",
+        "vendor/guzzlehttp/psr7/composer.json",
+        "vendor/guzzlehttp/psr7/CHANGELOG.md",
+        "vendor/guzzlehttp/psr7/LICENSE",
+        "vendor/longman/telegram-bot/README.md",
+        "vendor/longman/telegram-bot/structure.sql",
         "vendor/longman/telegram-bot/build/.gitkeep",
-        "vendor/longman/telegram-bot/.travis.yml",
+        "vendor/longman/telegram-bot/utils/db-schema-update/0.54.1-0.55.0.sql",
+        "vendor/longman/telegram-bot/utils/db-schema-update/0.53.0-0.54.0.sql",
+        "vendor/longman/telegram-bot/utils/db-schema-update/0.47.1-0.48.0.sql",
+        "vendor/longman/telegram-bot/utils/db-schema-update/0.50.0-0.51.0.sql",
+        "vendor/longman/telegram-bot/utils/db-schema-update/0.44.1-0.45.0.sql",
+        "vendor/longman/telegram-bot/utils/db-schema-update/unreleased.sql",
+        "vendor/longman/telegram-bot/utils/db-schema-update/0.56.0-0.57.0.sql",
+        "vendor/longman/telegram-bot/utils/db-schema-update/0.52.0-0.53.0.sql",
+        "vendor/longman/telegram-bot/phpcs.xml",
+        "vendor/longman/telegram-bot/CREDITS",
+        "vendor/longman/telegram-bot/.github/PULL_REQUEST_TEMPLATE.md",
         "vendor/longman/telegram-bot/.github/ISSUE_TEMPLATE.md",
         "vendor/longman/telegram-bot/.github/CONTRIBUTING.md",
-        "vendor/longman/telegram-bot/.github/PULL_REQUEST_TEMPLATE.md",
-        "vendor/longman/telegram-bot/README.md",
+        "vendor/longman/telegram-bot/composer.lock",
+        "vendor/longman/telegram-bot/composer.json",
+        "vendor/longman/telegram-bot/.scrutinizer.yml",
+        "vendor/longman/telegram-bot/.gitignore",
         "vendor/longman/telegram-bot/CHANGELOG.md",
-        "vendor/longman/telegram-bot/structure.sql",
-        "vendor/longman/telegram-bot/assets/logo/logo.ai",
-        "vendor/longman/telegram-bot/assets/logo/logo.svg",
-        "vendor/longman/telegram-bot/assets/logo/512px/logo_plain.png",
+        "vendor/longman/telegram-bot/.travis.yml",
+        "vendor/longman/telegram-bot/doc/01-utils.md",
+        "vendor/longman/telegram-bot/LICENSE.md",
+        "vendor/longman/telegram-bot/.editorconfig",
+        "vendor/longman/telegram-bot/phpunit.xml.dist",
         "vendor/longman/telegram-bot/assets/logo/512px/logo_flag_uk.png",
-        "vendor/psr/http-message/composer.json",
+        "vendor/longman/telegram-bot/assets/logo/512px/logo_plain.png",
+        "vendor/longman/telegram-bot/assets/logo/logo.svg",
+        "vendor/longman/telegram-bot/assets/logo/logo.ai",
+        "vendor/ralouphie/getallheaders/README.md",
+        "vendor/ralouphie/getallheaders/composer.json",
+        "vendor/ralouphie/getallheaders/LICENSE",
         "vendor/psr/http-message/README.md",
+        "vendor/psr/http-message/composer.json",
         "vendor/psr/http-message/CHANGELOG.md",
         "vendor/psr/http-message/LICENSE",
+        "vendor/psr/log/README.md",
         "vendor/psr/log/composer.json",
         "vendor/psr/log/.gitignore",
-        "vendor/psr/log/README.md",
         "vendor/psr/log/LICENSE",
         "vendor/composer/installed.json",
         "vendor/composer/LICENSE",
-        "vendor/ralouphie/getallheaders/composer.json",
-        "vendor/ralouphie/getallheaders/README.md",
-        "vendor/ralouphie/getallheaders/LICENSE",
-        "package.json",
-        "commands/help_docs/whois.html",
+        ".htaccess",
+        "commands/help_docs/stats.html",
+        "commands/help_docs/blacklist.html",
+        "commands/help_docs/false_detections.html",
+        "commands/help_docs/settings.html",
+        "commands/help_docs/msginfo.html",
         "commands/help_docs/unwanted_users.html",
-        "commands/help_docs/prop.html",
-        "commands/help_docs/prop_channel.html",
         "commands/help_docs/prop_user.html",
+        "commands/help_docs/prop_chat.html",
+        "commands/help_docs/whois.html",
+        "commands/help_docs/spam_protection.html",
+        "commands/help_docs/prop_channel.html",
+        "commands/help_docs/prop.html",
+        "commands/help_docs/blacklist_flags.html",
         "commands/help_docs/help.html",
         "commands/help_docs/false_blacklist.html",
-        "commands/help_docs/stats.html",
-        "commands/help_docs/msginfo.html",
-        "commands/help_docs/settings.html",
-        "commands/help_docs/prop_chat.html",
-        "commands/help_docs/blacklist.html",
-        "commands/help_docs/spam_protection.html",
-        "commands/help_docs/log.html",
-        "commands/help_docs/false_detections.html",
-        "commands/help_docs/blacklist_flags.html"
+        "commands/help_docs/log.html"
     ]
 }
