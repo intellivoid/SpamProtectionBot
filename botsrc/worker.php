@@ -45,23 +45,12 @@ use VerboseAdventure\VerboseAdventure;
     ppm::import("net.intellivoid.ziproto");
     /** @noinspection PhpUnhandledExceptionInspection */
     ppm::import("net.intellivoid.verbose_adventure");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.tdlib");
 
     $current_directory = getcwd();
     VerboseAdventure::setStdout(true); // Enable stdout
     ErrorHandler::registerHandlers(); // Register error handlers
-
-    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
-    {
-        $current_directory = __DIR__;
-    }
-
-    if(file_exists($current_directory . DIRECTORY_SEPARATOR . "vendor") == false)
-    {
-        print("Cannot find vendor directory" . PHP_EOL);
-        exit(255);
-    }
-
-    require($current_directory . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
     if(class_exists("SpamProtectionBot") == false)
     {
