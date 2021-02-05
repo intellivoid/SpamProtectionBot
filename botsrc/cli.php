@@ -44,8 +44,6 @@
     ppm::import("net.intellivoid.verbose_adventure");
     /** @noinspection PhpUnhandledExceptionInspection */
     ppm::import("net.intellivoid.tdlib");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.spam_protection_bot");
 
     VerboseAdventure::setStdout(true); // Enable stdout
     ErrorHandler::registerHandlers(); // Register error handlers

@@ -47,8 +47,6 @@ use VerboseAdventure\VerboseAdventure;
     ppm::import("net.intellivoid.verbose_adventure");
     /** @noinspection PhpUnhandledExceptionInspection */
     ppm::import("net.intellivoid.tdlib");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.spam_protection_bot");
 
 
     $current_directory = getcwd();
