@@ -47,6 +47,9 @@ use VerboseAdventure\VerboseAdventure;
     ppm::import("net.intellivoid.verbose_adventure");
     /** @noinspection PhpUnhandledExceptionInspection */
     ppm::import("net.intellivoid.tdlib");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.spam_protection_bot");
+
 
     $current_directory = getcwd();
     VerboseAdventure::setStdout(true); // Enable stdout
@@ -54,7 +57,18 @@ use VerboseAdventure\VerboseAdventure;
 
     if(class_exists("SpamProtectionBot") == false)
     {
-        include_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            require_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        }
+        elseif(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            require_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        }
+        else
+        {
+            throw new RuntimeException("Cannot locate bot class");
+        }
     }
 
     // Load all required configurations
@@ -92,7 +106,22 @@ use VerboseAdventure\VerboseAdventure;
             $TelegramServiceConfiguration['BotToken'],
             $TelegramServiceConfiguration['BotName']
         );
-        $telegram->addCommandsPaths([$current_directory . DIRECTORY_SEPARATOR . 'commands']);
+
+        if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            $telegram->addCommandsPaths([$current_directory . DIRECTORY_SEPARATOR . 'commands']);
+        }
+        elseif(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            $telegram->addCommandsPaths([__DIR__ . DIRECTORY_SEPARATOR . 'commands']);
+        }
+        else
+        {
+            print("Cannot locate commands path");
+            exit(1);
+        }
+
+        \Longman\TelegramBot\TelegramLog::initialize();
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {
@@ -157,7 +186,7 @@ use VerboseAdventure\VerboseAdventure;
     }
 
     // Define the function "process_batch" to process a batch of Updates from Telegram in the background
-    $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction("process_batch", function(GearmanJob $job) use ($telegram)
+    $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction($telegram->getBotUsername() . "_updates", function(GearmanJob $job) use ($telegram)
     {
         try
         {
@@ -165,26 +194,30 @@ use VerboseAdventure\VerboseAdventure;
             SpamProtectionBot::processSleepCycle(); // Wake worker if it's sleeping
 
             $ServerResponse = new ServerResponse(json_decode($job->workload(), true), TELEGRAM_BOT_NAME);
-            $UpdateCount = count($ServerResponse->getResult());
-
-            if($UpdateCount > 0)
+            if(is_null($ServerResponse->getResult()) == false)
             {
-                SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processing $UpdateCount update(s)", "Worker");
+                $UpdateCount = count($ServerResponse->getResult());
 
-                /** @var Update $result */
-                foreach ($ServerResponse->getResult() as $result)
+                if($UpdateCount > 0)
                 {
-                    try
+                    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processing $UpdateCount update(s)", "Worker");
+
+                    /** @var Update $result */
+                    foreach ($ServerResponse->getResult() as $result)
                     {
-                        SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processing update ID " . $result->getUpdateId(), "Worker");
-                        $telegram->processUpdate($result);
-                    }
-                    catch(Exception $e)
-                    {
-                        SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+                        try
+                        {
+                            SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processing update ID " . $result->getUpdateId(), "Worker");
+                            $telegram->processUpdate($result);
+                        }
+                        catch(Exception $e)
+                        {
+                            SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+                        }
                     }
                 }
             }
+
         }
         catch(Exception $e)
         {

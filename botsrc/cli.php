@@ -44,6 +44,8 @@
     ppm::import("net.intellivoid.verbose_adventure");
     /** @noinspection PhpUnhandledExceptionInspection */
     ppm::import("net.intellivoid.tdlib");
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import("net.intellivoid.spam_protection_bot");
 
     VerboseAdventure::setStdout(true); // Enable stdout
     ErrorHandler::registerHandlers(); // Register error handlers
@@ -52,7 +54,18 @@
 
     if(class_exists("SpamProtectionBot") == false)
     {
-        include_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            require_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        }
+        elseif(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            require_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        }
+        else
+        {
+            throw new RuntimeException("Cannot locate bot class");
+        }
     }
 
     // Load all configurations
