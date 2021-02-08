@@ -84,7 +84,7 @@ use VerboseAdventure\VerboseAdventure;
 
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName']);
     define("LOG_CHANNEL", "SpamProtectionLogs");
-    define("MAIN_OPERATOR_USERNAME", "IntellivoidSupport");
+    define("MAIN_OPERATOR_USERNAME", "Netkas");
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
     SpamProtectionBot::setLastWorkerActivity((int)time());
     SpamProtectionBot::setIsSleeping(false);

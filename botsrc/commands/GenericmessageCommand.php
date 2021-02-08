@@ -7,7 +7,11 @@
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
     use CoffeeHouse\Abstracts\LargeGeneralizedClassificationSearchMethod;
+    use CoffeeHouse\Exceptions\CoffeeHouseUtilsNotReadyException;
+    use CoffeeHouse\Exceptions\InvalidServerInterfaceModuleException;
     use CoffeeHouse\Exceptions\NoResultsFoundException;
+    use CoffeeHouse\Exceptions\NsfwClassificationException;
+    use CoffeeHouse\Exceptions\UnsupportedImageTypeException;
     use CoffeeHouse\Objects\Results\SpamPredictionResults;
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
@@ -20,18 +24,17 @@
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\DetectionAction;
     use SpamProtection\Abstracts\TelegramUserStatus;
-    use SpamProtection\Exceptions\DatabaseException;
-    use SpamProtection\Exceptions\MessageLogNotFoundException;
-    use SpamProtection\Exceptions\UnsupportedMessageException;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\ChannelStatus;
     use SpamProtection\Objects\ChatSettings;
     use SpamProtection\Objects\MessageLog;
     use SpamProtection\Objects\TelegramObjects\ChatMember;
     use SpamProtection\Objects\TelegramObjects\Message;
+    use SpamProtection\Objects\TelegramObjects\PhotoSize;
     use SpamProtection\Objects\UserStatus;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
+    use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
@@ -75,13 +78,10 @@
          * Executes the generic message command
          *
          * @return ServerResponse|null
-         * @throws DatabaseException
          * @throws InvalidSearchMethod
-         * @throws MessageLogNotFoundException
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws UnsupportedMessageException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
         public function execute()
@@ -139,6 +139,7 @@
 
             // Handles the message to detect if it's spam or not
             $this->handleMessage($this->WhoisCommand->ChatClient, $this->WhoisCommand->UserClient, $this->WhoisCommand->DirectClient);
+            $this->handleNsfwFilter($this->WhoisCommand->ChatClient, $this->WhoisCommand->UserClient);
             $this->handleLanguageDetection();
             return null;
         }
@@ -336,7 +337,7 @@
          * @return bool
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @throws DatabaseException
          */
         public function handleMessageDeletion(\Longman\TelegramBot\Entities\Message $sentMessage, TelegramClient $chatClient): bool
         {
@@ -371,12 +372,236 @@
         /**
          * @param TelegramClient $chatClient
          * @param TelegramClient $userClient
+         * @return bool
+         * @throws CoffeeHouseUtilsNotReadyException
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws InvalidServerInterfaceModuleException
+         * @throws NsfwClassificationException
+         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         * @throws UnsupportedImageTypeException
+         * @throws \CoffeeHouse\Exceptions\DatabaseException
+         */
+        public function handleNsfwFilter(TelegramCLient $chatClient, TelegramClient $userClient): bool
+        {
+            if($this->getMessage()->getPhoto() == null || count($this->getMessage()->getPhoto()) == 0)
+                return false;
+
+            $ChatSettings = SettingsManager::getChatSettings($chatClient);
+
+            if($ChatSettings->NsfwFilterEnabled == false)
+                return false; // Save processing power!
+
+            $Message = Message::fromArray($this->getMessage()->getRawData());
+
+            // Determine if the user is an admin or creator
+            $IsAdmin = false;
+            foreach($ChatSettings->Administrators as $chatMember)
+            {
+                if($chatMember->User->ID == $userClient->User->ID)
+                {
+                    if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
+                    {
+                        $IsAdmin = true;
+                    }
+                }
+            }
+
+            //if($IsAdmin)
+            //    return false;
+
+            if($Message->Photo !== null)
+            {
+                // Determine the largest photo
+                /** @var PhotoSize $LargestPhoto */
+                $LargestPhoto = null;
+
+                foreach($Message->Photo as $photoSize)
+                {
+                    if($LargestPhoto == null)
+                    {
+                        $LargestPhoto = $photoSize;
+                    }
+                    else
+                    {
+                        if($LargestPhoto->FileSize > $photoSize->FileSize)
+                        {
+                            $LargestPhoto = $photoSize;
+                        }
+                    }
+                }
+
+                $CoffeeHouse = SpamProtectionBot::getCoffeeHouse();
+
+                $DownloadURI = Request::downloadFileLocation(Request::getFile(["file_id" => $LargestPhoto->FileID])->getResult());
+                $ImageContent = file_get_contents($DownloadURI);
+
+                $Results = $CoffeeHouse->getNsfwClassification()->classifyImage($ImageContent);
+                $LargestPhoto->UnsafePrediction = $Results->UnsafePrediction;
+                $LargestPhoto->SafePrediction = $Results->SafePrediction;
+
+                if($Results->IsNSFW)
+                {
+                    /** @noinspection DuplicatedCode */
+                    if($userClient->User->Username == null)
+                    {
+                        if($userClient->User->LastName == null)
+                        {
+                            $Mention = "<a href=\"tg://user?id=" . $userClient->User->ID . "\">" . self::escapeHTML($userClient->User->FirstName) . "</a>";
+                        }
+                        else
+                        {
+                            $Mention = "<a href=\"tg://user?id=" . $userClient->User->ID . "\">" . self::escapeHTML($userClient->User->FirstName . " " . $userClient->User->LastName) . "</a>";
+                        }
+                    }
+                    else
+                    {
+                        $Mention = "@" . $userClient->User->Username;
+                    }
+
+                    $Response = "\u{26A0} <b>NSFW CONTENT DETECTED</b> \u{26A0}\n\n";
+                    $Response .= "<b>User:</b> $Mention (<code>" . $userClient->PublicID . "</code>)\n";
+                    $Response .= "<b>Content Hash:</b> <code>" . $Results->ContentHash . "</code>\n";
+                    $Response .= "<b>Unsafe Probability:</b> <code>" . ($Results->UnsafePrediction * 100) . "%</code>\n\n";
+                    $ReplyToMessage = true;
+
+                    switch($ChatSettings->NsfwDetectionAction)
+                    {
+                        case DetectionAction::DeleteMessage:
+                            $DeletionResponse = Request::deleteMessage([
+                                "chat_id" => $Message->Chat->ID,
+                                "message_id" => $Message->MessageID
+                            ]);
+
+                            if($DeletionResponse->isOk())
+                            {
+                                $ReplyToMessage = false;
+                                $Response .= "The message has been deleted";
+                            }
+                            else
+                            {
+                                $Response .=  "<b>The message cannot be deleted because of insufficient administrator privileges</b>";
+                            }
+                            break;
+
+                        case DetectionAction::KickOffender:
+                            $DeleteResponse = Request::deleteMessage([
+                                "chat_id" => $Message->Chat->ID,
+                                "message_id" => $Message->MessageID
+                            ]);
+
+                            $KickResponse = Request::kickChatMember([
+                                "chat_id" => $Message->Chat->ID,
+                                "user_id" => $userClient->User->ID,
+                                "until_date" => (int)time() + 60
+                            ]);
+
+                            if($DeleteResponse->isOk() == false)
+                            {
+                                $Response .= "<b>The message cannot be deleted because of insufficient administrator privileges</b>\n\n";
+                            }
+
+                            if($KickResponse->isOk() == false)
+                            {
+                                $Response .= "<b>The user cannot be removed because of insufficient administrator privileges</b>\n\n";
+                            }
+
+                            if($KickResponse->isOk() == true && $DeleteResponse->isOk() == true)
+                            {
+                                $Response .= "The message was deleted and the offender was removed from the group";
+                            }
+
+                            $DeletionResponse = Request::deleteMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "message_id" => $this->getMessage()->getMessageId()
+                            ]);
+
+                            if($DeletionResponse->isOk())
+                            {
+                                $ReplyToMessage = false;
+                                $Response .= "\n\nThe message has been deleted";
+                            }
+                            else
+                            {
+                                $Response .=  "\n\n<b>The message cannot be deleted because of insufficient administrator privileges</b>";
+                            }
+                            break;
+
+                        case DetectionAction::BanOffender:
+                            $DeleteResponse = Request::deleteMessage([
+                                "chat_id" => $Message->Chat->ID,
+                                "message_id" => $Message->MessageID
+                            ]);
+
+                            $BanResponse = Request::kickChatMember([
+                                "chat_id" => $Message->Chat->ID,
+                                "user_id" => $userClient->User->ID,
+                                "until_date" => 0
+                            ]);
+
+                            if($DeleteResponse->isOk() == false)
+                            {
+                                $Response .= "<b>The message cannot be deleted because of insufficient administrator privileges</b>\n\n";
+                            }
+                            else
+                            {
+                                $ReplyToMessage = false;
+                            }
+
+                            if($BanResponse->isOk() == false)
+                            {
+                                $Response .= "<b>The user cannot be banned because of insufficient administrator privileges</b>\n\n";
+                            }
+
+                            if($BanResponse->isOk() == true && $DeleteResponse->isOk() == true)
+                            {
+                                $Response .= "The message was deleted and the offender was banned from the group";
+                            }
+                            break;
+
+                        case DetectionAction::Nothing:
+                            $Response .= "No action will be taken since the the current detection rule in this group is to do nothing";
+                            break;
+                    }
+
+
+                    if($ReplyToMessage)
+                    {
+                        $RequestResults = Request::sendMessage([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            "text" => $Response
+                        ]);
+                    }
+                    else
+                    {
+                        $RequestResults = Request::sendMessage([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "parse_mode" => "html",
+                            "text" => $Response
+                        ]);
+                    }
+
+                    $this->handleMessageDeletion($RequestResults->getResult(), $chatClient);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /**
+         * @param TelegramClient $chatClient
+         * @param TelegramClient $userClient
          * @param TelegramClient $telegramClient
          * @return bool
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @throws DatabaseException
          */
         public function handleMessage(TelegramClient $chatClient, TelegramClient $userClient, TelegramClient $telegramClient): bool
         {
@@ -634,7 +859,7 @@
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
         public function handleBlacklistedChannel(ChatSettings $chatSettings, ChannelStatus $channelStatus, TelegramClient $channelClient, TelegramClient $userClient, TelegramClient $chatClient): bool
@@ -773,7 +998,7 @@
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
         public function handlePotentialSpammer(ChatSettings $chatSettings, UserStatus $userStatus, TelegramClient $userClient, TelegramClient $chatClient): bool
@@ -886,7 +1111,7 @@
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
         public function handleBlacklistedUser(ChatSettings $chatSettings, UserStatus $userStatus, TelegramClient $userClient, TelegramClient $chatClient): bool
@@ -1004,7 +1229,7 @@
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws \TelegramClientManager\Exceptions\DatabaseException
+         * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
         public function handleSpam(

@@ -446,6 +446,181 @@
                             }
                             break;
 
+                        case "detect_nsfw":
+                            $ChatSettings->NsfwFilterEnabled = self::isEnabledValue($TargetValueParameter);
+                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
+
+                            if($ChatSettings->NsfwFilterEnabled)
+                            {
+                                switch($ChatSettings->NsfwDetectionAction)
+                                {
+                                    case DetectionAction::Nothing:
+                                        if($ChatSettings->GeneralAlertsEnabled == false)
+                                        {
+                                            return Request::sendMessage([
+                                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                                "parse_mode" => "html",
+                                                "text" =>
+                                                    "Success? NSFW images will be detected but nothing will happen because General Alerts is disabled and the current action on NSFW detection is to do nothing\n\n".
+                                                    "To fix this, send the following commands:\n".
+                                                    "  <code>/settings detect_nsfw_action delete</code>\n".
+                                                    "  <code>/settings general_alerts enabled</code>"
+                                            ]);
+                                        }
+                                        else
+                                        {
+                                            return Request::sendMessage([
+                                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                                "parse_mode" => "html",
+                                                "text" =>
+                                                    "Success! NSFW images will be detected and alerts will be shown but the bot can't do anything about the spam\n\n".
+                                                    "To fix this, send the following commands:\n".
+                                                    "  <code>/settings detect_nsfw_action delete</code>"
+                                            ]);
+                                        }
+
+                                    case DetectionAction::DeleteMessage:
+                                        return Request::sendMessage([
+                                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                            "parse_mode" => "html",
+                                            "text" => "Success! NSFW Images will be detected and deleted"
+                                        ]);
+
+                                    case DetectionAction::KickOffender:
+                                        return Request::sendMessage([
+                                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                            "parse_mode" => "html",
+                                            "text" => "Success! NSFW Images will be detected and deleted, additionally the offender will be removed from this group"
+                                        ]);
+
+                                    case DetectionAction::BanOffender:
+                                        return Request::sendMessage([
+                                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                            "parse_mode" => "html",
+                                            "text" => "Success! NSFW Images will be detected and deleted, additionally the offender will be banned from this group"
+                                        ]);
+
+                                    default:
+                                        return Request::sendMessage([
+                                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                            "parse_mode" => "html",
+                                            "text" => "Success!"
+                                        ]);
+                                }
+                            }
+                            else
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" => "Success! The bot will no longer detect NSFW Images in this group"
+                                ]);
+                            }
+                            break;
+
+                        case "detect_nsfw_action":
+                            if(self::actionFromString($TargetValueParameter) == null)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" =>
+                                        "This is an invalid action!\n\n".
+                                        "  <code>nothing</code> - Does nothing upon detection\n".
+                                        "  <code>delete</code> - Deletes the message only without affecting the user\n".
+                                        "  <code>kick</code> - Deletes the message and removes the user\n".
+                                        "  <code>ban</code> - Deletes the message and bans the user\n\n".
+                                        "Example usage: <code>/settings detect_nsfw_action delete</code>"
+                                ]);
+                            }
+
+                            $ChatSettings->NsfwDetectionAction = self::actionFromString($TargetValueParameter);
+                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
+
+                            if($ChatSettings->NsfwDetectionAction == false)
+                            {
+                                return Request::sendMessage([
+                                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                    "parse_mode" => "html",
+                                    "text" =>
+                                        "Success! But it seems like that the bot is currently not detecting NSFW images\n\n".
+                                        "To fix this, send the following commands:\n".
+                                        "  <code>/settings detect_spam enabled</code>"
+                                ]);
+                            }
+                            else
+                            {
+                                switch($ChatSettings->DetectSpamAction)
+                                {
+                                    case DetectionAction::Nothing:
+                                        if($ChatSettings->GeneralAlertsEnabled == false)
+                                        {
+                                            return Request::sendMessage([
+                                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                                "parse_mode" => "html",
+                                                "text" =>
+                                                    "Success? NSFW images will be detected but nothing will happen because General Alerts is disabled\n\n".
+                                                    "To fix this, send the following commands:\n".
+                                                    "  <code>/settings general_alerts enabled</code>"
+                                            ]);
+                                        }
+                                        else
+                                        {
+                                            return Request::sendMessage([
+                                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                                "parse_mode" => "html",
+                                                "text" => "Success! When NSFW images is detected alerts will be shown"
+                                            ]);
+                                        }
+
+                                    case DetectionAction::DeleteMessage:
+                                        return Request::sendMessage([
+                                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                            "parse_mode" => "html",
+                                            "text" => "Success! When NSFW images is detected it will be deleted"
+                                        ]);
+
+                                    case DetectionAction::KickOffender:
+                                        return Request::sendMessage([
+                                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                            "parse_mode" => "html",
+                                            "text" => "Success! When NSFW images is detected it will be deleted and the offender will be removed from this group"
+                                        ]);
+
+                                    case DetectionAction::BanOffender:
+                                        return Request::sendMessage([
+                                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                            "parse_mode" => "html",
+                                            "text" => "Success! When NSFW images is detected it will be deleted and the offender will be banned from this group"
+                                        ]);
+
+                                    default:
+                                        return Request::sendMessage([
+                                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                            "parse_mode" => "html",
+                                            "text" => "Success!"
+                                        ]);
+                                }
+                            }
+                            break;
+
                         default:
 
                             return Request::sendMessage([
@@ -456,6 +631,8 @@
                                     "This is not an valid option to modify, here are the valid options\n\n".
                                     "   <code>detect_spam</code>\n".
                                     "   <code>detect_spam_action</code>\n".
+                                    "   <code>detect_nsfw</code>\n".
+                                    "   <code>detect_nsfw_action</code>\n".
                                     "   <code>blacklists</code>\n".
                                     "   <code>general_alerts</code>\n".
                                     "   <code>potential_spammer_protection</code>\n".

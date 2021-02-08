@@ -150,6 +150,7 @@
                     ]);
                 }
 
+                print($private_telegram_id . PHP_EOL);
                 try
                 {
                     $TargetClient = $TelegramClientManager->getTelegramClientManager()->getClient(
@@ -309,7 +310,7 @@
 
                             if($set_value == null)
                             {
-                                return Request::sendMessage([
+                                Request::sendMessage([
                                     "chat_id" => $this->getMessage()->getChat()->getId(),
                                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                     "parse_mode" => "html",
@@ -343,12 +344,13 @@
                                 ]);
                             }
 
-                            return Request::sendMessage([
+                            $res = Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
                                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
                                 "parse_mode" => "html",
-                                "text" => "<code>" . json_encode($Bytes, JSON_PRETTY_PRINT) . "</code>"
+                                "text" => json_encode($Bytes, JSON_PRETTY_PRINT)
                             ]);
+                            return $res;
                         }
                         break;
 
