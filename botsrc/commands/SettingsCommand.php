@@ -209,7 +209,7 @@
 
                 default:
                     return $callbackQuery->answer([
-                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand->ChatClient, "This query isn't understood, are you using an official client?"),
+                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This query isn't understood, are you using an official client?"),
                         "show_alert" => true
                     ]);
             }

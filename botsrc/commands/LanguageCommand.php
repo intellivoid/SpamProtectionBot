@@ -6,6 +6,7 @@
 
     namespace Longman\TelegramBot\Commands\UserCommands;
 
+    use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Entities\CallbackQuery;
     use Longman\TelegramBot\Entities\InlineKeyboard;
@@ -15,6 +16,7 @@
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Utilities\Validation;
     use SpamProtectionBot;
+    use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
@@ -84,12 +86,13 @@
                 return null;
             }
 
-            return Request::sendMessage([
-                "chat_id" => $this->getMessage()->getChat()->getId(),
-                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "parse_mode" => "html",
-                "text" => "Work in progress!"
-            ]);
+            if($this->WhoisCommand->ChatObject->Type == TelegramChatType::Private)
+            {
+                $LanguageCommand = new LanguageCommand($this->telegram, $this->update);
+                return $LanguageCommand->handleUserLanguageChange(null, $this->WhoisCommand, false);
+            }
+
+            return null;
         }
 
         /**
@@ -108,7 +111,6 @@
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $ChatSettings = SettingsManager::getChatSettings($whoisCommand->CallbackQueryChatClient);
             $StatusResponse = (string)null;
-
 
             switch($callbackQuery->getData())
             {
@@ -278,6 +280,170 @@
             return Request::editMessageText($ResponseMessage);
         }
 
+
+        /**
+         * Handles language localization changes for users
+         *
+         * @param CallbackQuery|null $callbackQuery
+         * @param WhoisCommand $whoisCommand
+         * @param bool $edit
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         */
+        public function handleUserLanguageChange(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand, bool $edit=True): ?ServerResponse
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+
+            if($callbackQuery !== null)
+            {
+                $ChatID = $whoisCommand->CallbackQueryChatObject->ID;
+                $UserStatus = SettingsManager::getUserStatus($whoisCommand->CallbackQueryUserClient);
+            }
+            else
+            {
+                $ChatID = $whoisCommand->ChatObject->ID;
+                $UserStatus = SettingsManager::getUserStatus($whoisCommand->UserClient);
+            }
+
+            $StatusResponse = (string)null;
+
+            if($callbackQuery !== null)
+            {
+                switch($callbackQuery->getData())
+                {
+                    case "1206auto":
+                        $UserStatus->ConfiguredLanguage = "auto";
+
+                        $whoisCommand->CallbackQueryUserClient = SettingsManager::updateUserStatus(
+                            $whoisCommand->CallbackQueryUserClient, $UserStatus
+                        );
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($whoisCommand->CallbackQueryUserClient);
+                        $callbackQuery->answer(["text" => self::localizeChatText($whoisCommand, "Current language set to automatic")]);
+                        break;
+                }
+            }
+
+            $CodeToLanguage = [
+                "en" => "English",
+                "es" => "Spanish",
+                "ja" => "Japanese",
+                "zh" => "Chinese (simplified)",
+                "de" => "German",
+                "pl" => "Polish",
+                "fr" => "French",
+                "nl" => "Dutch",
+                "ko" => "Korean",
+                "it" => "Italian",
+                "tr" => "Turkish",
+                "ru" => "Russian",
+                "auto" => "Automatic"
+            ];
+
+            if($callbackQuery !== null)
+            {
+                if(strlen($callbackQuery->getData()) == 8 || strlen($callbackQuery->getData()) == 6)
+                {
+                    if($callbackQuery->getData() == "1206auto")
+                    {
+                        $UserStatus->ConfiguredLanguage = "auto";
+
+                        $whoisCommand->CallbackQueryUserClient = SettingsManager::updateUserStatus(
+                            $whoisCommand->CallbackQueryUserClient, $UserStatus
+                        );
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($whoisCommand->CallbackQueryUserClient);
+                        $callbackQuery->answer(["text" => self::localizeChatText($whoisCommand, "Current language set to " . $CodeToLanguage["auto"])]);
+                    }
+                    else
+                    {
+                        if(in_array(substr(strtolower($callbackQuery->getData()), -2), array_keys($CodeToLanguage)) == false)
+                        {
+
+                            $callbackQuery->answer(["show_alert" => true, "text" => self::localizeChatText($whoisCommand, substr($callbackQuery->getData(), -2) . " is not a supported language")]);
+                        }
+                        else
+                        {
+                            $selected = strtolower(substr($callbackQuery->getData(), -2));
+                            $UserStatus->ConfiguredLanguage = $selected;
+
+                            $whoisCommand->CallbackQueryUserClient = SettingsManager::updateUserStatus(
+                                $whoisCommand->CallbackQueryUserClient, $UserStatus
+                            );
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($whoisCommand->CallbackQueryUserClient);
+                            $callbackQuery->answer(["text" => self::localizeChatText($whoisCommand, "Current language set to " . $CodeToLanguage[$selected])]);
+                        }
+                    }
+                }
+            }
+
+            if($UserStatus->ConfiguredLanguage == "auto")
+            {
+                $CurrentLanguageText = self::localizeChatText($whoisCommand, "Current Language: %s", ['s']);
+                $CurrentLanguageValue = self::localizeChatText($whoisCommand, "Automatic depending on your 
+                current language");
+
+            }
+            else
+            {
+                $CurrentLanguageText = self::localizeChatText($whoisCommand, "Current Language: %s", ['s']);
+                $CurrentLanguageValue = self::localizeChatText($whoisCommand, $CodeToLanguage[$UserStatus->ConfiguredLanguage]);
+            }
+
+            $StatusResponse .= "<b>" . str_ireplace("%s", $CurrentLanguageValue, $CurrentLanguageText) . "</b>\n";
+
+            $ResponseMessage = [
+                "chat_id" => $ChatID,
+                "parse_mode" => "html",
+                "disable_web_page_preview" => true,
+                "text" =>
+                    "\u{1F310} <b>" . self::localizeChatText($whoisCommand, "Bot Language (Beta)") . " </b>\n\n".
+                    self::localizeChatText($whoisCommand,
+                        "SpamProtectionBot is using an experimental localization method, so the localization may not always be accurate ".
+                        "but nevertheless you can change the language of this bot and SpamProtectionBot will respond in said language ".
+                        "(Including alerts) in this chat.") . "\n\n" .
+                    self::localizeChatText($whoisCommand,
+                        "If you use 'Automatic' as the configured language, the bot will use the language you are currently using") . "\n\n".
+                    $StatusResponse,
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        ["text" => "\u{1F310} " . self::localizeChatText($whoisCommand, "Automatic"), "callback_data" => "1206auto"]
+                    ],
+                    [
+                        ["text" => "\u{1F1EC}\u{1F1E7}", "callback_data" => "1206en"],
+                        ["text" => "\u{1F32E}", "callback_data" => "1206es"],
+                        ["text" => "\u{1F1EF}\u{1F1F5}", "callback_data" => "1206ja"],
+                        ["text" => "\u{1F1E8}\u{1F1F3}", "callback_data" => "1206zh"],
+                        ["text" => "\u{1F1E9}\u{1F1EA}", "callback_data" => "1206de"],
+                        ["text" => "\u{1F1F5}\u{1F1F1}", "callback_data" => "1206pl"],
+                    ],
+                    [
+                        ["text" => "\u{1F1EB}\u{1F1F7}", "callback_data" => "1206fr"],
+                        ["text" => "\u{1F1F3}\u{1F1F1}", "callback_data" => "1206nl"],
+                        ["text" => "\u{1F1F0}\u{1F1F7}", "callback_data" => "1206ko"],
+                        ["text" => "\u{1F1EE}\u{1F1F9}", "callback_data" => "1206it"],
+                        ["text" => "\u{1F1F9}\u{1F1F7}", "callback_data" => "1206tr"],
+                        ["text" => "\u{1F1F7}\u{1F1FA}", "callback_data" => "1206ru"],
+                    ],
+                    [
+                        [
+                            "text" => LanguageCommand::localizeChatText($whoisCommand, "Close Menu"),
+                            "callback_data" => "03"
+                        ]
+                    ]
+                )
+            ];
+
+            if($edit)
+            {
+                $ResponseMessage["message_id"] = $callbackQuery->getMessage()->getMessageId();
+                return Request::editMessageText($ResponseMessage);
+            }
+
+            return Request::sendMessage($ResponseMessage);
+        }
+
         /**
          * Localizes the chat text output
          *
@@ -346,7 +512,7 @@
             {
                 $TranslationResults = $CoffeeHouse->getTranslator()->translate($input, $TargetLanguage, "en");
             }
-            catch(\Exception $e)
+            catch(Exception $e)
             {
                 return $input;
             }

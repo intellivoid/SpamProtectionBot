@@ -3,7 +3,9 @@
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
     use Longman\TelegramBot\Commands\SystemCommand;
+    use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Commands\UserCommands\SettingsCommand;
+    use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Request;
 
@@ -25,6 +27,13 @@
         protected $version = '1.0.0';
 
         /**
+         * The whois command used for finding targets
+         *
+         * @var WhoisCommand|null
+         */
+        public $WhoisCommand = null;
+
+        /**
          * Main command execution
          *
          * @return ServerResponse
@@ -39,11 +48,38 @@
                     "show_alert" => true
                 ]);
 
+            if($this->WhoisCommand == null)
+            {
+                $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
+            }
+
+            $this->WhoisCommand->findCallbackClients($this->getCallbackQuery());
+
+
             switch(mb_substr($this->getCallbackQuery()->getData(), 0, 2))
             {
                 case "01":
                     $SettingsCommand = new SettingsCommand($this->telegram, $this->update);
                     return $SettingsCommand->handleCallbackQuery($this->getCallbackQuery());
+
+                case "02":
+                    Request::deleteMessage([
+                        "chat_id" => $this->getCallbackQuery()->getMessage()->getChat()->getId(),
+                        "message_id" => $this->getCallbackQuery()->getMessage()->getMessageId()
+                    ]);
+
+                    $LanguageCommand = new LanguageCommand($this->telegram, $this->update);
+                    return $LanguageCommand->handleUserLanguageChange($this->getCallbackQuery(), $this->WhoisCommand, false);
+
+                case "12":
+                    $LanguageCommand = new LanguageCommand($this->telegram, $this->update);
+                    return $LanguageCommand->handleUserLanguageChange($this->getCallbackQuery(), $this->WhoisCommand, true);
+
+                case "03": // Close the current language dialog
+                    return Request::deleteMessage([
+                        "chat_id" => $this->getCallbackQuery()->getMessage()->getChat()->getId(),
+                        "message_id" => $this->getCallbackQuery()->getMessage()->getMessageId()
+                    ]);
 
                 default:
                     return $this->getCallbackQuery()->answer([

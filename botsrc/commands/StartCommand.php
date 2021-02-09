@@ -7,6 +7,7 @@
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
     use Longman\TelegramBot\Commands\SystemCommand;
+    use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -109,7 +110,7 @@
                         {
                             $InlineKeyboard = new InlineKeyboard([
                                 [
-                                    "text" => "Help",
+                                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Help"),
                                     "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=help"
                                 ]
                             ]);
@@ -120,12 +121,17 @@
                                 "reply_markup" => $InlineKeyboard,
                                 "parse_mode" => "html",
                                 "text" =>
-                                    "Thanks for adding me! Remember to give me the following permissions\n\n".
-                                    " - <code>Delete Messages</code>\n".
-                                    " - <code>Ban Users</code>\n\n".
-                                    "If you need help with setting this up bot, see the help command\n\n".
-                                    "I will actively detect and remove spam and I will ban blacklisted users such as spammers, ".
-                                    "scammers and raiders, if you need any help then feel free to reach out to us at @SpamProtectionSupport"
+                                    LanguageCommand::localizeChatText($this->WhoisCommand, "Thanks for adding me! Remember to give me the following permissions") . "\n\n".
+                                    " - <code>" . LanguageCommand::localizeChatText($this->WhoisCommand, "Delete Messages") . "</code>\n".
+                                    " - <code>" . LanguageCommand::localizeChatText($this->WhoisCommand, "Ban Users") . "</code>\n\n".
+                                    str_ireplace("%s", "/help",
+                                        LanguageCommand::localizeChatText($this->WhoisCommand,
+                                            "If you need help with setting this up bot, see the %s command", ['s']
+                                        )) . "\n\n".
+                                    str_ireplace("%s", "@SpamProtectionSupport",
+                                        LanguageCommand::localizeChatText($this->WhoisCommand,
+                                        "I will actively detect and remove spam and I will ban blacklisted users such as spammers, ".
+                                        "scammers and raiders, if you need any help then feel free to reach out to us at %s", ['s']))
                             ]);
                         }
                 }
@@ -135,43 +141,47 @@
             {
                 case TelegramChatType::SuperGroup:
                 case TelegramChatType::Group:
-                    $InlineKeyboard = new InlineKeyboard([
-                        [
-                            "text" => "Help",
-                            "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=start"
-                        ]
-                    ]);
-
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "reply_markup" => $InlineKeyboard,
+                        "reply_markup" => new InlineKeyboard([
+                            [
+                                "text" => "Help",
+                                "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=start"
+                            ]
+                        ]),
                         "parse_mode" => "html",
-                        "text" => "Hey there! Looking for help?"
+                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Hey there! Looking for help?")
                     ]);
 
                 case TelegramChatType::Private:
-                    $InlineKeyboard = new InlineKeyboard(
-                        [
-                            ["text" => "Help", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=help"],
-                            ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
-                            ["text" => "Support", "url" => "https://t.me/SpamProtectionSupport"]
-                        ],
-                        [
-                            ["text" => "Add to group", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?startgroup=add"]
-                        ]
-                    );
-
-                    return Request::sendMessage([
+                    return Request::sendVideo([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "reply_markup" => $InlineKeyboard,
+                        "reply_markup" => new InlineKeyboard(
+                            [
+                                ["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Help"), "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=help"],
+                                ["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Logs"), "url" => "https://t.me/" . LOG_CHANNEL],
+                                ["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Support"), "url" => "https://t.me/SpamProtectionSupport"]
+                            ],
+                            [
+                                ["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Add to group"), "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?startgroup=add"]
+                            ],
+                            [
+                                ["text" => "\u{1F310} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Change Language"), "callback_data" => "02"]
+                            ]
+                        ),
+                        "video" => "https://telegra.ph/file/08da75a7dcfa11fb2329d.mp4",
+                        "allow_sending_without_reply" => true,
+                        "supports_streaming" => true,
                         "parse_mode" => "html",
-                        "text" =>
+                        "caption" =>
                             "<b>SpamProtectionBot</b>\n\n" .
+                            LanguageCommand::localizeChatText($this->WhoisCommand,
                             "Using machine learning, this bot is capable of detecting and deleting spam from your chat ".
-                            "and stop unwanted users from having the chance to post spam in your chat.\n\n".
-                            "if you notice any mistakes or issues then feel free to report it to the official support chat"
+                                "and stop unwanted users from having the chance to post spam in your chat.") . "\n\n".
+                            LanguageCommand::localizeChatText($this->WhoisCommand,
+                                "if you notice any mistakes or issues then feel free to report it to the official support chat")
                     ]);
 
                 default:
