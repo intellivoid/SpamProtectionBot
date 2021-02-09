@@ -139,16 +139,16 @@
          */
         public function handleCallbackQuery(CallbackQuery $callbackQuery): ?ServerResponse
         {
-            $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
-            $DeepAnalytics->tally('tg_spam_protection', 'callback_query', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'callback_query', (int)$this->WhoisCommand->ChatObject->ID);
-
             if($this->WhoisCommand == null)
             {
                 $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
             }
 
             $this->WhoisCommand->findCallbackClients($callbackQuery);
+
+            $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
+            $DeepAnalytics->tally('tg_spam_protection', 'callback_query', 0);
+            $DeepAnalytics->tally('tg_spam_protection', 'callback_query', (int)$this->WhoisCommand->CallbackQueryChatObject->ID);
 
             // Verify if the user is an administrator
             $UserChatMember = Request::getChatMember([
