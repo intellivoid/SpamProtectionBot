@@ -7,7 +7,8 @@
     namespace Longman\TelegramBot\Commands\UserCommands;
 
     use Longman\TelegramBot\Commands\UserCommand;
-    use Longman\TelegramBot\Entities\Message;
+    use Longman\TelegramBot\Entities\CallbackQuery;
+    use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
@@ -39,12 +40,12 @@
         /**
          * @var string
          */
-        protected $usage = '/settings [Option] [Value]';
+        protected $usage = '/settings';
 
         /**
          * @var string
          */
-        protected $version = '2.0.0';
+        protected $version = '3.0.0';
 
         /**
          * @var bool
@@ -62,10 +63,7 @@
          * Command execute method
          *
          * @return ServerResponse
-         * @throws DatabaseException
-         * @throws InvalidSearchMethod
          * @throws TelegramException
-         * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
         public function execute()
@@ -116,612 +114,793 @@
                 ]);
             }
 
-            if($UserChatMember->getResult()->status !== "creator")
+            if($UserChatMember->getResult()->status !== "creator" && $UserChatMember->getResult()->status !== "administrator")
             {
-                if($UserChatMember->getResult()->status !== "administrator")
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "This command can only be used by chat administrators"
-                    ]);
-                }
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" => "This command can only be used by chat administrators"
+                ]);
             }
 
-            if($UserChatMember->getResult()->status !== "administrator")
-            {
-                if($UserChatMember->getResult()->status !== "creator")
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "This command can only be used by chat administrators"
-                    ]);
-                }
-            }
-
-            // Parse the text
-            if($this->getMessage()->getText(true) !== null)
-            {
-                if (strlen($this->getMessage()->getText(true)) > 0)
-                {
-                    $CommandParameters = explode(" ", $this->getMessage()->getText(true));
-                    $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
-
-                    if(count($CommandParameters) !== 2)
-                    {
-
-                        return self::displayUsage($this->getMessage(), "Missing parameter");
-                    }
-
-                    $TargetOptionParameter = $CommandParameters[0];
-                    $TargetValueParameter = $CommandParameters[1];
-
-                    $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
-
-                    switch(strtolower($TargetOptionParameter))
-                    {
-                        case "detect_spam":
-                            $ChatSettings->DetectSpamEnabled = self::isEnabledValue($TargetValueParameter);
-                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
-
-                            if($ChatSettings->DetectSpamEnabled)
-                            {
-                                switch($ChatSettings->DetectSpamAction)
-                                {
-                                    case DetectionAction::Nothing:
-                                        if($ChatSettings->GeneralAlertsEnabled == false)
-                                        {
-                                            return Request::sendMessage([
-                                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                                "parse_mode" => "html",
-                                                "text" =>
-                                                    "Success? Spam will be detected but nothing will happen because General Alerts is disabled and the current action on spam detection is to do nothing\n\n".
-                                                    "To fix this, send the following commands:\n".
-                                                    "  <code>/settings detect_spam_action delete</code>\n".
-                                                    "  <code>/settings general_alerts enabled</code>"
-                                            ]);
-                                        }
-                                        else
-                                        {
-                                            return Request::sendMessage([
-                                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                                "parse_mode" => "html",
-                                                "text" =>
-                                                    "Success! Spam will be detected and alerts will be shown but the bot can't do anything about the spam\n\n".
-                                                    "To fix this, send the following commands:\n".
-                                                    "  <code>/settings detect_spam_action delete</code>"
-                                            ]);
-                                        }
-
-                                    case DetectionAction::DeleteMessage:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! Spam will be detected and deleted"
-                                        ]);
-
-                                    case DetectionAction::KickOffender:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! Spam will be detected and deleted, additionally the offender will be removed from this group"
-                                        ]);
-
-                                    case DetectionAction::BanOffender:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! Spam will be detected and deleted, additionally the offender will be banned from this group"
-                                        ]);
-
-                                    default:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success!"
-                                        ]);
-                                }
-                            }
-                            else
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! The bot will no longer detect spam in this group"
-                                ]);
-                            }
-                            break;
-
-                        case "detect_spam_action":
-                            if(self::actionFromString($TargetValueParameter) == null)
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" =>
-                                        "This is an invalid action!\n\n".
-                                        "  <code>nothing</code> - Does nothing upon detection\n".
-                                        "  <code>delete</code> - Deletes the message only without affecting the user\n".
-                                        "  <code>kick</code> - Deletes the message and removes the user\n".
-                                        "  <code>ban</code> - Deletes the message and bans the user\n\n".
-                                        "Example usage: <code>/settings detect_spam_action delete</code>"
-                                ]);
-                            }
-
-                            $ChatSettings->DetectSpamAction = self::actionFromString($TargetValueParameter);
-                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
-
-                            if($ChatSettings->DetectSpamEnabled == false)
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" =>
-                                        "Success! But it seems like that the bot is currently not detecting spam\n\n".
-                                        "To fix this, send the following commands:\n".
-                                        "  <code>/settings detect_spam enabled</code>"
-                                ]);
-                            }
-                            else
-                            {
-                                switch($ChatSettings->DetectSpamAction)
-                                {
-                                    case DetectionAction::Nothing:
-                                        if($ChatSettings->GeneralAlertsEnabled == false)
-                                        {
-                                            return Request::sendMessage([
-                                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                                "parse_mode" => "html",
-                                                "text" =>
-                                                    "Success? Spam will be detected but nothing will happen because General Alerts is disabled\n\n".
-                                                    "To fix this, send the following commands:\n".
-                                                    "  <code>/settings general_alerts enabled</code>"
-                                            ]);
-                                        }
-                                        else
-                                        {
-                                            return Request::sendMessage([
-                                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                                "parse_mode" => "html",
-                                                "text" => "Success! When spam is detected alerts will be shown"
-                                            ]);
-                                        }
-
-                                    case DetectionAction::DeleteMessage:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! When spam is detected it will be deleted"
-                                        ]);
-
-                                    case DetectionAction::KickOffender:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! When spam is detected it will be deleted and the offender will be removed from this group"
-                                        ]);
-
-                                    case DetectionAction::BanOffender:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! When spam is detected it will be deleted and the offender will be banned from this group"
-                                        ]);
-
-                                    default:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success!"
-                                        ]);
-                                }
-                            }
-                            break;
-
-                        case "blacklists":
-                            $ChatSettings->BlacklistProtectionEnabled = self::isEnabledValue($TargetValueParameter);
-                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
-
-                            if($ChatSettings->BlacklistProtectionEnabled)
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! This chat will be protected from unwanted spammers"
-                                ]);
-                            }
-                            else
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! Not recommended though! your chat may become vulnerable to spammers, raiders and scammers."
-                                ]);
-                            }
-                            break;
-
-                        case "general_alerts":
-                            $ChatSettings->GeneralAlertsEnabled = self::isEnabledValue($TargetValueParameter);
-                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
-
-                            if($ChatSettings->GeneralAlertsEnabled)
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! General alerts will be displayed in this chat"
-                                ]);
-                            }
-                            else
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! General alerts will no longer be displayed in this chat"
-                                ]);
-                            }
-                            break;
-
-                        case "potential_spammer_protection":
-                            $ChatSettings->ActiveSpammerProtectionEnabled = self::isEnabledValue($TargetValueParameter);
-                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
-
-                            if($ChatSettings->ActiveSpammerProtectionEnabled)
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! The bot will ban potential spammers from this chat"
-                                ]);
-                            }
-                            else
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! The bot will not ban any potential spammers from this chat"
-                                ]);
-                            }
-                            break;
-
-                        case "active_spammer_alert":
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" => "This feature is deprecated, use <code>potential_spammer_protection</code> instead."
-                            ]);
-
-                        case "delete_old_messages":
-                            $ChatSettings->DeleteOlderMessages = self::isEnabledValue($TargetValueParameter);
-                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
-
-                            if($ChatSettings->DeleteOlderMessages)
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! older spam detection messages will be deleted"
-                                ]);
-                            }
-                            else
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! old spam detections will not be deleted"
-                                ]);
-                            }
-                            break;
-
-                        case "detect_nsfw":
-                            $ChatSettings->NsfwFilterEnabled = self::isEnabledValue($TargetValueParameter);
-                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
-
-                            if($ChatSettings->NsfwFilterEnabled)
-                            {
-                                switch($ChatSettings->NsfwDetectionAction)
-                                {
-                                    case DetectionAction::Nothing:
-                                        if($ChatSettings->GeneralAlertsEnabled == false)
-                                        {
-                                            return Request::sendMessage([
-                                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                                "parse_mode" => "html",
-                                                "text" =>
-                                                    "Success? NSFW images will be detected but nothing will happen because General Alerts is disabled and the current action on NSFW detection is to do nothing\n\n".
-                                                    "To fix this, send the following commands:\n".
-                                                    "  <code>/settings detect_nsfw_action delete</code>\n".
-                                                    "  <code>/settings general_alerts enabled</code>"
-                                            ]);
-                                        }
-                                        else
-                                        {
-                                            return Request::sendMessage([
-                                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                                "parse_mode" => "html",
-                                                "text" =>
-                                                    "Success! NSFW images will be detected and alerts will be shown but the bot can't do anything about the spam\n\n".
-                                                    "To fix this, send the following commands:\n".
-                                                    "  <code>/settings detect_nsfw_action delete</code>"
-                                            ]);
-                                        }
-
-                                    case DetectionAction::DeleteMessage:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! NSFW Images will be detected and deleted"
-                                        ]);
-
-                                    case DetectionAction::KickOffender:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! NSFW Images will be detected and deleted, additionally the offender will be removed from this group"
-                                        ]);
-
-                                    case DetectionAction::BanOffender:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! NSFW Images will be detected and deleted, additionally the offender will be banned from this group"
-                                        ]);
-
-                                    default:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success!"
-                                        ]);
-                                }
-                            }
-                            else
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" => "Success! The bot will no longer detect NSFW Images in this group"
-                                ]);
-                            }
-                            break;
-
-                        case "detect_nsfw_action":
-                            if(self::actionFromString($TargetValueParameter) == null)
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" =>
-                                        "This is an invalid action!\n\n".
-                                        "  <code>nothing</code> - Does nothing upon detection\n".
-                                        "  <code>delete</code> - Deletes the message only without affecting the user\n".
-                                        "  <code>kick</code> - Deletes the message and removes the user\n".
-                                        "  <code>ban</code> - Deletes the message and bans the user\n\n".
-                                        "Example usage: <code>/settings detect_nsfw_action delete</code>"
-                                ]);
-                            }
-
-                            $ChatSettings->NsfwDetectionAction = self::actionFromString($TargetValueParameter);
-                            SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
-                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
-
-                            if($ChatSettings->NsfwDetectionAction == false)
-                            {
-                                return Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "text" =>
-                                        "Success! But it seems like that the bot is currently not detecting NSFW images\n\n".
-                                        "To fix this, send the following commands:\n".
-                                        "  <code>/settings detect_spam enabled</code>"
-                                ]);
-                            }
-                            else
-                            {
-                                switch($ChatSettings->DetectSpamAction)
-                                {
-                                    case DetectionAction::Nothing:
-                                        if($ChatSettings->GeneralAlertsEnabled == false)
-                                        {
-                                            return Request::sendMessage([
-                                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                                "parse_mode" => "html",
-                                                "text" =>
-                                                    "Success? NSFW images will be detected but nothing will happen because General Alerts is disabled\n\n".
-                                                    "To fix this, send the following commands:\n".
-                                                    "  <code>/settings general_alerts enabled</code>"
-                                            ]);
-                                        }
-                                        else
-                                        {
-                                            return Request::sendMessage([
-                                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                                "parse_mode" => "html",
-                                                "text" => "Success! When NSFW images is detected alerts will be shown"
-                                            ]);
-                                        }
-
-                                    case DetectionAction::DeleteMessage:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! When NSFW images is detected it will be deleted"
-                                        ]);
-
-                                    case DetectionAction::KickOffender:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! When NSFW images is detected it will be deleted and the offender will be removed from this group"
-                                        ]);
-
-                                    case DetectionAction::BanOffender:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success! When NSFW images is detected it will be deleted and the offender will be banned from this group"
-                                        ]);
-
-                                    default:
-                                        return Request::sendMessage([
-                                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                            "parse_mode" => "html",
-                                            "text" => "Success!"
-                                        ]);
-                                }
-                            }
-                            break;
-
-                        default:
-
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                "parse_mode" => "html",
-                                "text" =>
-                                    "This is not an valid option to modify, here are the valid options\n\n".
-                                    "   <code>detect_spam</code>\n".
-                                    "   <code>detect_spam_action</code>\n".
-                                    "   <code>detect_nsfw</code>\n".
-                                    "   <code>detect_nsfw_action</code>\n".
-                                    "   <code>blacklists</code>\n".
-                                    "   <code>general_alerts</code>\n".
-                                    "   <code>potential_spammer_protection</code>\n".
-                                    "   <code>delete_old_messages</code>\n\n".
-                                    "For further information, send <code>/help settings</code>"
-                            ]);
-                    }
-                }
-            }
-
-
-            return self::displayUsage($this->getMessage(), "Missing parameter");
+            return $this->handleSettingsManager();
         }
 
         /**
-         * Determines the action from the given string, returns null if invalid
+         * Handles the callback query
          *
-         * @param string $input
-         * @return string|null
-         */
-        private static function actionFromString(string $input)
-        {
-            switch(strtolower($input))
-            {
-                case "nothing":
-                    return DetectionAction::Nothing;
-
-                case "delete":
-                    return DetectionAction::DeleteMessage;
-
-                case "kick":
-                    return DetectionAction::KickOffender;
-
-                case "ban":
-                    return DetectionAction::BanOffender;
-
-                default:
-                    return null;
-            }
-        }
-
-        /**
-         * Determines if the value is an enabled value or not
-         *
-         * @param string $input
-         * @return bool
-         */
-        private static function isEnabledValue(string $input): bool
-        {
-            switch(strtolower($input))
-            {
-                case "enable":
-                case "enabled":
-                case "on":
-                    return true;
-
-                case "disable":
-                case "disabled":
-                case "off":
-                default:
-                    return false;
-            }
-        }
-
-        /**
-         * Displays the command usage
-         *
-         * @param Message $message
-         * @param string $error
-         * @return ServerResponse
+         * @param CallbackQuery $callbackQuery
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public static function displayUsage(Message $message, string $error="Missing parameter")
+        public function handleCallbackQuery(CallbackQuery $callbackQuery): ?ServerResponse
         {
-            return Request::sendMessage([
-                "chat_id" => $message->getChat()->getId(),
-                "parse_mode" => "html",
-                "reply_to_message_id" => $message->getMessageId(),
-                "text" =>
-                    "$error\n\n" .
-                    "Usage:\n" .
-                    "   <b>/settings</b> <code>[Option]</code> <code>[Value]</code>\n".
-                    "   <b>/settings</b> <code>detect_spam</code> <code>[On/Off/Enable/Disable]</code>\n".
-                    "   <b>/settings</b> <code>detect_spam_action</code> <code>[Nothing/Delete/Kick/Ban]</code>\n".
-                    "   <b>/settings</b> <code>blacklists</code> <code>[On/Off/Enable/Disable]</code>\n".
-                    "   <b>/settings</b> <code>general_alerts</code> <code>[On/Off/Enable/Disable]</code>\n".
-                    "   <b>/settings</b> <code>potential_spammer_protection</code> <code>[On/Off/Enable/Disable]</code>\n".
-                    "   <b>/settings</b> <code>delete_old_messages</code> <code>[On/Off/Enable/Disable]</code>\n\n".
-                    "For more information send <code>/help settings</code>"
+            $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
+            $DeepAnalytics->tally('tg_spam_protection', 'callback_query', 0);
+            $DeepAnalytics->tally('tg_spam_protection', 'callback_query', (int)$this->WhoisCommand->ChatObject->ID);
+
+            if($this->WhoisCommand == null)
+            {
+                $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
+            }
+
+            $this->WhoisCommand->findCallbackClients($callbackQuery);
+
+            // Verify if the user is an administrator
+            $UserChatMember = Request::getChatMember([
+                "user_id" => $this->WhoisCommand->CallbackQueryUserObject->ID,
+                "chat_id" => $this->WhoisCommand->CallbackQueryChatObject->ID
             ]);
+
+            if($UserChatMember->isOk() == false)
+            {
+                return $callbackQuery->answer([
+                    "text" => "You need to be a chat administrator to preform this action",
+                    "show_alert" => true
+                ]);
+            }
+
+            if($UserChatMember->getResult()->status !== "creator" && $UserChatMember->getResult()->status !== "administrator")
+            {
+                return $callbackQuery->answer([
+                    "text" => "You need to be a chat administrator to preform this action",
+                    "show_alert" => true
+                ]);
+            }
+
+            switch(mb_substr($callbackQuery->getData(), 0, 4))
+            {
+                case "0100": // Go back to main menu
+                    return $this->handleSettingsManager($callbackQuery);
+
+                case "0101": // Spam Detection
+                    return $this->handleSpamDetectionConfiguration($callbackQuery);
+
+                case "0102": // NSFW Detection
+                    return $this->handleNsfwDetectionConfiguration($callbackQuery);
+
+                case "0103": // Blacklist Protection
+                    return $this->handleBlacklistConfiguration($callbackQuery);
+
+                case "0104": // Potential spammer Protection
+                    return $this->handlePotentialSpammersConfiguration($callbackQuery);
+
+                case "0105": // General Alerts
+                    return $this->handleGeneralAlertsConfiguration($callbackQuery);
+
+                case "0106": // Language Change
+                    return $this->handleLanguageChange($callbackQuery);
+
+                case "0107":
+                    Request::deleteMessage([
+                        "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                        "message_id" => $callbackQuery->getMessage()->getMessageId()
+                    ]);
+                    Request::deleteMessage([
+                        "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                        "message_id" => $callbackQuery->getMessage()->getReplyToMessage()->getMessageId()
+                    ]);
+                    return null;
+
+                default:
+                    return $callbackQuery->answer([
+                        "text" => "This query isn't understood, are you using an official client?",
+                        "show_alert" => true
+                    ]);
+            }
+        }
+
+        /**
+         * Displays the settings menu
+         *
+         * @param CallbackQuery|null $callbackQuery
+         * @return ServerResponse|null
+         * @throws TelegramException
+         */
+        public function handleSettingsManager(CallbackQuery  $callbackQuery=null): ?ServerResponse
+        {
+            $ResponseMessage = [
+                "parse_mode" => "html",
+                "disable_web_page_preview" => true,
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        [
+                            "text" => "\u{1F4E8} Spam Detection",
+                            "callback_data" => "0101"
+                        ],
+                        [
+                            "text" => "\u{1F51E} NSFW Filter",
+                            "callback_data" => "0102"
+                        ]
+                    ],
+                    [
+
+                        [
+                            "text" => "\u{1F4A3} Blacklisted Users",
+                            "callback_data" => "0103"
+                        ],
+                        [
+                            "text" => "\u{26A0} Potential Spammers",
+                            "callback_data" => "0104"
+                        ]
+                    ],
+                    [
+                        [
+                            "text" => "\u{1F4E3} General Alerts",
+                            "callback_data" => "0105"
+                        ],
+                        [
+                            "text" => "\u{1F310} Language",
+                            "callback_data" => "0106"
+                        ]
+                    ],
+                    [
+                        [
+                            "text" => "Close Menu",
+                            "callback_data" => "0107"
+                        ]
+                    ]
+                ),
+                "text" =>
+                    "\u{2699} <b>Settings Manager</b>\n\n".
+                    "You can configure SpamProtectionBot's settings in this chat, just select the section you want to ".
+                    "configure and more information will be presented, if you have any questions or help then feel free ".
+                    "to join our <a href=\"https://t.me/SpamProtectionSupport\">support chat</a>."
+            ];
+
+            if($callbackQuery == null)
+            {
+                $ResponseMessage["chat_id"] = $this->getMessage()->getChat()->getId();
+                $ResponseMessage["reply_to_message_id"] = $this->getMessage()->getMessageId();
+                return Request::sendMessage($ResponseMessage);
+            }
+            else
+            {
+                $ResponseMessage["chat_id"] = $callbackQuery->getMessage()->getChat()->getId();
+                $ResponseMessage["message_id"] = $callbackQuery->getMessage()->getMessageId();
+                return Request::editMessageText($ResponseMessage);
+            }
+
+        }
+
+        /**
+         * Handles language localization changes
+         *
+         * @param CallbackQuery $callbackQuery
+         * @return ServerResponse|null
+         * @throws TelegramException
+         */
+        public function handleLanguageChange(CallbackQuery $callbackQuery): ?ServerResponse
+        {
+            $ResponseMessage = [
+                "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                "message_id" => $callbackQuery->getMessage()->getMessageId(),
+                "parse_mode" => "html",
+                "disable_web_page_preview" => true,
+                "text" =>
+                    "\u{1F4E3} <b>Bot Language</b>\n\n".
+                    "SpamProtectionBot is using an experimental localization method, so the localization may not always be accurate ".
+                    "but nevertheless you can change the language of this bot and SpamProtectionBot will respond in said language ".
+                    "(Including alerts) in this chat.",
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        ["text" => "\u{1F1EC}\u{1F1E7}", "callback_data" => "0106en"],
+                        ["text" => "\u{1F32E}", "callback_data" => "0106es"],
+                        ["text" => "\u{1F1EF}\u{1F1F5}", "callback_data" => "0106ja"],
+                        ["text" => "\u{1F1E8}\u{1F1F3}", "callback_data" => "0106zh"],
+                        ["text" => "\u{1F1E9}\u{1F1EA}", "callback_data" => "0106de"],
+                        ["text" => "\u{1F1F5}\u{1F1F1}", "callback_data" => "0106pl"],
+                    ],
+                    [
+                        ["text" => "\u{1F1EB}\u{1F1F7}", "callback_data" => "0106fr"],
+                        ["text" => "\u{1F1F3}\u{1F1F1}", "callback_data" => "0106nr"],
+                        ["text" => "\u{1F1F0}\u{1F1F7}", "callback_data" => "0106kr"],
+                        ["text" => "\u{1F1EE}\u{1F1F9}", "callback_data" => "0106it"],
+                        ["text" => "\u{1F1F9}\u{1F1F7}", "callback_data" => "0106tr"],
+                        ["text" => "\u{1F1F7}\u{1F1FA}", "callback_data" => "0106ru"],
+                    ],
+                    [
+                        [
+                            "text" => "\u{1F519} Go back",
+                            "callback_data" => "0100"
+                        ]
+                    ]
+                )
+            ];
+
+            return Request::editMessageText($ResponseMessage);
+        }
+
+        /**
+         * Handles general alerts
+         *
+         * @param CallbackQuery $callbackQuery
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         */
+        public function handleGeneralAlertsConfiguration(CallbackQuery $callbackQuery): ?ServerResponse
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
+
+            $StatusResponse = (string)null;
+
+            switch($callbackQuery->getData())
+            {
+                case "010501":
+                    if($ChatSettings->GeneralAlertsEnabled)
+                    {
+                        $ChatSettings->GeneralAlertsEnabled = false;
+                        $callbackQuery->answer(["text" => "General Alerts has been disabled successfully"]);
+                    }
+                    else
+                    {
+                        $ChatSettings->GeneralAlertsEnabled = true;
+                        $callbackQuery->answer(["text" => "General Alerts has been enabled successfully"]);
+                    }
+
+                    $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
+                        $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
+                    );
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
+
+                    break;
+
+            }
+
+            if($ChatSettings->GeneralAlertsEnabled)
+            {
+                $GeneralAlertsButton = [
+                    "text" => "\u{274C} Disable",
+                    "callback_data" => "010501"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Currently posting alerts about activities</i>\n";
+            }
+            else
+            {
+                $GeneralAlertsButton = [
+                    "text" => "\u{2714} Enable",
+                    "callback_data" => "010501"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Posting alerts quietly to recent actions</i>";
+            }
+
+
+            $ResponseMessage = [
+                "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                "message_id" => $callbackQuery->getMessage()->getMessageId(),
+                "parse_mode" => "html",
+                "disable_web_page_preview" => true,
+                "text" =>
+                    "\u{1F4E3} <b>General Alerts Settings</b>\n\n".
+                    "SpamProtectionBot is designed to alert users in the chat about the activites it's detecting and performing ".
+                    "but if you find this too annoying, you can disable this and SpamProtectionBot will redirect all the alerts to ".
+                    "recent actions so administrators can view actions taken by SpamProtectionBot in a more organized format.\n\n" . $StatusResponse,
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        $GeneralAlertsButton,
+                    ],
+                    [
+                        [
+                            "text" => "\u{1F519} Go back",
+                            "callback_data" => "0100"
+                        ]
+                    ]
+                )
+            ];
+
+            return Request::editMessageText($ResponseMessage);
+        }
+
+        /**
+         * Handles potential spammer configuration
+         *
+         * @param CallbackQuery $callbackQuery
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         */
+        public function handlePotentialSpammersConfiguration(CallbackQuery $callbackQuery): ?ServerResponse
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
+
+            $StatusResponse = (string)null;
+
+            switch($callbackQuery->getData())
+            {
+                case "010401":
+                    if($ChatSettings->ActiveSpammerProtectionEnabled)
+                    {
+                        $ChatSettings->ActiveSpammerProtectionEnabled = false;
+                        $callbackQuery->answer(["text" => "Potential Spammer Protection has been disabled successfully"]);
+                    }
+                    else
+                    {
+                        $ChatSettings->ActiveSpammerProtectionEnabled = true;
+                        $callbackQuery->answer(["text" => "Potential Spammer Protection has been enabled successfully"]);
+                    }
+
+                    $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
+                        $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
+                    );
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
+
+                    break;
+
+            }
+
+            if($ChatSettings->ActiveSpammerProtectionEnabled)
+            {
+                $PotentialSpammerDetectionButton = [
+                    "text" => "\u{274C} Disable",
+                    "callback_data" => "010401"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Currently banning potential spammers</i>\n";
+            }
+            else
+            {
+                $PotentialSpammerDetectionButton = [
+                    "text" => "\u{2714} Enable",
+                    "callback_data" => "010401"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Not banning potential spammers (Disabled)</i>";
+            }
+
+
+            $ResponseMessage = [
+                "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                "message_id" => $callbackQuery->getMessage()->getMessageId(),
+                "parse_mode" => "html",
+                "disable_web_page_preview" => true,
+                "text" =>
+                    "\u{26A0} <b>Potential Spammer Protection Settings</b>\n\n".
+                    "Using AI SpamProtectionBot can protect your group from potential spammers, potential spammers are ".
+                    "automatically flagged by SpamProtectionBot based off their past activities, this flag is usually ".
+                    "enabled for spam bots that are just throw-away accounts used to promote spam.\n\n" . $StatusResponse,
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        $PotentialSpammerDetectionButton,
+                    ],
+                    [
+                        [
+                            "text" => "\u{1F519} Go back",
+                            "callback_data" => "0100"
+                        ]
+                    ]
+                )
+            ];
+
+            return Request::editMessageText($ResponseMessage);
+        }
+
+        /**
+         * Handles blacklist configuration
+         *
+         * @param CallbackQuery $callbackQuery
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         */
+        public function handleBlacklistConfiguration(CallbackQuery  $callbackQuery): ?ServerResponse
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
+
+            $StatusResponse = (string)null;
+
+            switch($callbackQuery->getData())
+            {
+                case "010301":
+                    if($ChatSettings->BlacklistProtectionEnabled)
+                    {
+                        $ChatSettings->BlacklistProtectionEnabled = false;
+                        $callbackQuery->answer(["text" => "Blacklist Protection has been disabled successfully"]);
+                    }
+                    else
+                    {
+                        $ChatSettings->BlacklistProtectionEnabled = true;
+                        $callbackQuery->answer(["text" => "Blacklist Protection has been enabled successfully"]);
+                    }
+
+                    $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
+                        $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
+                    );
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
+
+                    break;
+
+            }
+
+            if($ChatSettings->BlacklistProtectionEnabled)
+            {
+                $BlacklistDetectionButton = [
+                    "text" => "\u{274C} Disable",
+                    "callback_data" => "010301"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Currently banning blacklisted users</i>\n";
+            }
+            else
+            {
+                $BlacklistDetectionButton = [
+                    "text" => "\u{2714} Enable",
+                    "callback_data" => "010301"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Not banning blacklisted users (Disabled)</i>";
+            }
+
+
+            $ResponseMessage = [
+                "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                "message_id" => $callbackQuery->getMessage()->getMessageId(),
+                "parse_mode" => "html",
+                "disable_web_page_preview" => true,
+                "text" =>
+                    "\u{1F51E} <b>Blacklist Protection Settings</b>\n\n".
+                    "Outsourced by trusted operators, blacklisted users are users that are blacklisted by operators due ".
+                    "to a strict reason in relation to spam or abuse, for example a blacklisted user may be known for " .
+                    "mass-sending spam, mass-adding users or initializing/participating in raids. Most blacklists are " .
+                    "backed up by proof in <a href=\"https://t.me/SpamProtectionLogs\">SpamProtectionLogs</a> and can be " .
+                    "found by searching for the users Private Telegram ID (PTID) in the channel.\n\n" .
+                    "If you believe a user was blacklisted incorrectly then ask for support in our <a href=\"https://t.me/SpamProtectionSupport\">Support Group</a> ".
+                    "or ask the user to message @SpamProtectionBot to go through a automatic appeal process.\n\n". $StatusResponse,
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        $BlacklistDetectionButton,
+                    ],
+                    [
+                        [
+                            "text" => "\u{1F519} Go back",
+                            "callback_data" => "0100"
+                        ]
+                    ]
+                )
+            ];
+
+            return Request::editMessageText($ResponseMessage);
+        }
+
+        /**
+         * Handle NSFW Filter configuration
+         *
+         * @param CallbackQuery $callbackQuery
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         */
+        public function handleNsfwDetectionConfiguration(CallbackQuery  $callbackQuery): ?ServerResponse
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
+
+            $StatusResponse = (string)null;
+
+            switch($callbackQuery->getData())
+            {
+                case "010201":
+                    if($ChatSettings->NsfwFilterEnabled)
+                    {
+                        $ChatSettings->NsfwFilterEnabled = false;
+                        $callbackQuery->answer(["text" => "NSFW Filter has been disabled successfully"]);
+                    }
+                    else
+                    {
+                        $ChatSettings->NsfwFilterEnabled = true;
+                        $callbackQuery->answer(["text" => "NSFW Filter has been enabled successfully"]);
+                    }
+
+                    $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
+                        $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
+                    );
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
+
+                    break;
+
+
+                case "010202":
+                    if($ChatSettings->NsfwFilterEnabled == false)
+                    {
+                        $callbackQuery->answer(
+                            [
+                                "text" => "You must enable NSFW Filter before changing the detection action",
+                                "show_alert" => true
+                            ]
+                        );
+                    }
+                    else
+                    {
+                        $ChatSettings->NsfwDetectionAction = self::cycleAction($ChatSettings->NsfwDetectionAction);
+                        $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
+                            $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
+                        );
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
+                    }
+                    break;
+            }
+
+            $DetectionActionButton = [];
+
+            if($ChatSettings->NsfwFilterEnabled)
+            {
+                $NsfwDetectionButton = [
+                    "text" => "\u{274C} Disable",
+                    "callback_data" => "010201"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Currently detecting NSFW content</i>\n";
+            }
+            else
+            {
+                $NsfwDetectionButton = [
+                    "text" => "\u{2714} Enable",
+                    "callback_data" => "010201"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Not detecting NSFW content (Disabled)</i>";
+            }
+
+            switch($ChatSettings->NsfwDetectionAction)
+            {
+                case DetectionAction::Nothing:
+                    $DetectionActionButton = [
+                        "text" => "\u{26AA} Do Nothing",
+                        "callback_data" => "010202"
+                    ];
+                    if($ChatSettings->NsfwFilterEnabled) $StatusResponse .= "<b>Detection Action:</b> <i>Show NSFW detection alerts only</i>";
+                    break;
+
+                case DetectionAction::BanOffender:
+                    $DetectionActionButton = [
+                        "text" => "\u{1F534} Delete & Ban Offender",
+                        "callback_data" => "010202"
+                    ];
+                    if($ChatSettings->NsfwFilterEnabled) $StatusResponse .= "<b>Detection Action:</b> <i>Delete NSFW content and ban offender</i>";
+                    break;
+
+                case DetectionAction::KickOffender:
+                    $DetectionActionButton = [
+                        "text" => "\u{1F7E0} Delete & Kick Offender",
+                        "callback_data" => "010202"
+                    ];
+                    if($ChatSettings->NsfwFilterEnabled) $StatusResponse .= "<b>Detection Action:</b> <i>Delete NSFW content and kick offender</i>";
+                    break;
+                case DetectionAction::DeleteMessage:
+                    $DetectionActionButton = [
+                        "text" => "\u{1F535} Delete Message",
+                        "callback_data" => "010202"
+                    ];
+                    if($ChatSettings->NsfwFilterEnabled) $StatusResponse .= "<b>Detection Action:</b> <i>Delete NSFW content only</i>";
+                    break;
+            }
+
+            $ResponseMessage = [
+                "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                "message_id" => $callbackQuery->getMessage()->getMessageId(),
+                "parse_mode" => "html",
+                "disable_web_page_preview" => true,
+                "text" =>
+                    "\u{1F51E} <b>NSFW Filter Settings</b>\n\n".
+                    "Using Machine Learning SpamProtectionBot will check images for NSFW content and protect your group ".
+                    "from content that can get your group flagged for hosting pornographic content\n\n" . $StatusResponse,
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        $NsfwDetectionButton,
+                        $DetectionActionButton
+                    ],
+                    [
+                        [
+                            "text" => "\u{1F519} Go back",
+                            "callback_data" => "0100"
+                        ]
+                    ]
+                )
+            ];
+
+            return Request::editMessageText($ResponseMessage);
+        }
+
+        /**
+         * Handles the spam detection configuration
+         *
+         * @param CallbackQuery $callbackQuery
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         */
+        public function handleSpamDetectionConfiguration(CallbackQuery $callbackQuery): ?ServerResponse
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+            $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
+
+            $StatusResponse = (string)null;
+
+            switch($callbackQuery->getData())
+            {
+                case "010101":
+                    if($ChatSettings->DetectSpamEnabled)
+                    {
+                        $ChatSettings->DetectSpamEnabled = false;
+                        $callbackQuery->answer(["text" => "Spam Detection has been disabled successfully"]);
+                    }
+                    else
+                    {
+                        $ChatSettings->DetectSpamEnabled = true;
+                        $callbackQuery->answer(["text" => "Spam Detection has been enabled successfully"]);
+                    }
+
+                    $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
+                        $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
+                    );
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
+
+                    break;
+
+                case "010102":
+                    if($ChatSettings->DetectSpamEnabled == false)
+                    {
+                        $callbackQuery->answer(
+                            [
+                                "text" => "You must enable Spam Detection before changing the detection action",
+                                "show_alert" => true
+                            ]
+                        );
+                    }
+                    else
+                    {
+                        $ChatSettings->DetectSpamAction = self::cycleAction($ChatSettings->DetectSpamAction);
+                        $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
+                            $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
+                        );
+                        $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
+                    }
+                    break;
+            }
+
+            $DetectionActionButton = [];
+
+            if($ChatSettings->DetectSpamEnabled)
+            {
+                $SpamDetectionButton = [
+                    "text" => "\u{274C} Disable",
+                    "callback_data" => "010101"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Currently detecting spam</i>\n";
+            }
+            else
+            {
+                $SpamDetectionButton = [
+                    "text" => "\u{2714} Enable",
+                    "callback_data" => "010101"
+                ];
+
+                $StatusResponse .= "<b>Status:</b> <i>Not detecting spam (Disabled)</i>";
+            }
+
+            switch($ChatSettings->DetectSpamAction)
+            {
+                case DetectionAction::Nothing:
+                    $DetectionActionButton = [
+                        "text" => "\u{26AA} Do Nothing",
+                        "callback_data" => "010102"
+                    ];
+                    if($ChatSettings->DetectSpamEnabled) $StatusResponse .= "<b>Detection Action:</b> <i>Show spam detection alerts only</i>";
+                    break;
+
+                case DetectionAction::BanOffender:
+                    $DetectionActionButton = [
+                        "text" => "\u{1F534} Delete & Ban Offender",
+                        "callback_data" => "010102"
+                    ];
+                    if($ChatSettings->DetectSpamEnabled) $StatusResponse .= "<b>Detection Action:</b> <i>Delete spam and ban offender</i>";
+                    break;
+
+                case DetectionAction::KickOffender:
+                    $DetectionActionButton = [
+                        "text" => "\u{1F7E0} Delete & Kick Offender",
+                        "callback_data" => "010102"
+                    ];
+                    if($ChatSettings->DetectSpamEnabled) $StatusResponse .= "<b>Detection Action:</b> <i>Delete spam and kick offender</i>";
+                    break;
+                case DetectionAction::DeleteMessage:
+                    $DetectionActionButton = [
+                        "text" => "\u{1F535} Delete Message",
+                        "callback_data" => "010102"
+                    ];
+                    if($ChatSettings->DetectSpamEnabled) $StatusResponse .= "<b>Detection Action:</b> <i>Delete spam only</i>";
+                    break;
+            }
+
+            $ResponseMessage = [
+                "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                "message_id" => $callbackQuery->getMessage()->getMessageId(),
+                "parse_mode" => "html",
+                "disable_web_page_preview" => true,
+                "text" =>
+                    "\u{1F4E8} <b>Spam Detection Settings</b>\n\n".
+                    "Using machine learning SpamProtectionBot can protect your group from unwanted spam before it even ".
+                    "becomes effective, this works by checking the message content for spam-like features and predicting ".
+                    "overall score to determine if the message is spam or not.\n\n" . $StatusResponse,
+                "reply_markup" => new InlineKeyboard(
+                    [
+                        $SpamDetectionButton,
+                        $DetectionActionButton
+                    ],
+                    [
+                        [
+                            "text" => "\u{1F519} Go back",
+                            "callback_data" => "0100"
+                        ]
+                    ]
+                )
+            ];
+
+            return Request::editMessageText($ResponseMessage);
+        }
+
+        /**
+         * Cycles the detection action
+         *
+         * @param string $action
+         * @return string
+         */
+        private static function cycleAction(string $action): string
+        {
+            switch($action)
+            {
+                case DetectionAction::Nothing:
+                    return DetectionAction::DeleteMessage;
+
+                case DetectionAction::DeleteMessage:
+                    return DetectionAction::KickOffender;
+
+                case DetectionAction::KickOffender:
+                    return DetectionAction::BanOffender;
+
+                case DetectionAction::BanOffender:
+                default:
+                    return DetectionAction::Nothing;
+            }
         }
     }

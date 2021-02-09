@@ -8,6 +8,7 @@
 
     use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
+    use Longman\TelegramBot\Entities\CallbackQuery;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
@@ -214,6 +215,97 @@
         public $ReplyToID = null;
 
         /**
+         * The chat of the callback query
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $CallbackQueryChatObject = null;
+
+        /**
+         * The chat client of the callback query
+         *
+         * @var TelegramClient|null
+         */
+        public $CallbackQueryChatClient = null;
+
+        /**
+         * The user of the callback query
+         *
+         * @var TelegramClient\User|null
+         */
+        public $CallbackQueryUserObject = null;
+
+        /**
+         * The user client of the callback query
+         *
+         * @var TelegramClient|null
+         */
+        public $CallbackQueryUserClient = null;
+
+        /**
+         * The client of the callback query
+         *
+         * @var TelegramClient|null
+         */
+        public $CallbackQueryClient = null;
+
+        /**
+         * Finds the callback clients
+         *
+         * @param CallbackQuery $callbackQuery
+         */
+        public function findCallbackClients(CallbackQuery $callbackQuery)
+        {
+            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
+
+            if($callbackQuery !== null)
+            {
+                if($callbackQuery->getFrom() !== null)
+                {
+                    try
+                    {
+                        $this->CallbackQueryUserObject = TelegramClient\User::fromArray($callbackQuery->getFrom()->getRawData());
+                        $this->CallbackQueryUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->CallbackQueryUserObject);
+                    }
+                    catch(Exception $e)
+                    {
+                        unset($e);
+                    }
+                }
+
+                if($callbackQuery->getMessage() !== null)
+                {
+                    if($callbackQuery->getMessage()->getChat() !== null)
+                    {
+                        try
+                        {
+                            $this->CallbackQueryChatObject = TelegramClient\Chat::fromArray($callbackQuery->getMessage()->getChat()->getRawData());
+                            $this->CallbackQueryChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->CallbackQueryChatObject);
+                        }
+                        catch(Exception $e)
+                        {
+                            unset($e);
+                        }
+                    }
+                }
+
+                if($this->CallbackQueryUserObject !== null && $this->CallbackQueryChatObject !== null)
+                {
+                    try
+                    {
+                        $this->CallbackQueryClient = $TelegramClientManager->getTelegramClientManager()->registerClient(
+                            $this->CallbackQueryChatObject, $this->CallbackQueryUserObject
+                        );
+                    }
+                    catch(Exception $e)
+                    {
+                        unset($e);
+                    }
+                }
+            }
+        }
+
+        /**
          * Parses the request and establishes all client connections
          * @noinspection DuplicatedCode
          */
@@ -223,6 +315,53 @@
 
             $this->ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
             $this->UserObject = TelegramClient\User::fromArray($this->getMessage()->getFrom()->getRawData());
+
+            // Parse the callback query
+            if($this->getCallbackQuery() !== null)
+            {
+                if($this->getCallbackQuery()->getFrom() !== null)
+                {
+                    try
+                    {
+                        $this->CallbackQueryUserObject = TelegramClient\User::fromArray($this->getCallbackQuery()->getFrom()->getRawData());
+                        $this->CallbackQueryUserClient = $TelegramClientManager->getTelegramClientManager()->registerUser($this->CallbackQueryUserObject);
+                    }
+                    catch(Exception $e)
+                    {
+                        unset($e);
+                    }
+                }
+
+                if($this->getCallbackQuery()->getMessage() !== null)
+                {
+                    if($this->getCallbackQuery()->getMessage()->getChat() !== null)
+                    {
+                        try
+                        {
+                            $this->CallbackQueryChatObject = TelegramClient\Chat::fromArray($this->getCallbackQuery()->getMessage()->getChat()->getRawData());
+                            $this->CallbackQueryChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->CallbackQueryChatObject);
+                        }
+                        catch(Exception $e)
+                        {
+                            unset($e);
+                        }
+                    }
+                }
+
+                if($this->CallbackQueryUserObject !== null && $this->CallbackQueryChatObject !== null)
+                {
+                    try
+                    {
+                        $this->CallbackQueryClient = $TelegramClientManager->getTelegramClientManager()->registerClient(
+                            $this->CallbackQueryChatObject, $this->CallbackQueryUserObject
+                        );
+                    }
+                    catch(Exception $e)
+                    {
+                        unset($e);
+                    }
+                }
+            }
 
             try
             {
