@@ -643,7 +643,7 @@
             if($ChatSettings->NsfwFilterEnabled)
             {
                 $NsfwDetectionButton = [
-                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Disable"),
+                    "text" => "\u{274C} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Disable"),
                     "callback_data" => "010201"
                 ];
                 $StatusValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Currently detecting NSFW content");
@@ -792,7 +792,7 @@
             if($ChatSettings->DetectSpamEnabled)
             {
                 $SpamDetectionButton = [
-                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Disable"),
+                    "text" => "\u{274C} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Disable"),
                     "callback_data" => "010101"
                 ];
 
