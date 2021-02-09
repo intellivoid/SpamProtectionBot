@@ -110,7 +110,7 @@
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
-                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand->ChatClient, "This command can only be used by chat administrators")
+                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This command can only be used by chat administrators")
                 ]);
             }
 
@@ -120,7 +120,7 @@
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
-                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand->ChatClient, "This command can only be used by chat administrators")
+                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This command can only be used by chat administrators")
                 ]);
             }
 
