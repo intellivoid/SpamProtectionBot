@@ -228,8 +228,7 @@
                 "You can configure SpamProtectionBot's settings in this chat, just select the section you want to ".
                 "configure and more information will be presented, if you have any questions or help then feel free ".
                 "to join our %s.", ['s']);
-            $SupportChatLink = LanguageCommand::localizeChatText($this->WhoisCommand, "support chat");
-            //<a href=\"https://t.me/SpamProtectionSupport\">support chat</a>
+            $SupportChatLink = "<a href=\"https://t.me/SpamProtectionSupport\">" . LanguageCommand::localizeChatText($this->WhoisCommand, "support chat") . "</a>";
 
             $ResponseMessage = [
                 "parse_mode" => "html",
