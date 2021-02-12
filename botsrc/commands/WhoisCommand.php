@@ -1,5 +1,6 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
     /** @noinspection PhpUndefinedClassInspection */
     /** @noinspection PhpUnused */
     /** @noinspection PhpIllegalPsrClassPathInspection */
@@ -371,18 +372,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
-                /** @noinspection PhpUnhandledExceptionInspection */
-                //return Request::sendMessage([
-                //    "chat_id" => $this->getMessage()->getChat()->getId(),
-                //    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                //    "parse_mode" => "html",
-                //    "text" =>
-                //        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                //        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                //        "Object: <code>Events/generic_request::direct.bin</code>"
-                //]);
-
+                SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 return null;
             }
 
@@ -399,18 +389,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
-                /** @noinspection PhpUnhandledExceptionInspection */
-                //return Request::sendMessage([
-                //    "chat_id" => $this->getMessage()->getChat()->getId(),
-                //    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                //    "parse_mode" => "html",
-                //    "text" =>
-                //        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                //        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                //        "Object: <code>Events/generic_request::chat_client.bin</code>"
-                //]);
-
+                SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 return null;
             }
 
@@ -427,18 +406,7 @@
             }
             catch(Exception $e)
             {
-                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
-                /** @noinspection PhpUnhandledExceptionInspection */
-                //return Request::sendMessage([
-                //    "chat_id" => $this->getMessage()->getChat()->getId(),
-                //    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                //    "parse_mode" => "html",
-                //    "text" =>
-                //        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
-                //        "Error Code: <code>" . $ReferenceID . "</code>\n" .
-                //        "Object: <code>Events/generic_request::user_client.bin</code>"
-                //]);
-
+                SpamProtectionBot::getLogHandler()->logException($e, "Worker");
                 return null;
             }
 
@@ -954,7 +922,7 @@
                             "text" =>
                                 self::resolveTarget($this->findForwardedTarget(), false, "None", true) .
                                 "\n\n" .
-                                self::resolveTarget($this->findTarget(), false, "None", false)
+                                self::resolveTarget($this->findTarget(), false, "None")
                         ]);
                     }
 
@@ -989,7 +957,7 @@
                         "chat_id" => $this->DestinationChat->ID,
                         "parse_mode" => "html",
                         "reply_to_message_id" => $this->ReplyToID,
-                        "text" => self::resolveTarget($this->findTarget(), false, "None", false)
+                        "text" => self::resolveTarget($this->findTarget(), false, "None")
                     ]);
                 }
             }
@@ -1015,7 +983,7 @@
                         "parse_mode" => "html",
                         "reply_to_message_id" => $this->ReplyToID,
                         "text" =>
-                            self::resolveTarget($this->ChatClient, false, "None", false)
+                            self::resolveTarget($this->ChatClient, false, "None")
                     ]);
                 }
 
@@ -1047,7 +1015,7 @@
                             "chat_id" => $this->DestinationChat->ID,
                             "parse_mode" => "html",
                             "reply_to_message_id" => $this->ReplyToID,
-                            "text" => self::resolveTarget($TargetTelegramClient, true, "ID", false)
+                            "text" => self::resolveTarget($TargetTelegramClient, true, "ID")
                         ]);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
@@ -1071,7 +1039,7 @@
                             "chat_id" => $this->DestinationChat->ID,
                             "parse_mode" => "html",
                             "reply_to_message_id" => $this->ReplyToID,
-                            "text" => self::resolveTarget($TargetTelegramClient, true, "Private ID", false)
+                            "text" => self::resolveTarget($TargetTelegramClient, true)
                         ]);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
@@ -1097,7 +1065,7 @@
                             "chat_id" => $this->DestinationChat->ID,
                             "parse_mode" => "html",
                             "reply_to_message_id" => $this->ReplyToID,
-                            "text" => self::resolveTarget($TargetTelegramClient, true, "Username", false)
+                            "text" => self::resolveTarget($TargetTelegramClient, true, "Username")
                         ]);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
@@ -1119,7 +1087,7 @@
                             "chat_id" => $this->DestinationChat->ID,
                             "parse_mode" => "html",
                             "reply_to_message_id" => $this->ReplyToID,
-                            "text" => self::resolveTarget($this->MentionUserClients[array_keys($this->MentionUserClients)[0]], true, "Mention", false)
+                            "text" => self::resolveTarget($this->MentionUserClients[array_keys($this->MentionUserClients)[0]], true, "Mention")
                         ]);
                     }
 
@@ -1134,7 +1102,8 @@
                     return Request::sendMessage([
                         "chat_id" => $this->DestinationChat->ID,
                         "reply_to_message_id" => $this->ReplyToID,
-                        "text" => "Unable to resolve the query '$TargetTelegramParameter'!"
+                        "text" => str_ireplace('%s', $TargetTelegramParameter,
+                            LanguageCommand::localizeChatText($this, "Unable to resolve the query '%s'!", ['s']))
                     ]);
                 }
             }
@@ -1151,7 +1120,7 @@
                 "chat_id" => $this->DestinationChat->ID,
                 "parse_mode" => "html",
                 "reply_to_message_id" => $this->ReplyToID,
-                "text" => self::resolveTarget($this->UserClient, false, "None", false)
+                "text" => self::resolveTarget($this->UserClient, false, "None")
             ]);
         }
 
@@ -1172,44 +1141,44 @@
                 case TelegramChatType::Group:
                     if($is_resolved)
                     {
-                        return $this->generateChatInfoString($target_client, "Resolved Chat " . $resolved_type);
+                        return $this->generateChatInfoString($target_client, LanguageCommand::localizeChatText($this, "Resolved Chat " . $resolved_type));
                     }
 
                     if($is_forwarded)
                     {
-                        return $this->generateChatInfoString($target_client, "Forwarded Chat");
+                        return $this->generateChatInfoString($target_client, LanguageCommand::localizeChatText($this, "Forwarded Chat"));
                     }
 
-                    return $this->generateChatInfoString($target_client, "Chat Information");
+                    return $this->generateChatInfoString($target_client, LanguageCommand::localizeChatText($this, "Chat Information"));
 
                 case TelegramChatType::Channel:
                     if($is_resolved)
                     {
-                        return $this->generateChannelInfoString($target_client, "Resolved Channel " . $resolved_type);
+                        return $this->generateChannelInfoString($target_client, LanguageCommand::localizeChatText($this, "Resolved Channel " . $resolved_type));
                     }
 
                     if($is_forwarded)
                     {
-                        return $this->generateChannelInfoString($target_client, "Forwarded Channel");
+                        return $this->generateChannelInfoString($target_client, LanguageCommand::localizeChatText($this, "Forwarded Channel"));
                     }
 
-                    return $this->generateChannelInfoString($target_client, "Channel Information");
+                    return $this->generateChannelInfoString($target_client, LanguageCommand::localizeChatText($this, "Channel Information"));
 
                 case TelegramChatType::Private:
                     if($is_resolved)
                     {
-                        return $this->generateUserInfoString($target_client, "Resolved User " . $resolved_type);
+                        return $this->generateUserInfoString($target_client, LanguageCommand::localizeChatText($this, "Resolved User " . $resolved_type));
                     }
 
                     if($is_forwarded)
                     {
-                        return $this->generateUserInfoString($target_client, "Original Sender");
+                        return $this->generateUserInfoString($target_client, LanguageCommand::localizeChatText($this, "Original Sender"));
                     }
 
-                    return $this->generateUserInfoString($target_client, "User Information");
+                    return $this->generateUserInfoString($target_client, LanguageCommand::localizeChatText($this, "User Information"));
 
                 default:
-                    return $this->generateGenericInfoString($target_client, "Resolved Information");
+                    return $this->generateGenericInfoString($target_client, LanguageCommand::localizeChatText($this, "Resolved Information"));
             }
         }
 
@@ -1224,43 +1193,55 @@
         {
             $Response = "<b>$title</b>\n\n";
 
-            $Response .= "<b>Private ID:</b> <code>" . $client->PublicID . "</code>\n";
-            $Response .= "<b>User ID:</b> <code>" . $client->User->ID . "</code>\n";
-            $Response .= "<b>Chat ID:</b> <code>" . $client->Chat->ID . "</code>\n";
+            $Response .= str_ireplace(
+                '%s', "<code>" . $client->PublicID . "</code>",
+                LanguageCommand::localizeChatText($this, "Private ID: %s", ['s'])) . "\n";
+            $Response .= str_ireplace(
+                '%s', "<code>" . $client->User->ID . "</code>",
+                LanguageCommand::localizeChatText($this, "User ID: %s", ['s'])) . "\n";
+            $Response .= str_ireplace(
+                '%s', "<code>" . $client->Chat->ID . "</code>",
+                LanguageCommand::localizeChatText($this, "Chat ID: %s", ['s'])) . "\n";
 
             if($client->User->FirstName !== null)
             {
-                $Response .= "<b>User First Name:</b> <code>" . self::escapeHTML($client->User->FirstName) . "</code>\n";
+                $Response .= str_ireplace(
+                    '%s', "<code>" . self::escapeHTML($client->User->FirstName) . "</code>",
+                    LanguageCommand::localizeChatText($this, "User First Name: %s", ['s'])) . "\n";
             }
 
             if($client->User->LastName !== null)
             {
-                $Response .= "<b>User Last Name:</b> <code>" . self::escapeHTML($client->User->LastName) . "</code>\n";
+                $Response .= str_ireplace(
+                    '%s', "<code>" . self::escapeHTML($client->User->LastName) . "</code>",
+                    LanguageCommand::localizeChatText($this, "User Last Name: %s", ['s'])) . "\n";
             }
 
             if($client->User->Username !== null)
             {
-                $Response .= "<b>User Username:</b> <code>" . $client->User->Username . "</code> (@" . $client->User->Username . ")\n";
+                $Response .= str_ireplace(
+                    '%s', "<code>" . self::escapeHTML($client->User->Username) . "</code> (@" . $client->User->Username . ")",
+                    LanguageCommand::localizeChatText($this, "User Username: %s", ['s'])) . "\n";
             }
 
             if($client->User->IsBot)
             {
-                $Response .= "<b>Is Bot:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>True</code>", LanguageCommand::localizeChatText($this,"Is Bot: %s", ['s'])) . "\n";
             }
 
             if($client->Chat->Type !== null)
             {
-                $Response .= "<b>Chat Type:</b> <code>" . self::escapeHTML($client->Chat->Type) . "</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . self::escapeHTML($client->Chat->Type) . "</code>", LanguageCommand::localizeChatText($this,"Chat Type: %s", ['s'])) . "\n";
             }
 
             if($client->Chat->Username !== null)
             {
-                $Response .= "<b>Chat Username:</b> <code>" . self::escapeHTML($client->Chat->Username) . "</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . self::escapeHTML($client->Chat->Username) . "</code>", LanguageCommand::localizeChatText($this,"Chat Username: %s", ['s'])) . "\n";
             }
 
             if($client->Chat->Title !== null)
             {
-                $Response .= "<b>Chat Title:</b> <code>" . self::escapeHTML($client->Chat->Title) . "</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . self::escapeHTML($client->Chat->Title) . "</code>", LanguageCommand::localizeChatText($this,"Chat Title: %s", ['s'])) . "\n";
             }
 
             return $Response;
@@ -1284,13 +1265,13 @@
             if($user_client->User->Username == MAIN_OPERATOR_USERNAME)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{2705} This user is the main operator\n";
+                $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This user is the main operator") . "\n";
             }
 
             if($user_client->AccountID !== 0)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{2705} This user's Telegram account is verified by Intellivoid Accounts\n";
+                $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This user's Telegram account is verified by Intellivoid Accounts") . "\n";
             }
 
             if($user_client->User->IsBot == false)
@@ -1300,7 +1281,7 @@
                     if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
                     {
                         $RequiresExtraNewline = true;
-                        $Response .= "\u{26A0} <b>This user may be an active spammer</b>\n";
+                        $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This user may be an active spammer") . "</b>\n";
                     }
                 }
             }
@@ -1310,12 +1291,12 @@
                 if($user_client->User->IsBot)
                 {
                     $RequiresExtraNewline = true;
-                    $Response .= "\u{26A0} <b>This bot is blacklisted!</b>\n";
+                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This bot is blacklisted!") . "</b>\n";
                 }
                 else
                 {
                     $RequiresExtraNewline = true;
-                    $Response .= "\u{26A0} <b>This user is blacklisted!</b>\n";
+                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This user is blacklisted!") . "</b>\n";
                 }
             }
 
@@ -1324,19 +1305,19 @@
                 if($user_client->User->IsBot)
                 {
                     $RequiresExtraNewline = true;
-                    $Response .= "\u{1F46E} This bot is an agent who actively reports spam automatically\n";
+                    $Response .= "\u{1F46E} " . LanguageCommand::localizeChatText($this, "This bot is an agent who actively reports spam automatically") . "\n";
                 }
                 else
                 {
                     $RequiresExtraNewline = true;
-                    $Response .= "\u{1F46E} This user is an agent who actively reports spam automatically\n";
+                    $Response .= "\u{1F46E} " . LanguageCommand::localizeChatText($this, "This user is an agent who actively reports spam automatically") . "\n";
                 }
             }
 
             if($UserStatus->IsOperator)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{1F46E} This user is an operator who can blacklist users\n";
+                $Response .= "\u{1F46E} " . LanguageCommand::localizeChatText($this, "This user is an operator who can blacklist users") . "\n";
             }
 
             if($RequiresExtraNewline)
@@ -1344,70 +1325,89 @@
                 $Response .= "\n";
             }
 
-            $Response .= "<b>Private ID:</b> <code>" . $user_client->PublicID . "</code>\n";
+
+            $Response .= str_ireplace("%s", "<code>" . $user_client->PublicID . "</code>",
+                LanguageCommand::localizeChatText($this, "Private ID: %s", ['s']) ) . "\n";
+
             if($user_client->User->IsBot)
             {
-                $Response .= "<b>Bot ID:</b> <code>" . $user_client->User->ID . "</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . $user_client->User->ID . "</code>",
+                        LanguageCommand::localizeChatText($this, "Bot ID: %s", ['s']) ) . "\n";
             }
             else
             {
-                $Response .= "<b>User ID:</b> <code>" . $user_client->User->ID . "</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . $user_client->User->ID . "</code>",
+                    LanguageCommand::localizeChatText($this, "User ID: %s", ['s']) ) . "\n";
             }
 
             if($user_client->User->FirstName !== null)
             {
-                $Response .= "<b>First Name:</b> <code>" . self::escapeHTML($user_client->User->FirstName) . "</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . $user_client->User->FirstName . "</code>",
+                    LanguageCommand::localizeChatText($this, "First Name: %s", ['s']) ) . "\n";
             }
 
             if($user_client->User->LastName !== null)
             {
-                $Response .= "<b>Last Name:</b> <code>" . self::escapeHTML($user_client->User->LastName) . "</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . $user_client->User->LastName . "</code>",
+                    LanguageCommand::localizeChatText($this, "Last Name: %s", ['s']) ) . "\n";
             }
 
             if($user_client->User->Username !== null)
             {
-                $Response .= "<b>Username:</b> <code>" . $user_client->User->Username . "</code> (@" . $user_client->User->Username . ")\n";
+                $Response .= str_ireplace("%s", "<code>" . $user_client->User->Username . "</code>",
+                    LanguageCommand::localizeChatText($this, "Username: %s", ['s']) ) . " (@" . $user_client->User->Username . ")\n";
             }
 
             if($user_client->User->IsBot == false)
             {
                 if($UserStatus->GeneralizedHam > 0 && $UserStatus->GeneralizedSpam > 0)
                 {
-                    $Response .= "<b>Trust Prediction:</b> <code>" . ($UserStatus->GeneralizedHam * 100) . "/" . ($UserStatus->GeneralizedSpam * 100) . "</code>\n";
+                    $Response .= str_ireplace("%s", "<code>" . ($UserStatus->GeneralizedHam * 100) . "/" . ($UserStatus->GeneralizedSpam * 100) . "</code>",
+                            LanguageCommand::localizeChatText($this, "Trust Prediction: %s", ['s']) ) . "\n";
                 }
             }
 
             if($UserStatus->LargeLanguageGeneralizedID !== null)
             {
-                $Response .= "<b>Language Prediction:</b> <code>" . $UserStatus->GeneralizedLanguage . "</code> (<code>" . ($UserStatus->GeneralizedLanguageProbability * 100) . "</code>)\n";
+                $Response .= str_ireplace("%s", "<code>" . $UserStatus->GeneralizedLanguage . "</code> (<code>" . ($UserStatus->GeneralizedLanguageProbability * 100) . "</code>)",
+                    LanguageCommand::localizeChatText($this, "Language Prediction: %s", ['s']) ) . "\n";
             }
 
             if($UserStatus->GeneralizedSpam > 0)
             {
                 if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
                 {
-                    $Response .= "<b>Active Spammer:</b> <code>True</code>\n";
+                    $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
+                            LanguageCommand::localizeChatText($this, "Active Spammer: %s", ['s']) ) . "\n";
                 }
             }
 
             if($UserStatus->IsWhitelisted)
             {
-                $Response .= "<b>Whitelisted:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Whitelisted: %s", ['s']) ) . "\n";
             }
 
             if($UserStatus->IsBlacklisted)
             {
-                $Response .= "<b>Blacklisted:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Blacklisted: %s", ['s']) ) . "\n";
 
                 switch($UserStatus->BlacklistFlag)
                 {
                     case BlacklistFlag::BanEvade:
-                        $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($UserStatus->BlacklistFlag) . "</code>\n";
-                        $Response .= "<b>Original Private ID:</b> <code>" . $UserStatus->OriginalPrivateID . "</code>\n";
+                        $Response .= str_ireplace("%s", "<code>" .
+                                LanguageCommand::localizeChatText($this, BlacklistCommand::blacklistFlagToReason($UserStatus->BlacklistFlag))  . "</code>",
+                                LanguageCommand::localizeChatText($this, "Blacklist Reason: %s", ['s']) ) . "\n";
+
+                        $Response .= str_ireplace("%s", "<code>" . $UserStatus->OriginalPrivateID . "</code>",
+                                LanguageCommand::localizeChatText($this, "Original Private ID: %s", ['s']) ) . "\n";
                         break;
 
                     default:
-                        $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($UserStatus->BlacklistFlag) . "</code>\n";
+                        $Response .= str_ireplace("%s", "<code>" .
+                                LanguageCommand::localizeChatText($this, BlacklistCommand::blacklistFlagToReason($UserStatus->BlacklistFlag))  . "</code>",
+                                LanguageCommand::localizeChatText($this, "Blacklist Reason: %s", ['s']) ) . "\n";
                         break;
                 }
 
@@ -1415,15 +1415,24 @@
 
             if($UserStatus->IsOperator)
             {
-                $Response .= "<b>Operator:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Operator: %s", ['s']) ) . "\n";
             }
 
             if($UserStatus->IsAgent)
             {
-                $Response .= "<b>Spam Detection Agent:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Spam Detection Agent: %s", ['s']) ) . "\n";
             }
 
-            $Response .=  "<b>User Link:</b> <a href=\"tg://user?id=" . $user_client->User->ID . "\">tg://user?id=" . $user_client->User->ID . "</a>";
+            if($UserStatus->ConfiguredLanguage !== null)
+            {
+                $Response .= str_ireplace("%s", "<code>" .  $UserStatus->ConfiguredLanguage . "</code>",
+                        LanguageCommand::localizeChatText($this, "Configured Language: %s", ['s']) ) . "\n";
+            }
+
+            $Response .= str_ireplace("%s", "<a href=\"tg://user?id=" . $user_client->User->ID . "\">tg://user?id=" . $user_client->User->ID . "</a>",
+                    LanguageCommand::localizeChatText($this, "User Link: %s", ['s']) ) . "\n";
 
             if($UserStatus->OperatorNote !== "None")
             {
@@ -1451,13 +1460,13 @@
             if($ChatSettings->ForwardProtectionEnabled)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{1F6E1} This chat has forward protection enabled\n";
+                $Response .= "\u{1F6E1} " . LanguageCommand::localizeChatText($this, "This chat has forward protection enabled") . "\n";
             }
 
             if($ChatSettings->IsVerified)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{2705} This chat is verified by Intellivoid Technologies\n";
+                $Response .= "\u{2705} " .  LanguageCommand::localizeChatText($this, "This chat is verified by Intellivoid Technologies") . "\n";
             }
 
             if($RequiresExtraNewline)
@@ -1465,84 +1474,123 @@
                 $Response .= "\n";
             }
 
-            $Response .= "<b>Private ID:</b> <code>" . $chat_client->PublicID . "</code>\n";
-            $Response .= "<b>Chat ID:</b> <code>" . $chat_client->Chat->ID . "</code>\n";
-            $Response .= "<b>Chat Type:</b> <code>" . $chat_client->Chat->Type . "</code>\n";
-            $Response .= "<b>Chat Title:</b> <code>" . self::escapeHTML($chat_client->Chat->Title) . "</code>\n";
+            $Response .= str_ireplace("%s", "<code>" . $chat_client->PublicID . "</code>",
+                    LanguageCommand::localizeChatText($this, "Private ID: %s", ['s']) ) . "\n";
+            $Response .= str_ireplace("%s", "<code>" . $chat_client->Chat->ID . "</code>",
+                    LanguageCommand::localizeChatText($this, "Chat ID: %s", ['s']) ) . "\n";
+            /** @noinspection PhpToStringImplementationInspection */
+            $Response .= str_ireplace("%s", "<code>" . $chat_client->Chat->Type . "</code>",
+                    LanguageCommand::localizeChatText($this, "Chat Type: %s", ['s']) ) . "\n";
+            $Response .= str_ireplace("%s", "<code>" . self::escapeHTML($chat_client->Chat->Title) . "</code>",
+                    LanguageCommand::localizeChatText($this, "Chat Title: %s", ['s']) ) . "\n";
+
 
             if($chat_client->Chat->Username !== null)
             {
-                $Response .= "<b>Chat Username:</b> <code>" . $chat_client->Chat->Username . "</code> (@" . $chat_client->Chat->Username . ")\n";
+                $Response .= str_ireplace("%s", "<code>" . $chat_client->Chat->Username . "</code> (@" . $chat_client->Chat->Username . ")",
+                        LanguageCommand::localizeChatText($this, "Chat Username: %s", ['s']) ) . "\n";
             }
 
             if($ChatSettings->ForwardProtectionEnabled)
             {
-                $Response .= "<b>Forward Protection Enabled:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Forward Protection Enabled: %s", ['s']) ) . "\n";
             }
 
             if($ChatSettings->DetectSpamEnabled)
             {
-                $Response .= "<b>Spam Detection Enabled:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Spam Detection Enabled: %s", ['s']) ) . "\n";
 
                 switch($ChatSettings->DetectSpamAction)
                 {
                     case DetectionAction::Nothing:
-                        $Response .= "<b>Spam Detection Action:</b> <code>Nothing</code>\n";
+                        $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "Nothing") . "</code>",
+                                LanguageCommand::localizeChatText($this, "Spam Detection Action: %s", ['s']) ) . "\n";
                         break;
 
                     case DetectionAction::DeleteMessage:
-                        $Response .= "<b>Spam Detection Action:</b> <code>Delete Content</code>\n";
+                        $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "Delete Content") . "</code>",
+                                LanguageCommand::localizeChatText($this, "Spam Detection Action: %s", ['s']) ) . "\n";
                         break;
 
                     case DetectionAction::KickOffender:
-                        $Response .= "<b>Spam Detection Action:</b> <code>Remove Offender</code>\n";
+                        $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "Remove Offender") . "</code>",
+                                LanguageCommand::localizeChatText($this, "Spam Detection Action: %s", ['s']) ) . "\n";
                         break;
 
                     case DetectionAction::BanOffender:
-                        $Response .= "<b>Spam Detection Action:</b> <code>Permanently Ban Offender</code>\n";
+                        $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "Permanently Ban Offender") . "</code>",
+                                LanguageCommand::localizeChatText($this, "Spam Detection Action: %s", ['s']) ) . "\n";
                         break;
                 }
             }
             else
             {
-                $Response .= "<b>Spam Detection Enabled:</b> <code>False</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "False") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Spam Detection Enabled: %s", ['s']) ) . "\n";
             }
 
             if($ChatSettings->GeneralAlertsEnabled)
             {
-                $Response .= "<b>General Alerts Enabled:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "General Alerts Enabled: %s", ['s']) ) . "\n";
             }
 
             if($ChatSettings->BlacklistProtectionEnabled)
             {
-                $Response .= "<b>Blacklist Protection Enabled:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Blacklist Protection Enabled: %s", ['s']) ) . "\n";
             }
             else
             {
-                $Response .= "<b>Blacklist Protection Enabled:</b> <code>False</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "False") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Blacklist Protection Enabled: %s", ['s']) ) . "\n";
             }
 
             if($ChatSettings->ActiveSpammerProtectionEnabled)
             {
-                $Response .= "<b>Active Spammer Protection Enabled:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Active Spammer Protection Enabled: %s", ['s']) ) . "\n";
             }
             else
             {
-                $Response .= "<b>Active Spammer Protection Enabled:</b> <code>False</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "False") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Active Spammer Protection Enabled: %s", ['s']) ) . "\n";
             }
 
             if($ChatSettings->DeleteOlderMessages)
             {
-                $Response .= "<b>Delete Older Messages:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Delete Older Messages: %s", ['s']) ) . "\n";
             }
             else
             {
-                $Response .= "<b>Delete Older Messages:</b> <code>False</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "False") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Delete Older Messages: %s", ['s']) ) . "\n";
             }
 
             if($ChatSettings->LargeLanguageGeneralizedID !== null)
             {
-                $Response .= "<b>Language Prediction:</b> <code>" . $ChatSettings->GeneralizedLanguage . "</code> (<code>" . ($ChatSettings->GeneralizedLanguageProbability * 100) . "</code>)\n";
+                $Response .= str_ireplace("%s", "<code>" .  $ChatSettings->GeneralizedLanguage . "</code> (<code>" . ($ChatSettings->GeneralizedLanguageProbability * 100) . "</code>)",
+                        LanguageCommand::localizeChatText($this, "Language Prediction: %s", ['s']) ) . "\n";
+            }
+
+            if($ChatSettings->ConfiguredLanguage !== null)
+            {
+                $Response .= str_ireplace("%s", "<code>" .  $ChatSettings->ConfiguredLanguage . "</code>",
+                        LanguageCommand::localizeChatText($this, "Configured Language: %s", ['s']) ) . "\n";
+            }
+
+            if($ChatSettings->StrictLocalization)
+            {
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Strict Localization Enabled: %s", ['s']) ) . "\n";
+            }
+            else
+            {
+                $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "False") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Strict Localization Enabled: %s", ['s']) ) . "\n";
             }
 
             return $Response;
@@ -1565,19 +1613,19 @@
             if($ChannelStatus->IsOfficial)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{2705} This channel is official\n";
+                $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This channel is official") . "\n";
             }
 
             if($ChannelStatus->IsBlacklisted)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{26A0} This channel is blacklisted\n";
+                $Response .= "\u{26A0} " . LanguageCommand::localizeChatText($this, "This channel is blacklisted") . "\n";
             }
 
             if($ChannelStatus->IsWhitelisted)
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{1F530} This channel is whitelisted\n";
+                $Response .= "\u{1F530} " . LanguageCommand::localizeChatText($this, "This channel is whitelisted") . "\n";
             }
 
             if($ChannelStatus->GeneralizedSpam > 0)
@@ -1585,7 +1633,7 @@
                 if($ChannelStatus->GeneralizedSpam > $ChannelStatus->GeneralizedHam)
                 {
                     $RequiresExtraNewline = true;
-                    $Response .= "\u{26A0} <b>This channel may be promoting spam!</b>\n";
+                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This channel may be promoting spam!") . "</b>\n";
                 }
             }
 
@@ -1594,35 +1642,44 @@
                 $Response .= "\n";
             }
 
-            $Response .= "<b>Private ID:</b> <code>" . $channel_client->PublicID . "</code>\n";
-            $Response .= "<b>Channel ID:</b> <code>" . $channel_client->Chat->ID . "</code>\n";
-            $Response .= "<b>Channel Title:</b> <code>" . self::escapeHTML($channel_client->Chat->Title) . "</code>\n";
+            $Response .= str_ireplace("%s", "<code>" .  $channel_client->PublicID . "</code>",
+                    LanguageCommand::localizeChatText($this, "Private ID: %s", ['s']) ) . "\n";
+            $Response .= str_ireplace("%s", "<code>" .  $channel_client->Chat->ID . "</code>",
+                    LanguageCommand::localizeChatText($this, "Channel ID: %s", ['s']) ) . "\n";
+            $Response .= str_ireplace("%s", "<code>" .  self::escapeHTML($channel_client->Chat->Title) . "</code>",
+                    LanguageCommand::localizeChatText($this, "Channel Title: %s", ['s']) ) . "\n";
 
             if($channel_client->Chat->Username !== null)
             {
-                $Response .= "<b>Channel Username:</b> <code>" . $channel_client->Chat->Username . "</code> (@" . $channel_client->Chat->Username . ")\n";
+                $Response .= str_ireplace("%s", "<code>" .  self::escapeHTML($channel_client->Chat->Username) . "</code> (@" . $channel_client->Chat->Username . ")",
+                        LanguageCommand::localizeChatText($this, "Channel Username: %s", ['s']) ) . "\n";
             }
 
             if($ChannelStatus->IsBlacklisted)
             {
-                $Response .= "<b>Blacklisted:</b> <code>True</code>\n";
+                $Response .= str_ireplace("%s", "<code>" .  "True" . "</code>",
+                        LanguageCommand::localizeChatText($this, "Blacklisted: %s", ['s']) ) . "\n";
 
                 switch($ChannelStatus->BlacklistFlag)
                 {
                     case BlacklistFlag::BanEvade:
-                        $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
-                        $Response .= "<b>Original Private ID:</b> Not applicable to channels\n";
+                        $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "Ban Evade") . "</code>",
+                                LanguageCommand::localizeChatText($this, "Blacklist Reason: %s", ['s']) ) . "\n";
+                        $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, "Not applicable to channels") . "</code>",
+                                LanguageCommand::localizeChatText($this, "Original Private ID: %s", ['s']) ) . "\n";
                         break;
 
                     default:
-                        $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($ChannelStatus->BlacklistFlag) . "</code>\n";
+                        $Response .= str_ireplace("%s", "<code>" .  LanguageCommand::localizeChatText($this, BlacklistCommand::blacklistFlagToReason($ChannelStatus->BlacklistFlag)) . "</code>",
+                                LanguageCommand::localizeChatText($this, "Blacklist Reason: %s", ['s']) ) . "\n";
                         break;
                 }
             }
 
             if($ChannelStatus->LargeLanguageGeneralizedID !== null)
             {
-                $Response .= "<b>Language Prediction:</b> <code>" . $ChannelStatus->GeneralizedLanguage . "</code> (<code>" . ($ChannelStatus->GeneralizedLanguageProbability * 100) . "</code>)\n";
+                $Response .= str_ireplace("%s", "<code>" .  $ChannelStatus->GeneralizedLanguage . "</code> (<code>" . ($ChannelStatus->GeneralizedLanguageProbability * 100) . "</code>)",
+                        LanguageCommand::localizeChatText($this, "Language Prediction: %s", ['s']) ) . "\n";
             }
 
             return $Response;

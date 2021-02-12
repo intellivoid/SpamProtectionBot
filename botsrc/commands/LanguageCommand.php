@@ -517,10 +517,11 @@
                 return $input;
             }
 
+
             foreach($specials as $special)
             {
                 // Fix the translation specials into normalized entities
-                $TranslationResults->Output = str_ireplace("％$special", "%$special", $TranslationResults->Output);
+                $TranslationResults->Output = str_ireplace("％$special", "%$special", $TranslationResults->Output); // Chinese
                 $TranslationResults->Output = str_ireplace("‰$special", "%$special", $TranslationResults->Output);
                 $TranslationResults->Output = str_ireplace("‱$special", "%$special", $TranslationResults->Output);
                 $TranslationResults->Output = str_ireplace("﹪$special", "%$special", $TranslationResults->Output);
@@ -528,6 +529,23 @@
                 $TranslationResults->Output = str_ireplace("٪$special", "%$special", $TranslationResults->Output);
                 $TranslationResults->Output = str_ireplace(":%$special", ": %$special", $TranslationResults->Output);
                 $TranslationResults->Output = str_ireplace("% $special", "%$special", $TranslationResults->Output);
+                $TranslationResults->Output = str_ireplace("：", ":", $TranslationResults->Output); // Japanese
+
+                // Fix missing ":"
+                if(stripos($TranslationResults->Output, ": %$special") == false)
+                    $TranslationResults->Output .= ": %$special";
+
+                // Fix broken spaces
+                if(stripos($TranslationResults->Output, ":% $special: %$special") !== false)
+                {
+                    $TranslationResults->Output = str_ireplace(":% $special: %$special", ": %$special", $TranslationResults->Output);
+                }
+
+                // Fix broken spaces
+                if(stripos($TranslationResults->Output, ":%$special: %$special") !== false)
+                {
+                    $TranslationResults->Output = str_ireplace(":%$special: %$special", ": %$special", $TranslationResults->Output);
+                }
             }
 
             $TranslationResults->Output = str_ireplace("</ ", "</", $TranslationResults->Output);
