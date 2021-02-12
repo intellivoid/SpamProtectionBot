@@ -38,6 +38,7 @@
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
+    use VerboseAdventure\Abstracts\EventType;
 
     /**
      * Generic Command
@@ -213,7 +214,8 @@
                 }
                 catch(Exception $e)
                 {
-                    unset($e);
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process languageDetection (Chat)", "handleLanguageDetection");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleLanguageDetection");
                 }
 
                 try
@@ -322,7 +324,8 @@
                 }
                 catch(Exception $e)
                 {
-                    unset($e);
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process languageDetection (Forward)", "handleLanguageDetection");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleLanguageDetection");
                 }
             }
 
