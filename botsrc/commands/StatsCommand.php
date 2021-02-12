@@ -100,6 +100,11 @@
                 return null;
             }
 
+            if($this->WhoisCommand->UserClient->User->Username !== MAIN_OPERATOR_USERNAME)
+            {
+                return null;
+            }
+
             // Parse the options
             if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
             {
@@ -117,16 +122,6 @@
                             "<i>" . $this->description . "</i>"
                     ]);
                 }
-            }
-
-            if($this->WhoisCommand->UserClient->User->Username !== MAIN_OPERATOR_USERNAME)
-            {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => "This command can only be used by @" . MAIN_OPERATOR_USERNAME
-                ]);
             }
 
             $MessageResponse = Request::sendMessage([

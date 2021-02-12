@@ -12,6 +12,7 @@
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
+    use SpamProtection\Managers\SettingsManager;
     use SpamProtectionBot;
 
     /**
@@ -76,6 +77,12 @@
 
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
+            {
+                return null;
+            }
+
+            $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
+            if($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
             {
                 return null;
             }

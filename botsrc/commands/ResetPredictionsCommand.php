@@ -90,6 +90,13 @@
                 return null;
             }
 
+            // Check the permissions
+            $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
+            if($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
+            {
+                return null;
+            }
+
             // Parse the options
             if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
             {
@@ -105,21 +112,6 @@
                             $this->name . " (v" . $this->version . ")\n" .
                             " Usage: <code>" . $this->usage . "</code>\n\n" .
                             "<i>" . $this->description . "</i>"
-                    ]);
-                }
-            }
-
-            // Check the permissions
-            $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
-            if($UserStatus->IsOperator == false)
-            {
-                if($UserStatus->IsAgent == false)
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "parse_mode" => "html",
-                        "text" => "This command can only be used by an operator or agent!"
                     ]);
                 }
             }

@@ -136,20 +136,7 @@
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
             if($UserStatus->IsOperator == false)
             {
-                if($this->PrivateMode)
-                {
-                    Request::deleteMessage([
-                        "chat_id" => $this->WhoisCommand->ChatObject->ID,
-                        "message_id" => $this->getMessage()->getMessageId()
-                    ]);
-                }
-
-                return Request::sendMessage([
-                    "chat_id" => $this->DestinationChat->ID,
-                    "reply_to_message_id" => $this->ReplyToID,
-                    "parse_mode" => "html",
-                    "text" => "This command can only be used by an operator!"
-                ]);
+                return null;
             }
 
             $options = [];
