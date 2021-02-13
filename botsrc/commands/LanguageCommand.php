@@ -20,6 +20,7 @@
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
+    use VerboseAdventure\Abstracts\EventType;
 
     /**
      * Language Command
@@ -464,8 +465,18 @@
             if($whoisCommand->CallbackQueryUserClient !== null)
                 $targetUserClient = $whoisCommand->CallbackQueryUserClient;
 
-            $ChatSettings = SettingsManager::getChatSettings($targetChatClient);
-            $UserStatus = SettingsManager::getUserStatus($targetUserClient);
+            try
+            {
+                $ChatSettings = SettingsManager::getChatSettings($targetChatClient);
+                $UserStatus = SettingsManager::getUserStatus($targetUserClient);
+            }
+            catch(Exception $e)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process localization (Generic)", "localizeChatText");
+                SpamProtectionBot::getLogHandler()->logException($e, "localizeChatText");
+
+                return $input;
+            }
 
             $TargetLanguage = null;
 
