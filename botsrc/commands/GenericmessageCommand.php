@@ -430,8 +430,7 @@
                 }
             }
 
-            //if($IsAdmin)
-            //    return false;
+            if($IsAdmin) return false;
 
             if($Message->Photo !== null)
             {
@@ -587,26 +586,36 @@
                             break;
                     }
 
+                    $RequestResults = null;
 
                     if($ReplyToMessage)
                     {
-                        $RequestResults = Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                            "parse_mode" => "html",
-                            "text" => $Response
-                        ]);
+                        if($ChatSettings->GeneralAlertsEnabled)
+                            $RequestResults = Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                                "parse_mode" => "html",
+                                "text" => $Response
+                            ]);
                     }
                     else
                     {
-                        $RequestResults = Request::sendMessage([
-                            "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "parse_mode" => "html",
-                            "text" => $Response
-                        ]);
+                        if($ChatSettings->GeneralAlertsEnabled)
+                            $RequestResults = Request::sendMessage([
+                                "chat_id" => $this->getMessage()->getChat()->getId(),
+                                "parse_mode" => "html",
+                                "text" => $Response
+                            ]);
                     }
 
-                    $this->handleMessageDeletion($RequestResults->getResult(), $chatClient);
+                    if($ChatSettings->GeneralAlertsEnabled)
+                    {
+                        if($RequestResults !== null)
+                        {
+                            if($RequestResults->isOk())
+                                $this->handleMessageDeletion($RequestResults->getResult(), $chatClient);
+                        }
+                    }
                 }
 
                 return true;
@@ -937,8 +946,6 @@
                             }
                         }
                     }
-
-                    $IsAdmin = false;
 
                     // If the user isn't an admin or creator, then it's probably a random spammer.
                     if($IsAdmin == false)

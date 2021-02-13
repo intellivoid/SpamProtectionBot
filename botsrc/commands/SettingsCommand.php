@@ -331,6 +331,25 @@
 
                     break;
 
+                case "010502":
+                    if($ChatSettings->DeleteOlderMessages)
+                    {
+                        $ChatSettings->DeleteOlderMessages = false;
+                        $callbackQuery->answer(["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Older general alerts will not be deleted")]);
+                    }
+                    else
+                    {
+                        $ChatSettings->DeleteOlderMessages = true;
+                        $callbackQuery->answer(["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Older general alerts will be deleted")]);
+                    }
+
+                    $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
+                        $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
+                    );
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
+
+                    break;
+
             }
 
             if($ChatSettings->GeneralAlertsEnabled)
@@ -354,7 +373,38 @@
                 $StatusText =  LanguageCommand::localizeChatText($this->WhoisCommand, "Status: %s", ['s']);
             }
 
+            if($ChatSettings->DeleteOlderMessages)
+            {
+                $DeleteOldMessagesButton = [
+                    "text" => "\u{274C} " . LanguageCommand::localizeChatText($this->WhoisCommand,"Delete older messages"),
+                    "callback_data" => "010502"
+                ];
+
+                if($ChatSettings->GeneralAlertsEnabled)
+                {
+                    $StatusDeletionValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Currently deleting older general alerts");
+                }
+            }
+            else
+            {
+                $DeleteOldMessagesButton = [
+                    "text" => "\u{2714} " . LanguageCommand::localizeChatText($this->WhoisCommand,"Delete older messages"),
+                    "callback_data" => "010502"
+                ];
+
+                if($ChatSettings->GeneralAlertsEnabled)
+                {
+                    $StatusDeletionValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Not deleting older alerts");
+                }
+            }
+
             $StatusResponse .= "<b>" . str_ireplace("%s", $StatusValue, $StatusText) . "</b>\n";
+
+            if($ChatSettings->GeneralAlertsEnabled)
+            {
+                /** @noinspection PhpUndefinedVariableInspection */
+                $StatusResponse .= "<b>" . $StatusDeletionValue . "</b>\n";
+            }
 
             $ResponseMessage = [
                 "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
@@ -365,12 +415,19 @@
                     "\u{1F4E3} <b>" . LanguageCommand::localizeChatText($this->WhoisCommand,"General Alerts Settings") . "</b>\n\n".
                     LanguageCommand::localizeChatText($this->WhoisCommand,
                         "SpamProtectionBot is designed to alert users in the chat about the activities it's detecting and performing ".
-                        "but if you find this too annoying, you can disable this and SpamProtectionBot will redirect all the alerts to ".
-                        "recent actions so administrators can view actions taken by SpamProtectionBot in a more organized format.") .
+                        "but if you find this too annoying, you can disable this and the bot will operate silently") .
+                    "\n\n" .
+                    LanguageCommand::localizeChatText($this->WhoisCommand,
+                        "You can also enable/disable the option for deleting older messages to keep your chat clean " .
+                        "from general alerts, with this option enabled, new general alerts will be shown while older ones are ".
+                        "deleted from the chat") .
                     "\n\n" . $StatusResponse,
                 "reply_markup" => new InlineKeyboard(
                     [
                         $GeneralAlertsButton,
+                    ],
+                    [
+                        $DeleteOldMessagesButton
                     ],
                     [
                         [
