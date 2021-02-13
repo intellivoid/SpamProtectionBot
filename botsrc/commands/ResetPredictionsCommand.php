@@ -46,7 +46,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.0';
+        protected $version = '2.0.0';
 
         /**
          * @var bool
@@ -80,9 +80,9 @@
             // Tally DeepAnalytics
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'messages', 0);
-            $DeepAnalytics->tally('tg_spam_protection', 'create_invite_command', 0);
+            $DeepAnalytics->tally('tg_spam_protection', 'reset_predictions_command', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
-            $DeepAnalytics->tally('tg_spam_protection', 'create_invite_command', (int)$this->WhoisCommand->ChatObject->ID);
+            $DeepAnalytics->tally('tg_spam_protection', 'reset_predictions_command', (int)$this->WhoisCommand->ChatObject->ID);
 
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
@@ -92,28 +92,10 @@
 
             // Check the permissions
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
+
             if($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
             {
                 return null;
-            }
-
-            // Parse the options
-            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
-            {
-                $options = pop::parse($this->getMessage()->getText(true));
-
-                if(isset($options["info"]))
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "parse_mode" => "html",
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "text" =>
-                            $this->name . " (v" . $this->version . ")\n" .
-                            " Usage: <code>" . $this->usage . "</code>\n\n" .
-                            "<i>" . $this->description . "</i>"
-                    ]);
-                }
             }
 
             if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
@@ -129,7 +111,7 @@
 
                 if($TargetTelegramParameter == null)
                 {
-                    return self::displayUsage($this->getMessage(), "Missing target value parameter");
+                    return self::displayUsage($this->getMessage(), LanguageCommand::localizeChatText($this->WhoisCommand, "Missing target value parameter"));
                 }
 
                 $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetTelegramParameter, (int)$TargetTelegramParameter);
@@ -172,7 +154,9 @@
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "text" => "Unable to find the client '" . self::escapeHTML($TargetTelegramParameter) . "'"
+                        "text" => str_ireplace("%s", self::escapeHTML($TargetTelegramParameter), LanguageCommand::localizeChatText(
+                            $this->WhoisCommand, "Unable to find the client '%s'", ['s']
+                        ))
                     ]);
                 }
 
@@ -180,12 +164,13 @@
                 {
                     case TelegramChatType::Private:
                         $UserStatus = SettingsManager::getUserStatus($TargetTelegramClient);
-                        $UserStatus->GeneralizedID = "None";
-                        $UserStatus->GeneralizedHam = 0;
-                        $UserStatus->GeneralizedSpam = 0;
                         $UserStatus->LargeLanguageGeneralizedID = null;
                         $UserStatus->GeneralizedLanguage = "Unknown";
                         $UserStatus->GeneralizedLanguageProbability = 0;
+                        $UserStatus->LargeSpamGeneralizedID = null;
+                        $UserStatus->GeneralizedSpamProbability = 0;
+                        $UserStatus->GeneralizedHamProbability = 0;
+                        $UserStatus->GeneralizedSpamLabel = "Unknown";
                         $TargetTelegramClient = SettingsManager::updateUserStatus($TargetTelegramClient, $UserStatus);
                         $TelegramClientManager->getTelegramClientManager()->updateClient($TargetTelegramClient);
                         break;
@@ -205,9 +190,10 @@
                         $ChannelStatus->LargeLanguageGeneralizedID = null;
                         $ChannelStatus->GeneralizedLanguage = "Unknown";
                         $ChannelStatus->GeneralizedLanguageProbability = 0;
-                        $ChannelStatus->GeneralizedID = "None";
-                        $ChannelStatus->GeneralizedHam = 0;
-                        $ChannelStatus->GeneralizedSpam = 0;
+                        $ChannelStatus->LargeSpamGeneralizedID = null;
+                        $ChannelStatus->GeneralizedSpamProbability = 0;
+                        $ChannelStatus->GeneralizedHamProbability = 0;
+                        $ChannelStatus->GeneralizedSpamLabel = "Unknown";
                         $TargetTelegramClient = SettingsManager::updateChannelStatus($TargetTelegramClient, $ChannelStatus);
                         $TelegramClientManager->getTelegramClientManager()->updateClient($TargetTelegramClient);
                         break;
@@ -217,7 +203,7 @@
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "reply_to_message_id" => $this->getMessage()->getMessageId(),
                             "parse_mode" => "html",
-                            "text" => "This command is not applicable to this entity type"
+                            "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This command is not applicable to this entity type")
                         ]);
                 }
 
@@ -225,7 +211,7 @@
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
-                    "text" => "Success, all prediction values has been set back to the default values"
+                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Success, all prediction values has been set back to the default values")
                 ]);
             }
 
@@ -248,9 +234,9 @@
                 "reply_to_message_id" => $message->getMessageId(),
                 "text" =>
                     "$error\n\n" .
-                    "Usage:\n" .
+                    LanguageCommand::localizeChatText($this->WhoisCommand, "Usage:") . "\n" .
                     "   <b>/resetpredictions</b> -c [PTID/ID/Username]\n".
-                    "For further instructions, send /help resetpredictions"
+                    LanguageCommand::localizeChatText($this->WhoisCommand, "For further instructions, send /help resetpredictions")
             ]);
         }
 
