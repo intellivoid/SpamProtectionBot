@@ -1276,13 +1276,10 @@
 
             if($user_client->User->IsBot == false)
             {
-                if($UserStatus->GeneralizedSpam > 0)
+                if($UserStatus->GeneralizedSpamLabel == "spam")
                 {
-                    if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
-                    {
-                        $RequiresExtraNewline = true;
-                        $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This user may be an active spammer") . "</b>\n";
-                    }
+                    $RequiresExtraNewline = true;
+                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This user may be an potential spammer") . "</b>\n";
                 }
             }
 
@@ -1358,11 +1355,11 @@
                     LanguageCommand::localizeChatText($this, "Username: %s", ['s']) ) . " (@" . $user_client->User->Username . ")\n";
             }
 
-            if($user_client->User->IsBot == false)
+            if($user_client->User->IsBot == false && $UserStatus->LargeSpamGeneralizedID !== null)
             {
-                if($UserStatus->GeneralizedHam > 0 && $UserStatus->GeneralizedSpam > 0)
+                if($UserStatus->GeneralizedSpamProbability > 0 && $UserStatus->GeneralizedHamProbability > 0)
                 {
-                    $Response .= str_ireplace("%s", "<code>" . ($UserStatus->GeneralizedHam * 100) . "/" . ($UserStatus->GeneralizedSpam * 100) . "</code>",
+                    $Response .= str_ireplace("%s", "<code>" . ($UserStatus->GeneralizedHamProbability * 100) . "/" . ($UserStatus->GeneralizedSpamProbability * 100) . "</code>",
                             LanguageCommand::localizeChatText($this, "Trust Prediction: %s", ['s']) ) . "\n";
                 }
             }
@@ -1373,13 +1370,10 @@
                     LanguageCommand::localizeChatText($this, "Language Prediction: %s", ['s']) ) . "\n";
             }
 
-            if($UserStatus->GeneralizedSpam > 0)
+            if($UserStatus->GeneralizedSpamLabel == "spam")
             {
-                if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
-                {
-                    $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
-                            LanguageCommand::localizeChatText($this, "Active Spammer: %s", ['s']) ) . "\n";
-                }
+                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
+                        LanguageCommand::localizeChatText($this, "Potential Spammer: %s", ['s']) ) . "\n";
             }
 
             if($UserStatus->IsWhitelisted)
@@ -1452,7 +1446,6 @@
          */
         private function generateChatInfoString(TelegramClient $chat_client, string $title="Chat Information"): string
         {
-            // TODO: Add language support
             $ChatSettings = SettingsManager::getChatSettings($chat_client);
             $RequiresExtraNewline = false;
             $Response = "<b>$title</b>\n\n";
@@ -1628,9 +1621,9 @@
                 $Response .= "\u{1F530} " . LanguageCommand::localizeChatText($this, "This channel is whitelisted") . "\n";
             }
 
-            if($ChannelStatus->GeneralizedSpam > 0)
+            if($ChannelStatus->LargeSpamGeneralizedID !== null)
             {
-                if($ChannelStatus->GeneralizedSpam > $ChannelStatus->GeneralizedHam)
+                if($ChannelStatus->GeneralizedSpamProbability > $ChannelStatus->GeneralizedHamProbability)
                 {
                     $RequiresExtraNewline = true;
                     $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This channel may be promoting spam!") . "</b>\n";

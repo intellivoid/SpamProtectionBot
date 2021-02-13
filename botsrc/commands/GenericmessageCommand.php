@@ -16,6 +16,7 @@
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Commands\UserCommands\BlacklistCommand;
+    use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -151,7 +152,7 @@
          *
          * @return bool
          */
-        public function handleLanguageDetection()
+        public function handleLanguageDetection(): bool
         {
             $CoffeeHouse = SpamProtectionBot::getCoffeeHouse();
 
@@ -254,8 +255,17 @@
                         $this->WhoisCommand->ForwardUserClient = SettingsManager::updateUserStatus($this->WhoisCommand->ForwardUserClient, $TargetForwardUserStatus);
                         SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->ForwardUserClient);
                     }
+                }
+                catch(Exception $e)
+                {
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process languageDetection (ForwardUser)", "handleLanguageDetection");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleLanguageDetection");
+                }
+
+                try
+                {
                     // Predict the language for the forwarded channel client
-                    elseif($this->WhoisCommand->ForwardChannelClient !== null)
+                    if($this->WhoisCommand->ForwardChannelClient !== null)
                     {
                         $TargetForwardChannelStatus = SettingsManager::getChannelStatus($this->WhoisCommand->ForwardChannelClient);
                         $GeneralizedChannelForward = null;
@@ -288,7 +298,16 @@
                         $this->WhoisCommand->ForwardChannelClient = SettingsManager::updateChannelStatus($this->WhoisCommand->ForwardChannelClient, $TargetForwardChannelStatus);
                         SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->ForwardChannelClient);
                     }
-                    else
+                }
+                catch(Exception $e)
+                {
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process languageDetection (ForwardChannel)", "handleLanguageDetection");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleLanguageDetection");
+                }
+
+                try
+                {
+                    if($this->WhoisCommand->ForwardUserClient !== null && $this->WhoisCommand->ForwardChannelClient !== null)
                     {
                         $TargetUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
                         $Generalized = null;
@@ -324,7 +343,7 @@
                 }
                 catch(Exception $e)
                 {
-                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process languageDetection (Forward)", "handleLanguageDetection");
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process languageDetection (User)", "handleLanguageDetection");
                     SpamProtectionBot::getLogHandler()->logException($e, "handleLanguageDetection");
                 }
             }
@@ -605,6 +624,7 @@
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          * @throws DatabaseException
+         * @noinspection DuplicatedCode
          */
         public function handleMessage(TelegramClient $chatClient, TelegramClient $userClient, TelegramClient $telegramClient): bool
         {
@@ -617,12 +637,6 @@
             {
                 $MessageObject = Message::fromArray($this->getMessage()->getRawData());
                 $ChatSettings = SettingsManager::getChatSettings($chatClient);
-
-                // Does the chat allow logging?
-                if($ChatSettings->LogSpamPredictions == false)
-                {
-                    return false;
-                }
 
                 // Is the message from the same bot?
                 if($Message->ForwardFrom !== null)
@@ -637,84 +651,108 @@
                 $TargetChannelClient = null;
 
                 // Does the chat have forward protection enabled?
-                if($ChatSettings->ForwardProtectionEnabled)
+                try
                 {
-                    if($this->getMessage()->getForwardFrom() !== null)
+                    if($ChatSettings->ForwardProtectionEnabled)
                     {
-                        // Define and update forwarder user client
-                        $ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
-                        $ForwardUserClient = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->registerUser($ForwardUserObject);
-                        if(isset($UserClient->SessionData->Data['user_status']) == false)
+                        if($this->getMessage()->getForwardFrom() !== null)
                         {
-                            $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
-                            $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
-                            SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ForwardUserClient);
-                        }
-
-                        $TargetUserClient = $ForwardUserClient;
-                    }
-
-                    /** @noinspection DuplicatedCode */
-                    if($this->getMessage()->getForwardFromChat() !== null)
-                    {
-                        // Define and update forwarder user client
-                        $ChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
-                        $ChannelClient = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->registerChat($ChannelObject);
-                        if(isset($ChannelClient->SessionData->Data['channel_status']) == false)
-                        {
-                            $ChannelStatus = SettingsManager::getChannelStatus($ChannelClient);
-                            $ChannelClient = SettingsManager::updateChannelStatus($ChannelClient, $ChannelStatus);
-                            SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ChannelClient);
-                        }
-
-                        $TargetChannelClient = $ChannelClient;
-                    }
-                }
-                else
-                {
-                    /** @noinspection DuplicatedCode */
-                    if($this->getMessage()->getForwardFromChat() !== null)
-                    {
-                        // Define and update forwarder user client
-                        $ChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
-                        $ChannelClient = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->registerChat($ChannelObject);
-                        if(isset($ChannelClient->SessionData->Data['channel_status']) == false)
-                        {
-                            $ChannelStatus = SettingsManager::getChannelStatus($ChannelClient);
-                            $ChannelClient = SettingsManager::updateChannelStatus($ChannelClient, $ChannelStatus);
-                            SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ChannelClient);
-                        }
-
-                        $TargetChannelClient = $ChannelClient;
-                    }
-                }
-
-                // Update the admin cache if outdated
-                /** @noinspection DuplicatedCode */
-                if($ChatObject->Type == TelegramChatType::Group || $ChatObject->Type == TelegramChatType::SuperGroup)
-                {
-                    if(((int)time() - $ChatSettings->AdminCacheLastUpdated) > 600)
-                    {
-                        $Results = Request::getChatAdministrators(["chat_id" => $ChatObject->ID]);
-
-                        if($Results->isOk())
-                        {
-                            /** @var array $ChatMembersResponse */
-                            $ChatMembersResponse = $Results->getRawData()["result"];
-                            $ChatSettings->Administrators = array();
-                            $ChatSettings->AdminCacheLastUpdated = (int)time();
-
-                            foreach($ChatMembersResponse as $chatMember)
+                            // Define and update forwarder user client
+                            $ForwardUserObject = TelegramClient\User::fromArray($this->getMessage()->getForwardFrom()->getRawData());
+                            $ForwardUserClient = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->registerUser($ForwardUserObject);
+                            if(isset($UserClient->SessionData->Data['user_status']) == false)
                             {
-                                $ChatSettings->Administrators[] = ChatMember::fromArray($chatMember);
+                                $ForwardUserStatus = SettingsManager::getUserStatus($ForwardUserClient);
+                                $ForwardUserClient = SettingsManager::updateUserStatus($ForwardUserClient, $ForwardUserStatus);
+                                SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ForwardUserClient);
                             }
 
-                            $ChatClient = SettingsManager::updateChatSettings($chatClient, $ChatSettings);
-                            SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ChatClient);
+                            $TargetUserClient = $ForwardUserClient;
+                        }
+                        /** @noinspection DuplicatedCode */
+                        elseif($this->getMessage()->getForwardFromChat() !== null)
+                        {
+                            // Define and update forwarder user client
+                            $ChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
+                            $ChannelClient = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->registerChat($ChannelObject);
+                            if(isset($ChannelClient->SessionData->Data['channel_status']) == false)
+                            {
+                                $ChannelStatus = SettingsManager::getChannelStatus($ChannelClient);
+                                $ChannelClient = SettingsManager::updateChannelStatus($ChannelClient, $ChannelStatus);
+                                SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ChannelClient);
+                            }
+
+                            $TargetChannelClient = $ChannelClient;
+                        }
+                        else
+                        {
+                            // Returns false since forward protection is enabled, the users shouldn't be punished for
+                            // forwarding spam that isn't theirs
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        /** @noinspection DuplicatedCode */
+                        if($this->getMessage()->getForwardFromChat() !== null)
+                        {
+                            // Define and update forwarder user client
+                            $ChannelObject = TelegramClient\Chat::fromArray($this->getMessage()->getForwardFromChat()->getRawData());
+                            $ChannelClient = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->registerChat($ChannelObject);
+                            if(isset($ChannelClient->SessionData->Data['channel_status']) == false)
+                            {
+                                $ChannelStatus = SettingsManager::getChannelStatus($ChannelClient);
+                                $ChannelClient = SettingsManager::updateChannelStatus($ChannelClient, $ChannelStatus);
+                                SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ChannelClient);
+                            }
+
+                            $TargetChannelClient = $ChannelClient;
                         }
                     }
                 }
+                catch(Exception $e)
+                {
+                    SpamProtectionBot::getLogHandler()->log(EventType::ERROR, "There was an error while trying to process handleMessage (ForwardProtectionEnabled)", "handleMessage");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleMessage");
 
+                    return false;
+                }
+
+                try
+                {
+                    // Update the admin cache if outdated
+                    /** @noinspection DuplicatedCode */
+                    if($ChatObject->Type == TelegramChatType::Group || $ChatObject->Type == TelegramChatType::SuperGroup)
+                    {
+                        if(((int)time() - $ChatSettings->AdminCacheLastUpdated) > 600)
+                        {
+                            $Results = Request::getChatAdministrators(["chat_id" => $ChatObject->ID]);
+
+                            if($Results->isOk())
+                            {
+                                /** @var array $ChatMembersResponse */
+                                $ChatMembersResponse = $Results->getRawData()["result"];
+                                $ChatSettings->Administrators = array();
+                                $ChatSettings->AdminCacheLastUpdated = (int)time();
+
+                                foreach($ChatMembersResponse as $chatMember)
+                                {
+                                    $ChatSettings->Administrators[] = ChatMember::fromArray($chatMember);
+                                }
+
+                                $ChatClient = SettingsManager::updateChatSettings($chatClient, $ChatSettings);
+                                SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ChatClient);
+                            }
+                        }
+                    }
+                }
+                catch(Exception $e)
+                {
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process handleMessage (AdminCacheUpdate)", "handleMessage");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleMessage");
+                }
+
+                // Check if spam detection is enabled
                 if($ChatSettings->DetectSpamEnabled)
                 {
                     $TargetUserStatus = SettingsManager::getUserStatus($TargetUserClient);
@@ -740,14 +778,67 @@
 
                     try
                     {
-                        if($TargetUserStatus->GeneralizedID == null || $TargetUserStatus->GeneralizedID == "None")
+                        // Predict the spam results
+                        $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), false);
+                    }
+                    catch(Exception $e)
+                    {
+                        SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process handleMessage (Prediction)", "handleMessage");
+                        SpamProtectionBot::getLogHandler()->logException($e, "handleMessage");
+
+                        // Return false since the rest cannot run without the results
+                        return false;
+                    }
+
+                    try
+                    {
+                        if($TargetUserStatus->LargeSpamGeneralizedID == null)
                         {
-                            $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), true);
+                            /** @noinspection PhpRedundantOptionalArgumentInspection */
+                            $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(50);
                         }
                         else
                         {
-                            $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), true, $TargetUserStatus->GeneralizedID);
+                            try
+                            {
+                                $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->get(
+                                    LargeGeneralizedClassificationSearchMethod::byPublicID, $TargetUserStatus->LargeSpamGeneralizedID
+                                );
+                            }
+                            catch(NoResultsFoundException $e)
+                            {
+                                /** @noinspection PhpRedundantOptionalArgumentInspection */
+                                $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(50);
+                            }
                         }
+
+                        /**
+                         * This part has been updated to use the new LargeGeneralization method in oppose to using
+                         * the two-label generalization system
+                         */
+
+                        /** @noinspection DuplicatedCode */
+                        $Generalized = $CoffeeHouse->getSpamPrediction()->largeGeneralize($Generalized, $Results);
+
+                        $TargetUserStatus->LargeSpamGeneralizedID = $Generalized->ID;
+                        $TargetUserStatus->GeneralizedSpamLabel = $Generalized->TopLabel;
+
+                        foreach($Generalized->Probabilities as $probability)
+                        {
+                            switch($probability->Label)
+                            {
+                                case "ham":
+                                    $TargetUserStatus->GeneralizedHamProbability = $probability->CalculatedProbability;
+                                    break;
+
+                                case "spam":
+                                    $TargetUserStatus->GeneralizedSpamProbability = $probability->CalculatedProbability;
+                                    break;
+                            }
+                        }
+
+                        $TargetUserClient = SettingsManager::updateUserStatus($TargetUserClient, $TargetUserStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($TargetUserClient);
                     }
                     catch(Exception $exception)
                     {
@@ -760,18 +851,46 @@
                         {
                             $TargetChannelStatus = SettingsManager::getChannelStatus($TargetChannelClient);
 
-                            if($TargetChannelStatus->GeneralizedID == null || $TargetChannelStatus->GeneralizedID == "None")
+                            if($TargetChannelStatus->LargeSpamGeneralizedID == null)
                             {
-                                $ChannelResults = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), true);
+                                /** @noinspection PhpRedundantOptionalArgumentInspection */
+                                $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(50);
                             }
                             else
                             {
-                                $ChannelResults = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), true, $TargetChannelStatus->GeneralizedID);
+                                try
+                                {
+                                    $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->get(
+                                        LargeGeneralizedClassificationSearchMethod::byPublicID, $TargetChannelStatus->LargeSpamGeneralizedID
+                                    );
+                                }
+                                catch(NoResultsFoundException $e)
+                                {
+                                    /** @noinspection PhpRedundantOptionalArgumentInspection */
+                                    $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(50);
+                                }
                             }
 
-                            $TargetChannelStatus->GeneralizedSpam = $ChannelResults->GeneralizedSpam;
-                            $TargetChannelStatus->GeneralizedHam = $ChannelResults->GeneralizedHam;
-                            $TargetChannelStatus->GeneralizedID = $ChannelResults->GeneralizedID;
+                            /** @noinspection DuplicatedCode */
+                            $Generalized = $CoffeeHouse->getSpamPrediction()->largeGeneralize($Generalized, $Results);
+
+                            $TargetChannelStatus->LargeSpamGeneralizedID = $Generalized->ID;
+                            $TargetChannelStatus->GeneralizedSpamLabel = $Generalized->TopLabel;
+
+                            foreach($Generalized->Probabilities as $probability)
+                            {
+                                switch($probability->Label)
+                                {
+                                    case "ham":
+                                        $TargetChannelStatus->GeneralizedHamProbability = $probability->CalculatedProbability;
+                                        break;
+
+                                    case "spam":
+                                        $TargetChannelStatus->GeneralizedSpamProbability = $probability->CalculatedProbability;
+                                        break;
+                                }
+                            }
+
                             $TargetChannelClient = SettingsManager::updateChannelStatus($TargetChannelClient, $TargetChannelStatus);
                             SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($TargetChannelClient);
                         }
@@ -796,14 +915,18 @@
                     }
 
                     // Update the target user's trust prediction
-                    $TargetUserStatus->GeneralizedSpam = $Results->GeneralizedSpam;
-                    $TargetUserStatus->GeneralizedHam = $Results->GeneralizedHam;
-                    $TargetUserStatus->GeneralizedID = $Results->GeneralizedID;
-                    $TargetUserClient = SettingsManager::updateUserStatus($TargetUserClient, $TargetUserStatus);
-                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($TargetUserClient);
+                    // WARNING: This action was already performed above, omitting the functionality.
+                    /**
+                        $TargetUserStatus->GeneralizedSpam = $Results->GeneralizedSpam;
+                        $TargetUserStatus->GeneralizedHam = $Results->GeneralizedHam;
+                        $TargetUserStatus->GeneralizedID = $Results->GeneralizedID;
+                        $TargetUserClient = SettingsManager::updateUserStatus($TargetUserClient, $TargetUserStatus);
+                        SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($TargetUserClient);
+                     **/
 
                     // Determine if the user is an admin or creator
                     $IsAdmin = false;
+
                     foreach($ChatSettings->Administrators as $chatMember)
                     {
                         if($chatMember->User->ID == $TargetUserClient->User->ID)
@@ -814,6 +937,8 @@
                             }
                         }
                     }
+
+                    $IsAdmin = false;
 
                     // If the user isn't an admin or creator, then it's probably a random spammer.
                     if($IsAdmin == false)
@@ -832,7 +957,6 @@
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', 0);
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getChatId());
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getUserId());
-
                             return true;
                         }
                         else
@@ -840,7 +964,6 @@
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_ham', 0);
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_ham', (int)$telegramClient->getChatId());
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_ham', (int)$telegramClient->getUserId());
-
                             return false;
                         }
                     }
@@ -1247,11 +1370,11 @@
                 $UseInlineKeyboard = true;
                 $InlineKeyboard = new InlineKeyboard([
                     [
-                        "text" => "View Message",
+                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "View Message", [], true),
                         "url" => $logLink
                     ],
                     [
-                        "text" => "View User",
+                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "View User", [], true),
                         "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID
                     ]
                 ]);
@@ -1261,7 +1384,7 @@
                 $UseInlineKeyboard = true;
                 $InlineKeyboard = new InlineKeyboard([
                     [
-                        "text" => "User Info",
+                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "User Info", [], true),
                         "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID
                     ]
                 ]);
@@ -1280,8 +1403,8 @@
                                 "reply_to_message_id" => $message->MessageID,
                                 "parse_mode" => "html",
                                 "text" =>
-                                    self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                                    "No action will be taken since this group has Forward Protection Enabled"
+                                    self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                    LanguageCommand::localizeChatText($this->WhoisCommand, "No action will be taken since this group has Forward Protection Enabled", [], true)
                             ];
 
                             if($UseInlineKeyboard)
@@ -1317,8 +1440,8 @@
                             "reply_to_message_id" => $message->MessageID,
                             "parse_mode" => "html",
                             "text" =>
-                                self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                                "No action will be taken since the the current detection rule in this group is to do nothing"
+                                self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                LanguageCommand::localizeChatText($this->WhoisCommand, "No action will be taken since the the current detection rule in this group is to do nothing", [], true)
                         ];
 
                         if($UseInlineKeyboard)
@@ -1348,8 +1471,8 @@
                                 "chat_id" => $message->Chat->ID,
                                 "parse_mode" => "html",
                                 "text" =>
-                                    self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                                    "The message has been deleted"
+                                    self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                    LanguageCommand::localizeChatText($this->WhoisCommand, "The message has been deleted", [], true)
                             ];
 
                             if($UseInlineKeyboard)
@@ -1374,8 +1497,8 @@
                                 "reply_to_message_id" => $message->MessageID,
                                 "parse_mode" => "html",
                                 "text" =>
-                                    self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                                    "<b>The message cannot be deleted because of insufficient administrator privileges</b>"
+                                    self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                    "<b>" . LanguageCommand::localizeChatText($this->WhoisCommand, "The message cannot be deleted because of insufficient administrator privileges", [], true) . "</b>"
                             ];
 
                             if($UseInlineKeyboard)
@@ -1406,21 +1529,21 @@
                         "until_date" => (int)time() + 60
                     ]);
 
-                    $Response = self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n";
+                    $Response = self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n";
 
                     if($DeleteResponse->isOk() == false)
                     {
-                        $Response .= "<b>The message cannot be deleted because of insufficient administrator privileges</b>\n\n";
+                        $Response .= "<b>" . LanguageCommand::localizeChatText($this->WhoisCommand, "The message cannot be deleted because of insufficient administrator privileges", [], true) . "</b>\n\n";
                     }
 
                     if($KickResponse->isOk() == false)
                     {
-                        $Response .= "<b>The user cannot be removed because of insufficient administrator privileges</b>\n\n";
+                        $Response .= "<b>" . LanguageCommand::localizeChatText($this->WhoisCommand, "The user cannot be removed because of insufficient administrator privileges", [], true) . "</b>\n\n";
                     }
 
                     if($KickResponse->isOk() == true && $DeleteResponse->isOk() == true)
                     {
-                        $Response .= "The message was deleted and the offender was removed from the group";
+                        $Response .= LanguageCommand::localizeChatText($this->WhoisCommand, "The message was deleted and the offender was removed from the group", [], true);
                     }
 
                     if($chatSettings->GeneralAlertsEnabled)
@@ -1458,21 +1581,21 @@
                         "until_date" => 0
                     ]);
 
-                    $Response = self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n";
+                    $Response = self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n";
 
                     if($DeleteResponse->isOk() == false)
                     {
-                        $Response .= "<b>The message cannot be deleted because of insufficient administrator privileges</b>\n\n";
+                        $Response .= "<b>" . LanguageCommand::localizeChatText($this->WhoisCommand, "The message cannot be deleted because of insufficient administrator privileges", [], true) . "</b>\n\n";
                     }
 
                     if($BanResponse->isOk() == false)
                     {
-                        $Response .= "<b>The user cannot be banned because of insufficient administrator privileges</b>\n\n";
+                        $Response .= "<b>" . LanguageCommand::localizeChatText($this->WhoisCommand, "The user cannot be banned because of insufficient administrator privileges", [], true) . "</b>\n\n";
                     }
 
                     if($BanResponse->isOk() == true && $DeleteResponse->isOk() == true)
                     {
-                        $Response .= "The message was deleted and the offender was banned from the group";
+                        $Response .= LanguageCommand::localizeChatText($this->WhoisCommand, "The message was deleted and the offender was banned from the group", [], true);
                     }
 
                     if($chatSettings->GeneralAlertsEnabled)
@@ -1506,8 +1629,8 @@
                             "reply_to_message_id" => $message->MessageID,
                             "parse_mode" => "html",
                             "text" =>
-                                self::generateDetectionMessage($messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                                "No action was taken because the detection action is not recognized"
+                                self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
+                                LanguageCommand::localizeChatText($this->WhoisCommand, "No action was taken because the detection action is not recognized", [], true)
                         ];
 
                         if($UseInlineKeyboard)
@@ -1531,12 +1654,13 @@
         /**
          * Generates a generic spam detection message
          *
+         * @param WhoisCommand $whoisCommand
          * @param MessageLog $messageLog
          * @param TelegramClient $userClient
          * @param SpamPredictionResults $spamPredictionResults
          * @return string
          */
-        private static function generateDetectionMessage(MessageLog $messageLog, TelegramClient $userClient, SpamPredictionResults $spamPredictionResults): string
+        private static function generateDetectionMessage(WhoisCommand $whoisCommand, MessageLog $messageLog, TelegramClient $userClient, SpamPredictionResults $spamPredictionResults): string
         {
             /** @noinspection DuplicatedCode */
             if($userClient->User->Username == null)
@@ -1555,10 +1679,20 @@
                 $Mention = "@" . $userClient->User->Username;
             }
 
-            $Response = "\u{26A0} <b>SPAM DETECTED</b> \u{26A0}\n\n";
-            $Response .= "<b>User:</b> $Mention (<code>" . $userClient->PublicID . "</code>)\n";
-            $Response .= "<b>Message Hash:</b> <code>" . $messageLog->MessageHash . "</code>\n";
-            $Response .= "<b>Spam Probability:</b> <code>" . ($spamPredictionResults->SpamPrediction * 100) . "%</code>";
+            $Response = "\u{26A0} <b>" . LanguageCommand::localizeChatText($whoisCommand, "SPAM DETECTED", [], true) . "</b> \u{26A0}\n\n";
+
+            $Response .= str_ireplace(
+                "%s", "$Mention (<code>" . $userClient->PublicID . "</code>)\n",
+                LanguageCommand::localizeChatText($whoisCommand, "User: %s", ['s'], true)
+            );
+            $Response .= str_ireplace(
+                "%s", "<code>" . $messageLog->MessageHash . "</code>\n",
+                LanguageCommand::localizeChatText($whoisCommand, "Message Hash: %s", ['s'], true)
+            );
+            $Response .= str_ireplace(
+                "%s", "<code>" . ($spamPredictionResults->SpamPrediction * 100) . "%</code>\n",
+                LanguageCommand::localizeChatText($whoisCommand, "Spam Probability: %s", ['s'], true)
+            );
 
             return $Response;
         }
@@ -1574,7 +1708,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        private static function logDetectedSpam(Message $message,  MessageLog $messageLog, TelegramClient $userClient, $channelClient=null)
+        private static function logDetectedSpam(Message $message,  MessageLog $messageLog, TelegramClient $userClient, $channelClient=null): ?string
         {
             $LogMessage = "#spam_prediction\n\n";
 
