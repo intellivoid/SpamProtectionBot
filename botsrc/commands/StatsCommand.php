@@ -45,7 +45,7 @@
         /**
          * @var string
          */
-        protected $version = '2.0.0';
+        protected $version = '3.0.0';
 
         /**
          * @var bool
@@ -105,30 +105,12 @@
                 return null;
             }
 
-            // Parse the options
-            if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)
-            {
-                $options = pop::parse($this->getMessage()->getText(true));
-
-                if(isset($options["info"]))
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "parse_mode" => "html",
-                        "reply_to_message_id" =>$this->getMessage()->getMessageId(),
-                        "text" =>
-                            $this->name . " (v" . $this->version . ")\n" .
-                            " Usage: <code>" . $this->usage . "</code>\n\n" .
-                            "<i>" . $this->description . "</i>"
-                    ]);
-                }
-            }
-
             $MessageResponse = Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "text" => "Loading results"
+                "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Loading results")
             ]);
+
             /** @var Message $Message */
             $Message = $MessageResponse->getResult();
 
@@ -145,7 +127,7 @@
             Request::editMessageText([
                 "chat_id" => $Message->getChat()->getId(),
                 "message_id" => $Message->getMessageId(),
-                "text" => "Calculating results"
+                "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Calculating results")
             ]);
 
             $Results = array(
@@ -156,7 +138,7 @@
                 "agents" => 0,
                 "whitelisted_users" => 0,
                 "blacklisted_users" => 0,
-                "active_spammers" => 0,
+                "potential_spammers" => 0,
                 "whitelisted_channels" => 0,
                 "blacklisted_channels" => 0,
                 "official_channels" => 0,
@@ -217,11 +199,11 @@
                             $Results["verified_accounts"] += 1;
                         }
 
-                        if($UserStatus->GeneralizedSpam > 0)
+                        if($UserStatus->GeneralizedSpamProbability > 0)
                         {
-                            if($UserStatus->GeneralizedSpam > $UserStatus->GeneralizedHam)
+                            if($UserStatus->GeneralizedSpamProbability > $UserStatus->GeneralizedHamProbability)
                             {
-                                $Results["active_spammers"] += 1;
+                                $Results["potential_spammers"] += 1;
                             }
                         }
                     }
@@ -247,9 +229,9 @@
                             $Results["official_channels"] += 1;
                         }
 
-                        if($ChannelStatus->GeneralizedSpam > 0)
+                        if($ChannelStatus->GeneralizedSpamProbability > 0)
                         {
-                            if($ChannelStatus->GeneralizedSpam > $ChannelStatus->GeneralizedHam)
+                            if($ChannelStatus->GeneralizedSpamProbability > $ChannelStatus->GeneralizedHamProbability)
                             {
                                 $Results["spam_channels"] += 1;
                             }
@@ -260,25 +242,30 @@
 
             $QueryResults->free();
 
+            str_ireplace("%s",
+                "<code>" . number_format($Results["users"]) . "</code>",
+                LanguageCommand::localizeChatText($this->WhoisCommand, "Users: %s", ['s']
+            )) . "\n";
+
             return Request::editMessageText([
                 "chat_id" => $Message->getChat()->getId(),
                 "message_id" => $Message->getMessageId(),
                 "parse_mode" => "html",
                 "text" =>
-                    "Chats: <code>" . number_format($Results["chats"]) . "</code>\n".
-                    "Users: <code>" . number_format($Results["users"]) . "</code>\n".
-                    "Channels: <code>" . number_format($Results["channels"]) . "</code>\n".
-                    "Operators: <code>" . number_format($Results["operators"]) . "</code>\n".
-                    "Agents: <code>" . number_format($Results["agents"]) . "</code>\n".
-                    "Whitelisted Users: <code>" . number_format($Results["whitelisted_users"]) . "</code>\n".
-                    "Blacklisted Users: <code>" . number_format($Results["blacklisted_users"]) . "</code>\n".
-                    "Active Spammers: <code>" . number_format($Results["active_spammers"]) . "</code>\n".
-                    "Whitelisted Channels: <code>" . number_format($Results["whitelisted_channels"]) . "</code>\n".
-                    "Blacklisted Channels: <code>" . number_format($Results["blacklisted_channels"]) . "</code>\n".
-                    "Official Channels: <code>" . number_format($Results["official_channels"]) . "</code>\n".
-                    "Spam Channels: <code>" . number_format($Results["spam_channels"]) . "</code>\n".
-                    "Verified Chats: <code>" . number_format($Results["verified_chats"]) . "</code>\n".
-                    "Verified Accounts: <code>" . number_format($Results["verified_accounts"]) . "</code>\n"
+                    str_ireplace("%s", "<code>" . number_format($Results["chats"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Chats: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["users"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Users: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["channels"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Channels: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["operators"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Operators: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["agents"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Agents: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["whitelisted_users"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Whitelisted Users: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["blacklisted_users"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Blacklisted Users: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["potential_spammers"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Potential Spammers: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["whitelisted_channels"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Whitelisted Channels: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["blacklisted_channels"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Blacklisted Channels: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["official_channels"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Official Channels: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["spam_channels"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Spam Channels: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["verified_chats"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Verified Chats: %s", ['s'])) . "\n".
+                    str_ireplace("%s", "<code>" . number_format($Results["verified_accounts"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Verified Accounts: %s", ['s'])) . "\n"
             ]);
         }
     }
