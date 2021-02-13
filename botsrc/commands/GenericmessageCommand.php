@@ -1,6 +1,6 @@
-<?php
+<?php /** @noinspection PhpMissingFieldTypeInspection */
 
-    /** @noinspection PhpUndefinedClassInspection */
+/** @noinspection PhpUndefinedClassInspection */
     /** @noinspection PhpUnused */
     /** @noinspection PhpIllegalPsrClassPathInspection */
 
@@ -80,11 +80,17 @@
          * Executes the generic message command
          *
          * @return ServerResponse|null
+         * @throws CoffeeHouseUtilsNotReadyException
+         * @throws DatabaseException
          * @throws InvalidSearchMethod
+         * @throws InvalidServerInterfaceModuleException
+         * @throws NsfwClassificationException
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws DatabaseException
+         * @throws UnsupportedImageTypeException
+         * @throws \CoffeeHouse\Exceptions\DatabaseException
          * @noinspection DuplicatedCode
+         * @noinspection PhpMissingReturnTypeInspection
          */
         public function execute()
         {
@@ -151,6 +157,7 @@
          * Handles language prediction
          *
          * @return bool
+         * @noinspection DuplicatedCode
          */
         public function handleLanguageDetection(): bool
         {
@@ -838,6 +845,12 @@
                          * the two-label generalization system
                          */
 
+                        if($Generalized == null)
+                        {
+                            /** @noinspection PhpRedundantOptionalArgumentInspection */
+                            $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(50);
+                        }
+
                         /** @noinspection DuplicatedCode */
                         $Generalized = $CoffeeHouse->getSpamPrediction()->largeGeneralize($Generalized, $Results);
 
@@ -890,6 +903,12 @@
                                     /** @noinspection PhpRedundantOptionalArgumentInspection */
                                     $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(50);
                                 }
+                            }
+
+                            if($Generalized == null)
+                            {
+                                /** @noinspection PhpRedundantOptionalArgumentInspection */
+                                $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->create(50);
                             }
 
                             /** @noinspection DuplicatedCode */
@@ -1133,124 +1152,6 @@
         }
 
         /**
-         * Handles a potential spammer in the chat
-         *
-         * @param ChatSettings $chatSettings
-         * @param UserStatus $userStatus
-         * @param TelegramClient $userClient
-         * @param TelegramClient $chatClient
-         * @return bool
-         * @throws InvalidSearchMethod
-         * @throws TelegramClientNotFoundException
-         * @throws TelegramException
-         * @throws DatabaseException
-         * @noinspection DuplicatedCode
-         */
-        public function handlePotentialSpammer(ChatSettings $chatSettings, UserStatus $userStatus, TelegramClient $userClient, TelegramClient $chatClient): bool
-        {
-            /** @noinspection DuplicatedCode */
-            if($userStatus->IsWhitelisted)
-            {
-                return false;
-            }
-
-            if($userClient->User->IsBot)
-            {
-                return false;
-            }
-
-            if($chatSettings->ActiveSpammerProtectionEnabled)
-            {
-                if($userStatus->GeneralizedSpamProbability > 0)
-                {
-                    if($userStatus->GeneralizedSpamProbability > $userStatus->GeneralizedHamProbability)
-                    {
-                        /** @noinspection DuplicatedCode */
-                        $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
-
-                        // Update the admin cache if it's outdated
-                        /** @noinspection DuplicatedCode */
-                        if($ChatObject->Type == TelegramChatType::Group || $ChatObject->Type == TelegramChatType::SuperGroup)
-                        {
-                            if(((int)time() - $chatSettings->AdminCacheLastUpdated) > 600)
-                            {
-                                $Results = Request::getChatAdministrators(["chat_id" => $ChatObject->ID]);
-
-                                if($Results->isOk())
-                                {
-                                    /** @var array $ChatMembersResponse */
-                                    $ChatMembersResponse = $Results->getRawData()["result"];
-                                    $chatSettings->Administrators = array();
-                                    $chatSettings->AdminCacheLastUpdated = (int)time();
-
-                                    foreach($ChatMembersResponse as $chatMember)
-                                    {
-                                        $chatSettings->Administrators[] = ChatMember::fromArray($chatMember);
-                                    }
-
-                                    $chatClient = SettingsManager::updateChatSettings($chatClient, $chatSettings);
-                                    SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($chatClient);
-                                }
-                            }
-                        }
-
-                        $IsAdmin = false;
-                        foreach($chatSettings->Administrators as $chatMember)
-                        {
-                            if($chatMember->User->ID == $userClient->User->ID)
-                            {
-                                if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
-                                {
-                                    $IsAdmin = true;
-                                }
-                            }
-                        }
-
-                        if($IsAdmin == false)
-                        {
-                            $BanResponse = Request::kickChatMember([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "user_id" => $userClient->User->ID,
-                                "until_date" => 0
-                            ]);
-
-                            if($BanResponse->isOk())
-                            {
-                                $Response = WhoisCommand::generateMention($userClient) . " has been banned because they might be an potential spammer\n\n";
-                                $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n\n";
-                                $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @" . LOG_CHANNEL . " else ";
-                                $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
-
-                                Request::sendMessage([
-                                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                                    "parse_mode" => "html",
-                                    "reply_markup" => new InlineKeyboard(
-                                        [
-                                            ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
-                                            ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
-                                            ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
-                                        ]
-                                    ),
-                                    "text" => $Response
-                                ]);
-
-                                // Tally analytics
-                                $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
-                                $DeepAnalytics->tally('tg_spam_protection', 'removed_potential_spammers', 0);
-                                $DeepAnalytics->tally('tg_spam_protection', 'removed_potential_spammers', (int)$chatClient->Chat->ID);
-
-                                return true;
-                            }
-                        }
-                    }
-
-                }
-            }
-            return false;
-        }
-
-        /**
          * Handles a blacklisted user from the chat
          *
          * @param ChatSettings $chatSettings
@@ -1324,23 +1225,42 @@
 
                         if($BanResponse->isOk())
                         {
-                            $Response = WhoisCommand::generateMention($userClient) . " has been banned because they've been blacklisted!\n\n";
-                            $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n";
+                            $Response = str_ireplace("%s", WhoisCommand::generateMention($userClient), LanguageCommand::localizeChatText(
+                                $this->WhoisCommand, "%s has been banned because they've been blacklisted!", ['s'], true
+                            )) . "\n\n";
+
+                            $Response .= str_ireplace("%s", "<code>" . $userClient->PublicID . "</code>", LanguageCommand::localizeChatText(
+                                    $this->WhoisCommand, "Private Telegram ID: %s", ['s'], true
+                                )) . "\n";
 
                             switch($userStatus->BlacklistFlag)
                             {
                                 case BlacklistFlag::BanEvade:
-                                    $Response .= "<b>Blacklist Reason:</b> <code>Ban Evade</code>\n";
-                                    $Response .= "<b>Original Private ID:</b> <code>" . $userStatus->OriginalPrivateID . "</code>\n";
+                                    $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this->WhoisCommand, "Ban Evade") . "</code>", LanguageCommand::localizeChatText(
+                                            $this->WhoisCommand, "Blacklist Reason: %s", ['s'], true
+                                        )) . "\n";
+                                    $Response .= str_ireplace("%s", "<code>" . $userStatus->OriginalPrivateID . "</code>", LanguageCommand::localizeChatText(
+                                            $this->WhoisCommand, "Original Private ID: %s", ['s'], true
+                                        )) . "\n";
                                     break;
 
                                 default:
-                                    $Response .= "<b>Blacklist Reason:</b> <code>" . BlacklistCommand::blacklistFlagToReason($userStatus->BlacklistFlag) . "</code>\n";
+                                    $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this->WhoisCommand, $userStatus->BlacklistFlag) . "</code>", LanguageCommand::localizeChatText(
+                                            $this->WhoisCommand, "Blacklist Reason: %s", ['s'], true
+                                        )) . "\n";
                                     break;
                             }
 
-                            $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @" . LOG_CHANNEL .  " else ";
-                            $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
+                            $NoticeText = LanguageCommand::localizeChatText(
+                                    $this->WhoisCommand,
+                                    "You can find evidence of abuse by searching the Private Telegram ID in %s else " .
+                                    "if you believe that this is a mistake then let us know in %b",
+                                    ['s', 'b'], true
+                                );
+
+                            $NoticeText = str_ireplace("%s", "@" . LOG_CHANNEL, $NoticeText);
+                            $NoticeText = str_ireplace("%b", "@SpamProtectionSupport", $NoticeText);
+                            $Response .= "<i>$NoticeText</i>";
 
                             Request::sendMessage([
                                 "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -1348,13 +1268,17 @@
                                 "parse_mode" => "html",
                                 "reply_markup" => new InlineKeyboard(
                                     [
-                                        ["text" => "Logs", "url" => "https://t.me/" . LOG_CHANNEL],
-                                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
-                                        ["text" => "Report Problem", "url" => "https://t.me/SpamProtectionSupport"]
+                                        ["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Logs", [], true), "url" => "https://t.me/" . LOG_CHANNEL],
+                                        ["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "User Info", [], true), "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $userClient->User->ID],
+                                        ["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Report Problem", [], true), "url" => "https://t.me/SpamProtectionSupport"]
                                     ]
                                 ),
                                 "text" => $Response
                             ]);
+
+                            $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
+                            $DeepAnalytics->tally('tg_spam_protection', 'banned_blacklisted', 0);
+                            $DeepAnalytics->tally('tg_spam_protection', 'banned_blacklisted', (int)$this->WhoisCommand->ChatObject->ID);
 
                             return true;
                         }
@@ -1386,7 +1310,7 @@
             Message $message, MessageLog $messageLog,
             TelegramClient $userClient, UserStatus $userStatus,
             ChatSettings $chatSettings, SpamPredictionResults $spamPredictionResults, TelegramClient $chatClient,
-            $logLink
+            ?string $logLink
         ): bool
         {
             if($logLink !== null)
@@ -1525,6 +1449,7 @@
                                     "<b>" . LanguageCommand::localizeChatText($this->WhoisCommand, "The message cannot be deleted because of insufficient administrator privileges", [], true) . "</b>"
                             ];
 
+                            /** @noinspection PhpExpressionAlwaysConstantInspection */
                             if($UseInlineKeyboard)
                             {
                                 $ResponseMessage["reply_markup"] = $InlineKeyboard;

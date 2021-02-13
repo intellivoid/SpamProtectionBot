@@ -465,6 +465,12 @@
             if($whoisCommand->CallbackQueryUserClient !== null)
                 $targetUserClient = $whoisCommand->CallbackQueryUserClient;
 
+            if($targetChatClient == null)
+                return $input;
+
+            if($targetUserClient == null)
+                return $input;
+
             try
             {
                 $ChatSettings = SettingsManager::getChatSettings($targetChatClient);
@@ -528,6 +534,7 @@
                 return $input;
             }
 
+            var_dump($TranslationResults->Output);
 
             foreach($specials as $special)
             {
@@ -557,6 +564,13 @@
                 {
                     $TranslationResults->Output = str_ireplace(":%$special: %$special", ": %$special", $TranslationResults->Output);
                 }
+
+                // Fix double periods
+                if(stripos($TranslationResults->Output, "%$special.: %$special") !== false)
+                {
+                    $TranslationResults->Output = str_ireplace("%$special.: %$special", ": %$special", $TranslationResults->Output);
+                }
+
             }
 
             $TranslationResults->Output = str_ireplace("</ ", "</", $TranslationResults->Output);
