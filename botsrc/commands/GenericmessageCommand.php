@@ -454,6 +454,7 @@
                 }
 
                 $CoffeeHouse = SpamProtectionBot::getCoffeeHouse();
+                $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
 
                 $DownloadURI = Request::downloadFileLocation(Request::getFile(["file_id" => $LargestPhoto->FileID])->getResult());
                 $ImageContent = file_get_contents($DownloadURI);
@@ -461,6 +462,17 @@
                 $Results = $CoffeeHouse->getNsfwClassification()->classifyImage($ImageContent);
                 $LargestPhoto->UnsafePrediction = $Results->UnsafePrediction;
                 $LargestPhoto->SafePrediction = $Results->SafePrediction;
+
+                if($Results->IsNSFW)
+                {
+                    $DeepAnalytics->tally('tg_spam_protection', 'unsafe_content', 0);
+                    $DeepAnalytics->tally('tg_spam_protection', 'unsafe_content', (int)$chatClient->Chat->ID);
+                }
+                else
+                {
+                    $DeepAnalytics->tally('tg_spam_protection', 'safe_content', 0);
+                    $DeepAnalytics->tally('tg_spam_protection', 'safe_content', (int)$chatClient->Chat->ID);
+                }
 
                 if($Results->IsNSFW)
                 {
@@ -1149,9 +1161,9 @@
 
             if($chatSettings->ActiveSpammerProtectionEnabled)
             {
-                if($userStatus->GeneralizedSpam > 0)
+                if($userStatus->GeneralizedSpamProbability > 0)
                 {
-                    if($userStatus->GeneralizedSpam > $userStatus->GeneralizedHam)
+                    if($userStatus->GeneralizedSpamProbability > $userStatus->GeneralizedHamProbability)
                     {
                         /** @noinspection DuplicatedCode */
                         $ChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getChat()->getRawData());
@@ -1204,7 +1216,7 @@
 
                             if($BanResponse->isOk())
                             {
-                                $Response = WhoisCommand::generateMention($userClient) . " has been banned because they might be an active spammer\n\n";
+                                $Response = WhoisCommand::generateMention($userClient) . " has been banned because they might be an potential spammer\n\n";
                                 $Response .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n\n";
                                 $Response .= "<i>You can find evidence of abuse by searching the Private Telegram ID in @" . LOG_CHANNEL . " else ";
                                 $Response .= "If you believe that this is was a mistake then let us know in @SpamProtectionSupport</i>";
@@ -1222,6 +1234,11 @@
                                     ),
                                     "text" => $Response
                                 ]);
+
+                                // Tally analytics
+                                $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
+                                $DeepAnalytics->tally('tg_spam_protection', 'removed_potential_spammers', 0);
+                                $DeepAnalytics->tally('tg_spam_protection', 'removed_potential_spammers', (int)$chatClient->Chat->ID);
 
                                 return true;
                             }
