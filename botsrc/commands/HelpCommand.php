@@ -108,7 +108,10 @@
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
-                        "text" => "There is not help available for <code>" . $HelpRequestDoc . "</code>"
+                        "text" => str_ireplace(
+                            "%s", "<code>" . $HelpRequestDoc . "</code>",
+                            LanguageCommand::localizeChatText($this->WhoisCommand, "There is not help available for %s", ['s'])
+                        )
                     ]);
                 }
                 else
