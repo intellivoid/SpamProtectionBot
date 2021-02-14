@@ -808,6 +808,9 @@
                     {
                         // Predict the spam results
                         $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), false);
+
+                        if($Results == null)
+                            return false;
                     }
                     catch(Exception $e)
                     {
@@ -817,6 +820,7 @@
                         // Return false since the rest cannot run without the results
                         return false;
                     }
+
 
                     try
                     {
@@ -859,16 +863,17 @@
 
                         foreach($Generalized->Probabilities as $probability)
                         {
-                            switch($probability->Label)
-                            {
-                                case "ham":
-                                    $TargetUserStatus->GeneralizedHamProbability = $probability->CalculatedProbability;
-                                    break;
+                            if($probability !== null)
+                                switch($probability->Label)
+                                {
+                                    case "ham":
+                                        $TargetUserStatus->GeneralizedHamProbability = $probability->CalculatedProbability;
+                                        break;
 
-                                case "spam":
-                                    $TargetUserStatus->GeneralizedSpamProbability = $probability->CalculatedProbability;
-                                    break;
-                            }
+                                    case "spam":
+                                        $TargetUserStatus->GeneralizedSpamProbability = $probability->CalculatedProbability;
+                                        break;
+                                }
                         }
 
                         $TargetUserClient = SettingsManager::updateUserStatus($TargetUserClient, $TargetUserStatus);

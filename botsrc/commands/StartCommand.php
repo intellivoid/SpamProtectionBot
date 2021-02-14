@@ -17,6 +17,9 @@
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\BlacklistFlag;
+    use SpamProtection\Exceptions\InvalidBlacklistFlagException;
+    use SpamProtection\Exceptions\MissingOriginalPrivateIdException;
+    use SpamProtection\Exceptions\PropertyConflictedException;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
@@ -338,6 +341,18 @@
             return null;
         }
 
+        /**
+         * @param CallbackQuery|null $callbackQuery
+         * @param WhoisCommand $whoisCommand
+         * @return ServerResponse|null
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         * @throws InvalidBlacklistFlagException
+         * @throws MissingOriginalPrivateIdException
+         * @throws PropertyConflictedException
+         */
         public function handleAppealCallback(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand): ?ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();

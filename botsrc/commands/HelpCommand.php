@@ -7,6 +7,7 @@
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
     use Longman\TelegramBot\Commands\UserCommand;
+    use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
@@ -77,7 +78,7 @@
             {
                 return null;
             }
-
+            /**
             if($this->getMessage()->getChat()->getType() !== TelegramChatType::Private)
             {
                 return Request::sendMessage([
@@ -87,6 +88,7 @@
                     "text" => "This command can only be used in private!"
                 ]);
             }
+             **/
 
             $CommandParameters = explode(" ", $this->getMessage()->getText(true));
             $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
@@ -98,6 +100,7 @@
                 $HelpRequestDocSafe = str_ireplace('\\', '_', $HelpRequestDocSafe);
                 $HelpDocumentsPath = __DIR__ . DIRECTORY_SEPARATOR . "help_docs";
                 $HelpDocument = $HelpDocumentsPath . DIRECTORY_SEPARATOR . $HelpRequestDocSafe . ".html";
+                $BannerImage = $HelpDocumentsPath . DIRECTORY_SEPARATOR . $HelpRequestDocSafe . ".png";
 
                 if(file_exists($HelpDocument) == false)
                 {
@@ -110,12 +113,24 @@
                 }
                 else
                 {
+                    if(file_exists($BannerImage))
+                    {
+                        return Request::sendPhoto([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            "disable_web_page_preview" => true,
+                            "photo" => $BannerImage,
+                            "caption" => $this->translateDocument(file_get_contents($HelpDocument))
+                        ]);
+                    }
+
                     return Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "parse_mode" => "html",
                         "disable_web_page_preview" => true,
-                        "text" => file_get_contents($HelpDocument)
+                        "text" => $this->translateDocument(file_get_contents($HelpDocument))
                     ]);
                 }
             }
@@ -124,13 +139,41 @@
                 $HelpDocumentsPath = __DIR__ . DIRECTORY_SEPARATOR . "help_docs";
                 $HelpDocument = $HelpDocumentsPath . DIRECTORY_SEPARATOR . "help.html";
 
-                return Request::sendMessage([
+                return Request::sendPhoto([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
                     "disable_web_page_preview" => true,
-                    "text" => file_get_contents($HelpDocument)
+                    "caption" => $this->translateDocument(file_get_contents($HelpDocument)),
+                    "photo" => __DIR__ . DIRECTORY_SEPARATOR . "help_docs" . DIRECTORY_SEPARATOR . "help.png"
                 ]);
             }
+        }
+
+
+        /**
+         * Translates the document
+         *
+         * @param string $input
+         * @return string
+         */
+        private function translateDocument(string $input): string
+        {
+            preg_match_all('/\{([\w\s!-@]+)\}/m', $input, $matches, PREG_OFFSET_CAPTURE);
+            if($matches !== null)
+            {
+                foreach($matches[1] as $match)
+                {
+                    $Text = LanguageCommand::localizeChatText($this->WhoisCommand, $match[0]);
+                    $input = str_ireplace("{" . $match[0] . "}", $Text, $input);
+                }
+            }
+            else
+            {
+                $input = str_ireplace("{", "", $input);
+                $input = str_ireplace("}", "", $input);
+            }
+
+            return $input;
         }
     }
