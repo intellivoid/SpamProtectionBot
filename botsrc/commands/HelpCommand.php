@@ -78,17 +78,17 @@
             {
                 return null;
             }
-            /**
+
             if($this->getMessage()->getChat()->getType() !== TelegramChatType::Private)
             {
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->getMessage()->getMessageId(),
                     "parse_mode" => "html",
-                    "text" => "This command can only be used in private!"
+                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This command can only be used in private!")
                 ]);
             }
-             **/
+
 
             $CommandParameters = explode(" ", $this->getMessage()->getText(true));
             $CommandParameters = array_values(array_filter($CommandParameters, 'strlen'));
