@@ -81,6 +81,10 @@
                         "message_id" => $this->getCallbackQuery()->getMessage()->getMessageId()
                     ]);
 
+                case "04": // Close the current language dialog
+                    $StartCommand = new StartCommand($this->telegram, $this->update);
+                    return $StartCommand->handleAppealCallback($this->getCallbackQuery(), $this->WhoisCommand);
+
                 default:
                     return $this->getCallbackQuery()->answer([
                         "text" => "This query isn't understood, are you using an official client? (Got '" . mb_substr($this->getCallbackQuery()->getData(), 0, 2) . "')",

@@ -579,7 +579,7 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        private function logAction(TelegramClient $targetClient, TelegramClient $operatorUserClient, bool $removal=false, bool $update=false, string $previous_flag=null)
+        public function logAction(TelegramClient $targetClient, TelegramClient $operatorUserClient, bool $removal=false, bool $update=false, string $previous_flag=null)
         {
             switch($targetClient->Chat->Type)
             {
