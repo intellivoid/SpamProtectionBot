@@ -121,6 +121,10 @@
         },
         {
             "required": true,
+            "file": "commands/LanguageCommand.php"
+        },
+        {
+            "required": true,
             "file": "commands/SettingsCommand.php"
         },
         {
@@ -157,6 +161,10 @@
         },
         {
             "required": true,
+            "file": "commands/CallbackqueryCommand.php"
+        },
+        {
+            "required": true,
             "file": "commands/BlacklistCommand.php"
         },
         {
@@ -171,21 +179,16 @@
     "files": [
         "package.json",
         ".htaccess",
-        "commands/help_docs/stats.html",
-        "commands/help_docs/blacklist.html",
+        "commands/help_docs/language.html",
         "commands/help_docs/false_detections.html",
+        "commands/help_docs/help.png",
         "commands/help_docs/settings.html",
         "commands/help_docs/msginfo.html",
         "commands/help_docs/unwanted_users.html",
-        "commands/help_docs/prop_user.html",
-        "commands/help_docs/prop_chat.html",
         "commands/help_docs/whois.html",
         "commands/help_docs/spam_protection.html",
-        "commands/help_docs/prop_channel.html",
-        "commands/help_docs/prop.html",
         "commands/help_docs/blacklist_flags.html",
         "commands/help_docs/help.html",
-        "commands/help_docs/false_blacklist.html",
-        "commands/help_docs/log.html"
+        "commands/help_docs/start.html"
     ]
 }
