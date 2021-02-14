@@ -569,6 +569,16 @@
                     $TranslationResults->Output = str_ireplace("%$special.: %$special", ": %$special", $TranslationResults->Output);
                 }
 
+                if($input[stripos($input, "%$special") -1] == " " && $TranslationResults->Output[stripos($TranslationResults->Output, "%$special") -1] !== " ")
+                {
+                    $TranslationResults->Output = str_ireplace("%$special", " %$special", $TranslationResults->Output);
+                }
+
+                if(stripos($TranslationResults->Output, ":  %$special") !== false)
+                {
+                    $TranslationResults->Output = str_ireplace(":  %$special", "", $TranslationResults->Output);
+                }
+
             }
 
             $TranslationResults->Output = str_ireplace("</ ", "</", $TranslationResults->Output);
