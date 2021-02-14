@@ -534,8 +534,6 @@
                 return $input;
             }
 
-            var_dump($TranslationResults->Output);
-
             foreach($specials as $special)
             {
                 // Fix the translation specials into normalized entities
