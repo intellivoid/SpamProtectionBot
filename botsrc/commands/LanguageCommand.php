@@ -256,7 +256,7 @@
                         ["text" => "\u{1F1EF}\u{1F1F5}", "callback_data" => "0106ja"],
                         ["text" => "\u{1F1E8}\u{1F1F3}", "callback_data" => "0106zh"],
                         ["text" => "\u{1F1E9}\u{1F1EA}", "callback_data" => "0106de"],
-                        ["text" => "\u{1F1F5}\u{1F1F1}", "callback_data" => "0106pl"],
+                        ["text" => "\u{1F404}", "callback_data" => "0106pl"],
                     ],
                     [
                         ["text" => "\u{1F1EB}\u{1F1F7}", "callback_data" => "0106fr"],
@@ -417,7 +417,7 @@
                         ["text" => "\u{1F1EF}\u{1F1F5}", "callback_data" => "1206ja"],
                         ["text" => "\u{1F1E8}\u{1F1F3}", "callback_data" => "1206zh"],
                         ["text" => "\u{1F1E9}\u{1F1EA}", "callback_data" => "1206de"],
-                        ["text" => "\u{1F1F5}\u{1F1F1}", "callback_data" => "1206pl"],
+                        ["text" => "\u{1F404}", "callback_data" => "1206pl"],
                     ],
                     [
                         ["text" => "\u{1F1EB}\u{1F1F7}", "callback_data" => "1206fr"],
