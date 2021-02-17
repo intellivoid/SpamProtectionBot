@@ -466,6 +466,8 @@
                 $DownloadURI = Request::downloadFileLocation(Request::getFile(["file_id" => $LargestPhoto->FileID])->getResult());
                 $ImageContent = file_get_contents($DownloadURI);
 
+                if($ImageContent == false) return false;
+
                 try
                 {
                     $Results = $CoffeeHouse->getNsfwClassification()->classifyImage($ImageContent);
@@ -474,7 +476,7 @@
                 {
                     return false;
                 }
-                
+
                 $LargestPhoto->UnsafePrediction = $Results->UnsafePrediction;
                 $LargestPhoto->SafePrediction = $Results->SafePrediction;
 
