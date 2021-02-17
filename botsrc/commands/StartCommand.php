@@ -154,7 +154,7 @@
                         "reply_to_message_id" => $this->getMessage()->getMessageId(),
                         "reply_markup" => new InlineKeyboard([
                             [
-                                "text" => "Help",
+                                "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Help"),
                                 "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=start"
                             ]
                         ]),
@@ -238,7 +238,7 @@
             return Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "text" => "Unable to resolve the query '$user_id'!"
+                "text" => str_ireplace("%s", $user_id, LanguageCommand::localizeChatText($this->WhoisCommand, "Unable to resolve the query %s", ['s']))
             ]);
         }
 
