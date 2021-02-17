@@ -466,7 +466,15 @@
                 $DownloadURI = Request::downloadFileLocation(Request::getFile(["file_id" => $LargestPhoto->FileID])->getResult());
                 $ImageContent = file_get_contents($DownloadURI);
 
-                $Results = $CoffeeHouse->getNsfwClassification()->classifyImage($ImageContent);
+                try
+                {
+                    $Results = $CoffeeHouse->getNsfwClassification()->classifyImage($ImageContent);
+                }
+                catch(UnsupportedImageTypeException $e)
+                {
+                    return false;
+                }
+                
                 $LargestPhoto->UnsafePrediction = $Results->UnsafePrediction;
                 $LargestPhoto->SafePrediction = $Results->SafePrediction;
 
