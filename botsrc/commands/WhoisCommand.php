@@ -1268,7 +1268,7 @@
                 $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This user is the main operator") . "\n";
             }
 
-            if($user_client->AccountID !== 0)
+            if($user_client->AccountID !== null && $user_client->AccountID !== 0)
             {
                 $RequiresExtraNewline = true;
                 $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This user's Telegram account is verified by Intellivoid Accounts") . "\n";
