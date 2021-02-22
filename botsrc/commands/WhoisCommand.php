@@ -1359,7 +1359,9 @@
             {
                 if($UserStatus->GeneralizedSpamProbability > 0 && $UserStatus->GeneralizedHamProbability > 0)
                 {
-                    $Response .= str_ireplace("%s", "<code>" . (($UserStatus->GeneralizedHamProbability * 100) / ($UserStatus->GeneralizedSpamProbability * 100)) . "</code>",
+                    $TrustPrediction = 100 * (0.5**($UserStatus->GeneralizedSpamProbability/$UserStatus->GeneralizedHamProbability));
+
+                    $Response .= str_ireplace("%s", "<code>" . $TrustPrediction . "</code>",
                             LanguageCommand::localizeChatText($this, "Trust Prediction: %s", ['s']) ) . "\n";
                 }
             }
