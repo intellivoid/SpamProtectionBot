@@ -410,6 +410,7 @@
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          * @throws \CoffeeHouse\Exceptions\DatabaseException
+         * @noinspection DuplicatedCode
          */
         public function handleNsfwFilter(TelegramCLient $chatClient, TelegramClient $userClient): bool
         {
@@ -997,6 +998,10 @@
                             {
                                 $IsAdmin = true;
                             }
+                            elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
+                            {
+                                $IsAdmin = true;
+                            }
                         }
                     }
 
@@ -1093,6 +1098,10 @@
                         if($chatMember->User->ID == $userClient->User->ID)
                         {
                             if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
+                            {
+                                $IsAdmin = true;
+                            }
+                            elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
                             {
                                 $IsAdmin = true;
                             }
@@ -1231,6 +1240,10 @@
                         if($chatMember->User->ID == $userClient->User->ID)
                         {
                             if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
+                            {
+                                $IsAdmin = true;
+                            }
+                            elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
                             {
                                 $IsAdmin = true;
                             }

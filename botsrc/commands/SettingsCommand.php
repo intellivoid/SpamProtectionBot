@@ -45,7 +45,7 @@
         /**
          * @var string
          */
-        protected $version = '3.0.0';
+        protected $version = '3.0.1';
 
         /**
          * @var bool
@@ -98,23 +98,26 @@
                 }
             }
 
-            // Verify if the user is an administrator
-            $UserChatMember = Request::getChatMember([
-                "user_id" => $this->WhoisCommand->UserObject->ID,
-                "chat_id" => $this->WhoisCommand->ChatObject->ID
-            ]);
+            $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
 
-            if($UserChatMember->isOk() == false)
+            // Determine if the user is an admin or creator
+            $IsAdmin = false;
+            foreach($ChatSettings->Administrators as $chatMember)
             {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This command can only be used by chat administrators")
-                ]);
+                if($chatMember->User->ID == $this->WhoisCommand->UserClient->User->ID)
+                {
+                    if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
+                    {
+                        $IsAdmin = true;
+                    }
+                    elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
+                    {
+                        $IsAdmin = true;
+                    }
+                }
             }
 
-            if($UserChatMember->getResult()->status !== "creator" && $UserChatMember->getResult()->status !== "administrator")
+            if($IsAdmin == false)
             {
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
