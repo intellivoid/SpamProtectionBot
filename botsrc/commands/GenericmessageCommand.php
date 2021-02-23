@@ -438,11 +438,12 @@
                     {
                         $IsAdmin = true;
                     }
-                    elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
-                    {
-                        $IsAdmin = true;
-                    }
                 }
+            }
+
+            if($this->WhoisCommand->UserClient->User->Username == "GroupAnonymousBot" && $this->WhoisCommand->UserClient->User->IsBot)
+            {
+                $IsAdmin = true;
             }
 
             if($IsAdmin) return false;
@@ -998,11 +999,12 @@
                             {
                                 $IsAdmin = true;
                             }
-                            elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
-                            {
-                                $IsAdmin = true;
-                            }
                         }
+                    }
+
+                    if($this->WhoisCommand->UserClient->User->Username == "GroupAnonymousBot" && $this->WhoisCommand->UserClient->User->IsBot)
+                    {
+                        $IsAdmin = true;
                     }
 
                     // If the user isn't an admin or creator, then it's probably a random spammer.
@@ -1101,11 +1103,12 @@
                             {
                                 $IsAdmin = true;
                             }
-                            elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
-                            {
-                                $IsAdmin = true;
-                            }
                         }
+                    }
+
+                    if($this->WhoisCommand->UserClient->User->Username == "GroupAnonymousBot" && $this->WhoisCommand->UserClient->User->IsBot)
+                    {
+                        $IsAdmin = true;
                     }
 
                     if($IsAdmin == false)
@@ -1243,11 +1246,12 @@
                             {
                                 $IsAdmin = true;
                             }
-                            elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
-                            {
-                                $IsAdmin = true;
-                            }
                         }
+                    }
+
+                    if($this->WhoisCommand->UserClient->User->Username == "GroupAnonymousBot" && $this->WhoisCommand->UserClient->User->IsBot)
+                    {
+                        $IsAdmin = true;
                     }
 
                     if($IsAdmin == false)

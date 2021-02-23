@@ -13,6 +13,7 @@
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\DetectionAction;
+    use SpamProtection\Abstracts\TelegramUserStatus;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
@@ -110,11 +111,13 @@
                     {
                         $IsAdmin = true;
                     }
-                    elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
-                    {
-                        $IsAdmin = true;
-                    }
+
                 }
+            }
+
+            if($this->WhoisCommand->UserClient->User->Username == "GroupAnonymousBot" && $this->WhoisCommand->UserClient->User->IsBot)
+            {
+                $IsAdmin = true;
             }
 
             if($IsAdmin == false)
