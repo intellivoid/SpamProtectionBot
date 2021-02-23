@@ -1268,7 +1268,7 @@
                 $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This user is the main operator") . "\n";
             }
 
-            if($user_client->AccountID !== 0)
+            if($user_client->AccountID !== null && $user_client->AccountID !== 0)
             {
                 $RequiresExtraNewline = true;
                 $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This user's Telegram account is verified by Intellivoid Accounts") . "\n";
@@ -1359,7 +1359,9 @@
             {
                 if($UserStatus->GeneralizedSpamProbability > 0 && $UserStatus->GeneralizedHamProbability > 0)
                 {
-                    $Response .= str_ireplace("%s", "<code>" . (($UserStatus->GeneralizedHamProbability * 100) / ($UserStatus->GeneralizedSpamProbability * 100)) . "</code>",
+                    $TrustPrediction = 100 * (0.5**($UserStatus->GeneralizedSpamProbability/$UserStatus->GeneralizedHamProbability));
+
+                    $Response .= str_ireplace("%s", "<code>" . $TrustPrediction . "</code>",
                             LanguageCommand::localizeChatText($this, "Trust Prediction: %s", ['s']) ) . "\n";
                 }
             }
