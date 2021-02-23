@@ -409,7 +409,6 @@
          * @throws NsfwClassificationException
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws UnsupportedImageTypeException
          * @throws \CoffeeHouse\Exceptions\DatabaseException
          */
         public function handleNsfwFilter(TelegramCLient $chatClient, TelegramClient $userClient): bool
@@ -435,6 +434,10 @@
                 if($chatMember->User->ID == $userClient->User->ID)
                 {
                     if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
+                    {
+                        $IsAdmin = true;
+                    }
+                    elseif($chatMember->User->Username == "GroupAnonymousBot" && $chatMember->User->IsBot)
                     {
                         $IsAdmin = true;
                     }
