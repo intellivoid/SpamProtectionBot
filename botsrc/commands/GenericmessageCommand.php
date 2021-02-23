@@ -418,9 +418,13 @@
                 return false;
 
             $ChatSettings = SettingsManager::getChatSettings($chatClient);
+            $UserStatus = SettingsManager::getUserStatus($userClient);
 
             if($ChatSettings->NsfwFilterEnabled == false)
                 return false; // Save processing power!
+
+            if($UserStatus->IsWhitelisted)
+                return false;
 
             $Message = Message::fromArray($this->getMessage()->getRawData());
 
