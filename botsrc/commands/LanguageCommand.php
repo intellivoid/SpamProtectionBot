@@ -241,10 +241,10 @@
                         "but nevertheless you can change the language of this bot and SpamProtectionBot will respond in said language ".
                         "(Including alerts) in this chat.") . "\n\n" .
                     self::localizeChatText($whoisCommand,
-                        "You can also disable strict localization, when this option is enabled SpamProtectionBot will respond to the user ".
-                        "in the language they understand, if disabled the bot will only respond in the language configured in the chat") . "\n\n".
+                        "With strict localization when disabled, SpamProtectionBot will respond to the user in the " .
+                        "language they understand, if enabled the bot will only respond in the language configured in the chat") . "\n\n".
                     self::localizeChatText($whoisCommand,
-                        "If you use 'Automatic' as the configured language, the bot will use the language that the chat is currently based in") . "\n\n".
+                        "If you use 'Automatic' as the configured language, the bot will use the language that the chat is currently based in automatically") . "\n\n".
                     $StatusResponse,
                 "reply_markup" => new InlineKeyboard(
                     [
