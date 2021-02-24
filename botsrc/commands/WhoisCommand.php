@@ -1339,13 +1339,13 @@
 
             if($user_client->User->FirstName !== null)
             {
-                $Response .= str_ireplace("%s", "<code>" . $user_client->User->FirstName . "</code>",
+                $Response .= str_ireplace("%s", "<code>" . self::escapeHTML($user_client->User->FirstName) . "</code>",
                     LanguageCommand::localizeChatText($this, "First Name: %s", ['s']) ) . "\n";
             }
 
             if($user_client->User->LastName !== null)
             {
-                $Response .= str_ireplace("%s", "<code>" . $user_client->User->LastName . "</code>",
+                $Response .= str_ireplace("%s", "<code>" . self::escapeHTML($user_client->User->LastName) . "</code>",
                     LanguageCommand::localizeChatText($this, "Last Name: %s", ['s']) ) . "\n";
             }
 
@@ -1366,6 +1366,8 @@
                 }
             }
 
+
+
             if($UserStatus->LargeLanguageGeneralizedID !== null)
             {
                 $Response .= str_ireplace("%s", "<code>" . $UserStatus->GeneralizedLanguage . "</code> (<code>" . ($UserStatus->GeneralizedLanguageProbability * 100) . "</code>)",
@@ -1377,6 +1379,8 @@
                 $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
                         LanguageCommand::localizeChatText($this, "Potential Spammer: %s", ['s']) ) . "\n";
             }
+
+
 
             if($UserStatus->IsWhitelisted)
             {
@@ -1409,6 +1413,7 @@
 
             }
 
+
             if($UserStatus->IsOperator)
             {
                 $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
@@ -1420,6 +1425,8 @@
                 $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
                         LanguageCommand::localizeChatText($this, "Spam Detection Agent: %s", ['s']) ) . "\n";
             }
+
+
 
             if($UserStatus->ConfiguredLanguage !== null)
             {
@@ -1688,10 +1695,6 @@
          */
         private static function escapeHTML(string $input): string
         {
-            $input = str_ireplace("<", "&lt;", $input);
-            $input = str_ireplace(">", "&gt;", $input);
-            $input = str_ireplace("&", "&amp;", $input);
-
-            return $input;
+            return htmlspecialchars($input, ENT_COMPAT);
         }
     }
