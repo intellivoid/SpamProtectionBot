@@ -17,6 +17,7 @@
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Commands\UserCommands\BlacklistCommand;
     use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
+    use Longman\TelegramBot\Commands\UserCommands\SettingsCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -110,6 +111,8 @@
                 return null;
             }
 
+            $this->handleMessageSpeed();
+
             // Obtain the User Stats and Chat Settings
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
@@ -152,6 +155,37 @@
             return null;
         }
 
+        /**
+         * Handles the message speed for the user and chat
+         */
+        public function handleMessageSpeed()
+        {
+            try
+            {
+                $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
+                $UserStatus->trackMessageSpeed($this->getMessage()->getDate());
+                $this->WhoisCommand->UserClient = SettingsManager::updateUserStatus($this->WhoisCommand->UserClient, $UserStatus);
+                SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->UserClient);
+            }
+            catch(Exception $e)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to calculate the messages per minute (user)", "handleMessageSpeed");
+                SpamProtectionBot::getLogHandler()->logException($e, "handleMessageSpeed");
+            }
+
+            try
+            {
+                $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
+                $ChatSettings->trackMessageSpeed($this->getMessage()->getDate());
+                $this->WhoisCommand->ChatClient = SettingsManager::updateChatSettings($this->WhoisCommand->ChatClient, $ChatSettings);
+                SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($this->WhoisCommand->ChatClient);
+            }
+            catch(Exception $e)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to calculate the messages per minute (chat)", "handleMessageSpeed");
+                SpamProtectionBot::getLogHandler()->logException($e, "handleMessageSpeed");
+            }
+        }
 
         /**
          * Handles language prediction
