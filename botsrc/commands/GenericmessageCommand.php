@@ -160,6 +160,8 @@
          */
         public function handleMessageSpeed()
         {
+            if($this->getMessage() == null) return;
+
             try
             {
                 $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);

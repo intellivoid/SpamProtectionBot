@@ -1366,8 +1366,6 @@
                 }
             }
 
-
-
             if($UserStatus->LargeLanguageGeneralizedID !== null)
             {
                 $Response .= str_ireplace("%s", "<code>" . $UserStatus->GeneralizedLanguage . "</code> (<code>" . ($UserStatus->GeneralizedLanguageProbability * 100) . "</code>)",
@@ -1380,7 +1378,8 @@
                         LanguageCommand::localizeChatText($this, "Potential Spammer: %s", ['s']) ) . "\n";
             }
 
-
+            $Response .= str_ireplace("%s", "<code>" . $UserStatus->calculateAverageMessagesPerMinute() . "</code>",
+                    LanguageCommand::localizeChatText($this, "Messages per minute: %s", ['s']) ) . "\n";
 
             if($UserStatus->IsWhitelisted)
             {
@@ -1425,7 +1424,6 @@
                 $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
                         LanguageCommand::localizeChatText($this, "Spam Detection Agent: %s", ['s']) ) . "\n";
             }
-
 
 
             if($UserStatus->ConfiguredLanguage !== null)
@@ -1577,6 +1575,9 @@
                 $Response .= str_ireplace("%s", "<code>" .  $ChatSettings->GeneralizedLanguage . "</code> (<code>" . ($ChatSettings->GeneralizedLanguageProbability * 100) . "</code>)",
                         LanguageCommand::localizeChatText($this, "Language Prediction: %s", ['s']) ) . "\n";
             }
+
+            $Response .= str_ireplace("%s", "<code>" . $ChatSettings->calculateAverageMessagesPerMinute() . "</code>",
+                    LanguageCommand::localizeChatText($this, "Messages per minute: %s", ['s']) ) . "\n";
 
             if($ChatSettings->ConfiguredLanguage !== null)
             {
