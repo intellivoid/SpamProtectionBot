@@ -1768,10 +1768,6 @@
          */
         private static function escapeHTML(string $input): string
         {
-            $input = str_ireplace("<", "&lt;", $input);
-            $input = str_ireplace(">", "&gt;", $input);
-            $input = str_ireplace("&", "&amp;", $input);
-
-            return $input;
+            return htmlspecialchars($input, ENT_COMPAT);
         }
     }
