@@ -113,6 +113,10 @@
         },
         {
             "required": true,
+            "file": "commands/FinalVerdictCommand.php"
+        },
+        {
+            "required": true,
             "file": "commands/HelpCommand.php"
         },
         {
