@@ -1,6 +1,7 @@
-<?php /** @noinspection PhpMissingFieldTypeInspection */
+<?php
 
-/** @noinspection PhpUndefinedClassInspection */
+    /** @noinspection PhpMissingFieldTypeInspection */
+    /** @noinspection PhpUndefinedClassInspection */
     /** @noinspection PhpUnused */
     /** @noinspection PhpIllegalPsrClassPathInspection */
 
@@ -16,8 +17,8 @@
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Commands\UserCommands\BlacklistCommand;
+    use Longman\TelegramBot\Commands\UserCommands\FinalVerdictCommand;
     use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
-    use Longman\TelegramBot\Commands\UserCommands\SettingsCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -26,6 +27,7 @@
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\DetectionAction;
     use SpamProtection\Abstracts\TelegramUserStatus;
+    use SpamProtection\Abstracts\VotesDueRecordStatus;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\ChannelStatus;
     use SpamProtection\Objects\ChatSettings;
@@ -68,7 +70,7 @@
         /**
          * @var string
          */
-        protected $version = '2.0.1';
+        protected $version = '2.0.2';
 
         /**
          * The whois command used for finding targets
@@ -88,7 +90,6 @@
          * @throws NsfwClassificationException
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
-         * @throws UnsupportedImageTypeException
          * @throws \CoffeeHouse\Exceptions\DatabaseException
          * @noinspection DuplicatedCode
          * @noinspection PhpMissingReturnTypeInspection
@@ -112,6 +113,7 @@
             }
 
             $this->handleMessageSpeed();
+            $this->handleFinalVerdict();
 
             // Obtain the User Stats and Chat Settings
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
@@ -153,6 +155,31 @@
             $this->handleNsfwFilter($this->WhoisCommand->ChatClient, $this->WhoisCommand->UserClient);
             $this->handleLanguageDetection();
             return null;
+        }
+
+        /**
+         * Handles the final verdict
+         */
+        public function handleFinalVerdict()
+        {
+            $VotesDueRecord = SpamProtectionBot::getSpamProtection()->getVotesDueManager()->getCurrentPool(false);
+            if(time() >= $VotesDueRecord->DueTimestamp && $VotesDueRecord->Status == VotesDueRecordStatus::CollectingData)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Running final verdict event", "handleFinalVerdict");
+                $FinalVerdictCommand = new FinalVerdictCommand($this->telegram, $this->update);
+
+                try
+                {
+                    $FinalVerdictCommand->processFinalVerdict();
+
+                    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Final Verdict processed!", "handleFinalVerdict");
+                }
+                catch(Exception $e)
+                {
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to handle the final verdict event", "handleFinalVerdict");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleFinalVerdict");
+                }
+            }
         }
 
         /**
@@ -1734,6 +1761,25 @@
          */
         private static function logDetectedSpam(Message $message,  MessageLog $messageLog, TelegramClient $userClient, $channelClient=null): ?string
         {
+            // Attempt to create a voting pool
+            $VotingPool = null;
+            $VotingPoll = null;
+
+            try
+            {
+                $VotingPool = SpamProtectionBot::getSpamProtection()->getVotesDueManager()->getCurrentPool(false);
+                $VotingPoll = SpamProtectionBot::getSpamProtection()->getPredictionVotesManager()->createNewVote(
+                    $messageLog, $message, $VotingPool
+                );
+                $VotingPool->Records->addRecord($VotingPoll);
+                SpamProtectionBot::getSpamProtection()->getVotesDueManager()->updatePool($VotingPool);
+            }
+            catch(Exception $e)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to create a voting pool", "logDetectedSpam");
+                SpamProtectionBot::getLogHandler()->logException($e, "logDetectedSpam");
+            }
+
             $LogMessage = "#spam_prediction\n\n";
 
             $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n";
@@ -1758,22 +1804,57 @@
 
             if($channelClient !== null)
             {
-                $InlineKeyboard = new InlineKeyboard(
-                    [
-                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
-                        ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID],
-                        ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->ForwardFromChat->ID],
-                    ]
-                );
+                if($VotingPoll == null)
+                {
+                    $InlineKeyboard = new InlineKeyboard(
+                        [
+                            ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
+                            ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID],
+                            ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->ForwardFromChat->ID],
+                        ]
+                    );
+                }
+                else
+                {
+                    $InlineKeyboard = new InlineKeyboard(
+                        [
+                            ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
+                            ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID],
+                            ["text" => "Channel Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->ForwardFromChat->ID],
+                        ],
+                        [
+                            ["text" => "\u{2714} Correct (0)", "callback_data" => "0501" . $VotingPoll->ID],
+                            ["text" => "\u{274C} Incorrect (0)", "callback_data" => "0500" . $VotingPoll->ID]
+                        ]
+                    );
+                }
+
             }
             else
             {
-                $InlineKeyboard = new InlineKeyboard(
-                    [
-                        ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
-                        ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID]
-                    ]
-                );
+                if($VotingPoll == null)
+                {
+                    $InlineKeyboard = new InlineKeyboard(
+                        [
+                            ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
+                            ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID]
+                        ]
+                    );
+                }
+                else
+                {
+                    $InlineKeyboard = new InlineKeyboard(
+                        [
+                            ["text" => "User Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->User->ID],
+                            ["text" => "Chat Info", "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $messageLog->Chat->ID]
+                        ],
+                        [
+                            ["text" => "\u{2714} Correct (0)", "callback_data" => "0501" . $VotingPoll->ID],
+                            ["text" => "\u{274C} Incorrect (0)", "callback_data" => "0500" . $VotingPoll->ID]
+                        ]
+                    );
+                }
+
             }
 
             $Response = Request::sendMessage([

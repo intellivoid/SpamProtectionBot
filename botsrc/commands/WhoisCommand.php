@@ -48,7 +48,8 @@
         /**
          * @var string
          */
-        protected $usage = '/whois [None/Reply/ID/Private Telegram ID/Username/Mention]';
+        protected $usage = '/whois [None/Reply/ID/Private Telegram ID/Username/
+        ]';
 
         /**
          * @var string
@@ -811,6 +812,47 @@
         }
 
         /**
+         * Generates a private mention that cannot be linked back to the original user but can be used as a way to
+         * uniquely identify a user.
+         *
+         * @param TelegramClient $client
+         * @param bool $include_username
+         * @return string
+         */
+        public static function generatePrivateMention(TelegramClient $client)
+        {
+            switch($client->Chat->Type)
+            {
+                case TelegramChatType::Private:
+                    /** @noinspection DuplicatedCode */
+                    if($client->User->LastName == null)
+                    {
+                        return self::escapeHTML($client->User->FirstName);
+                    }
+                    else
+                    {
+                        return self::escapeHTML($client->User->FirstName . " " . $client->User->LastName);
+                    }
+
+                case TelegramChatType::SuperGroup:
+                case TelegramChatType::Group:
+                case TelegramChatType::Channel:
+                    /** @noinspection DuplicatedCode */
+                    if($client->Chat->Title !== null)
+                    {
+                        return self::escapeHTML($client->Chat->Title);
+                    }
+
+                    break;
+
+                default:
+                    return "Unknown";
+            }
+
+            return "Unknown";
+        }
+
+        /**
          * Command execute method
          *
          * @return ServerResponse
@@ -1355,15 +1397,10 @@
                     LanguageCommand::localizeChatText($this, "Username: %s", ['s']) ) . " (@" . $user_client->User->Username . ")\n";
             }
 
-            if($user_client->User->IsBot == false && $UserStatus->LargeSpamGeneralizedID !== null)
+            if($user_client->User->IsBot == false)
             {
-                if($UserStatus->GeneralizedSpamProbability > 0 && $UserStatus->GeneralizedHamProbability > 0)
-                {
-                    $TrustPrediction = 100 * (0.5**($UserStatus->GeneralizedSpamProbability/$UserStatus->GeneralizedHamProbability));
-
-                    $Response .= str_ireplace("%s", "<code>" . $TrustPrediction . "</code>",
-                            LanguageCommand::localizeChatText($this, "Trust Prediction: %s", ['s']) ) . "\n";
-                }
+                $Response .= str_ireplace("%s", "<code>" . $UserStatus->getTrustPrediction() . "</code>",
+                        LanguageCommand::localizeChatText($this, "Trust Prediction: %s", ['s']) ) . "\n";
             }
 
             if($UserStatus->LargeLanguageGeneralizedID !== null)
@@ -1378,8 +1415,8 @@
                         LanguageCommand::localizeChatText($this, "Potential Spammer: %s", ['s']) ) . "\n";
             }
 
-            $Response .= str_ireplace("%s", "<code>" . $UserStatus->calculateAverageMessagesPerMinute() . "</code>",
-                    LanguageCommand::localizeChatText($this, "Messages per minute: %s", ['s']) ) . "\n";
+            $Response .= str_ireplace("%s", "<code>" . $UserStatus->ReputationPoints . "</code>",
+                    LanguageCommand::localizeChatText($this, "Reputation: %s", ['s']) ) . "\n";
 
             if($UserStatus->IsWhitelisted)
             {
@@ -1410,26 +1447,6 @@
                         break;
                 }
 
-            }
-
-
-            if($UserStatus->IsOperator)
-            {
-                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
-                        LanguageCommand::localizeChatText($this, "Operator: %s", ['s']) ) . "\n";
-            }
-
-            if($UserStatus->IsAgent)
-            {
-                $Response .= str_ireplace("%s", "<code>" . LanguageCommand::localizeChatText($this, "True") . "</code>",
-                        LanguageCommand::localizeChatText($this, "Spam Detection Agent: %s", ['s']) ) . "\n";
-            }
-
-
-            if($UserStatus->ConfiguredLanguage !== null)
-            {
-                $Response .= str_ireplace("%s", "<code>" .  $UserStatus->ConfiguredLanguage . "</code>",
-                        LanguageCommand::localizeChatText($this, "Configured Language: %s", ['s']) ) . "\n";
             }
 
             $Response .= str_ireplace("%s", "<a href=\"tg://user?id=" . $user_client->User->ID . "\">tg://user?id=" . $user_client->User->ID . "</a>",

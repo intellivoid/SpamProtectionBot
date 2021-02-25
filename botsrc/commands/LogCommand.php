@@ -8,13 +8,21 @@
 
     use Exception;
     use Longman\TelegramBot\Commands\UserCommand;
+    use Longman\TelegramBot\Entities\CallbackQuery;
     use Longman\TelegramBot\Entities\InlineKeyboard;
+    use Longman\TelegramBot\Entities\InlineKeyboardButton;
     use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use pop\pop;
     use SpamProtection\Abstracts\BlacklistFlag;
+    use SpamProtection\Abstracts\PredictionVotesStatus;
+    use SpamProtection\Abstracts\SearchMethods\PredictionVoteSearchMethod;
+    use SpamProtection\Abstracts\VoteVerdict;
+    use SpamProtection\Exceptions\InvalidSearchMethodException;
+    use SpamProtection\Exceptions\InvalidVoteVerdictException;
+    use SpamProtection\Exceptions\PredictionVotesNotFoundException;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
@@ -22,6 +30,7 @@
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
+    use VerboseAdventure\Abstracts\EventType;
 
     /**
      * Log message command
@@ -711,6 +720,127 @@
                 }
             }
 
+        }
+
+        /**
+         * Handles the voting callback report
+         *
+         * @param CallbackQuery|null $callbackQuery
+         * @param WhoisCommand $whoisCommand
+         * @return ServerResponse|null
+         */
+        public function handleVotingCallback(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand): ?ServerResponse
+        {
+            $TargetClient = null;
+
+            if ($callbackQuery !== null)
+            {
+                $UserStatus = SettingsManager::getUserStatus($whoisCommand->CallbackQueryUserClient);
+                $TargetClient = $whoisCommand->CallbackQueryUserClient;
+            }
+            else
+            {
+                $UserStatus = SettingsManager::getUserStatus($whoisCommand->UserClient);
+                $TargetClient = $whoisCommand->UserClient;
+            }
+
+            if($UserStatus->IsBlacklisted)
+            {
+                return $callbackQuery->answer(
+                    [
+                        "text" => LanguageCommand::localizeChatText($whoisCommand, "You cannot cast a vote because you are blacklisted"),
+                        "show_alert" => true
+                    ]);
+            }
+
+            if($UserStatus->getTrustPrediction() < 80)
+            {
+                return $callbackQuery->answer(
+                    [
+                        "text" => LanguageCommand::localizeChatText($whoisCommand, "You must have a trust prediction over 80 in order to vote."),
+                        "show_alert" => true
+                    ]);
+            }
+
+            if($callbackQuery !== null)
+            {
+                try
+                {
+                    $VoteVerdict = null;
+                    $PollID = null;
+
+                    if(mb_substr($this->getCallbackQuery()->getData(), 2, 2) == "00")
+                    {
+                        $VoteVerdict = VoteVerdict::Nay;
+                    }
+                    else
+                    {
+                        $VoteVerdict = VoteVerdict::Yay;
+                    }
+
+                    $PollID = mb_substr($this->getCallbackQuery()->getData(), 4);
+                    $PredictionVote = SpamProtectionBot::getSpamProtection()->getPredictionVotesManager()->getPredictionVote(
+                        PredictionVoteSearchMethod::ById, $PollID
+                    );
+
+                    if($PredictionVote->Status == PredictionVotesStatus::Closed)
+                    {
+                        return $callbackQuery->answer(
+                            [
+                                "text" => LanguageCommand::localizeChatText($whoisCommand, "The poll for this prediction was closed, try voting on the most recent spam predictions"),
+                                "show_alert" => true
+                            ]);
+                    }
+
+                    $VerdictCastResults = $PredictionVote->Votes->placeVerdict($TargetClient, $VoteVerdict);
+                    SpamProtectionBot::getSpamProtection()->getPredictionVotesManager()->updatePredictionVote($PredictionVote);
+
+                    // Update the inline keyboard (or try to at least)
+                    try
+                    {
+                        $InlineKeyboard = new InlineKeyboard($callbackQuery->getMessage()->getProperty("reply_markup"));
+
+                        $FirstRow = [];
+                        /** @var InlineKeyboardButton $inlineKeyboardButton */
+                        foreach($InlineKeyboard->getProperty("inline_keyboard")[0] as $inlineKeyboardButton)
+                        {
+                            $FirstRow[] = $inlineKeyboardButton->getRawData();
+                        }
+
+                        Request::editMessageReplyMarkup([
+                            "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
+                            "message_id" => $callbackQuery->getMessage()->getMessageId(),
+                            "reply_markup" => new InlineKeyboard($FirstRow, [
+                                ["text" => "\u{2714} Correct (" . $PredictionVote->Votes->getYays() . ")", "callback_data" => "0501" . $PollID],
+                                ["text" => "\u{274C} Incorrect (" . $PredictionVote->Votes->getNays() . ")", "callback_data" => "0500" . $PollID],
+                            ])
+                        ]);
+                    }
+                    catch(Exception $e)
+                    {
+                        unset($e);
+                    }
+
+                    return $callbackQuery->answer(
+                        [
+                            "text" => LanguageCommand::localizeChatText($whoisCommand, "Vote successfully casted")
+                        ]);
+                }
+                catch(Exception $e)
+                {
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to handle the cast vote event", "handleVotingCallback");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleVotingCallback");
+
+                    return $callbackQuery->answer(
+                        [
+                            "text" => LanguageCommand::localizeChatText($whoisCommand, "There was an error while trying to cast your vote, report this issue to our support group."),
+                            "show_alert" => true
+                        ]);
+                }
+            }
+
+
+            return null;
         }
 
         /**

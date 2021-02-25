@@ -4,6 +4,7 @@
 
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
+    use Longman\TelegramBot\Commands\UserCommands\LogCommand;
     use Longman\TelegramBot\Commands\UserCommands\SettingsCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
@@ -84,6 +85,10 @@
                 case "04": // Close the current language dialog
                     $StartCommand = new StartCommand($this->telegram, $this->update);
                     return $StartCommand->handleAppealCallback($this->getCallbackQuery(), $this->WhoisCommand);
+
+                case "05":
+                    $LogCommand = new LogCommand($this->telegram, $this->update);
+                    return $LogCommand->handleVotingCallback($this->getCallbackQuery(), $this->WhoisCommand);
 
                 default:
                     return $this->getCallbackQuery()->answer([
