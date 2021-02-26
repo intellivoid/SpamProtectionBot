@@ -1321,7 +1321,7 @@
                 if($UserStatus->GeneralizedSpamLabel == "spam")
                 {
                     $RequiresExtraNewline = true;
-                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This user may be an potential spammer") . "</b>\n";
+                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This user may be an potential spammer (May not be accurate at this time)") . "</b>\n";
                 }
             }
 
@@ -1653,7 +1653,7 @@
                 if($ChannelStatus->GeneralizedSpamProbability > $ChannelStatus->GeneralizedHamProbability)
                 {
                     $RequiresExtraNewline = true;
-                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This channel may be promoting spam!") . "</b>\n";
+                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This channel may be promoting spam! (May not be accurate)") . "</b>\n";
                 }
             }
 

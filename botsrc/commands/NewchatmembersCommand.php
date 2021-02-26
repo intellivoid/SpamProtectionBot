@@ -143,6 +143,9 @@
          */
         public function handleActiveSpammer(TelegramClient $userClient): ?ServerResponse
         {
+            // Disabled for now
+            return null;
+
             if($userClient->User->IsBot)
             {
                 return null;
