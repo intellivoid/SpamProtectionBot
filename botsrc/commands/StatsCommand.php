@@ -15,6 +15,7 @@
     use msqg\QueryBuilder;
     use pop\pop;
     use SpamProtection\Managers\SettingsManager;
+    use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Objects\TelegramClient;
@@ -144,7 +145,21 @@
                 "official_channels" => 0,
                 "spam_channels" => 0,
                 "verified_chats" => 0,
-                "verified_accounts" => 0
+                "verified_accounts" => 0,
+                "blacklist_flags" => [
+                    "0xSP" => 0,
+                    "0xSPAM" => 0,
+                    "0xNSFW" => 0,
+                    "0xPRIVATE" => 0,
+                    "0xPIRACY" => 0,
+                    "0xCACP" => 0,
+                    "0xRAID" => 0,
+                    "0xSCAM" => 0,
+                    "0xIMPER" => 0,
+                    "0xEVADE" => 0,
+                    "0xMASSADD" => 0,
+                    "0xNAMESPAM" => 0
+                ]
             );
 
             while($row = $QueryResults->fetch_assoc())
@@ -192,6 +207,44 @@
                         if($UserStatus->IsBlacklisted)
                         {
                             $Results["blacklisted_users"] += 1;
+                            switch($UserStatus->BlacklistFlag) {
+                                case BlacklistFlag::Special:
+                                    $Results["blacklist_flags"]["0xSP"] += 1;
+                                    break;
+                                case BlacklistFlag::Spam:
+                                    $Results["blacklist_flags"]["0xSPAM"] += 1;
+                                    break;
+                                case BlacklistFlag::PornographicSpam:
+                                    $Results["blacklist_flags"]["0xNSFW"] += 1;
+                                    break;
+                                case BlacklistFlag::PrivateSpam:
+                                    $Results["blacklist_flags"]["0xPRIVATE"] += 1;
+                                    break;
+                                case BlacklistFlag::PiracySpam:
+                                    $Results["blacklist_flags"]["0xPRIVACY"] += 1;
+                                    break;
+                                case BlacklistFlag::ChildAbuse:
+                                    $Results["blacklist_flags"]["0xCACP"] += 1;
+                                    break;
+                                case BlacklistFlag::Raid:
+                                    $Results["blacklist_flags"]["0xRAID"] += 1;
+                                    break;
+                                case BlacklistFlag::Scam:
+                                    $Results["blacklist_flags"]["0xSCAM"] += 1;
+                                    break;
+                                case BlacklistFlag::Impersonation:
+                                    $Results["blacklist_flags"]["0xIMPER"] += 1;
+                                    break;
+                                case BlacklistFlag::BanEvade:
+                                    $Results["blacklist_flags"]["0xEVADE"] += 1;
+                                    break;
+                                case BlacklistFlag::MassAdding:
+                                    $Results["blacklist_flags"]["0xMASSADD"] += 1;
+                                    break;                                
+                                case BlacklistFlag::NameSpam:
+                                    $Results["blacklist_flags"]["0xNAMESPAM"] += 1;
+                                    break;
+                            }
                         }
 
                         if($CurrentClient->AccountID > 0)
@@ -266,6 +319,7 @@
                     str_ireplace("%s", "<code>" . number_format($Results["spam_channels"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Spam Channels: %s", ['s'])) . "\n".
                     str_ireplace("%s", "<code>" . number_format($Results["verified_chats"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Verified Chats: %s", ['s'])) . "\n".
                     str_ireplace("%s", "<code>" . number_format($Results["verified_accounts"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Verified Accounts: %s", ['s'])) . "\n"
+                    str_ireplace("%s", "<code>" . json_encode($Results["blacklist_flags"], JSON_PRETTY_PRINT) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Blacklist Flags: %s", ['s'])) . "\n"
             ]);
         }
     }
