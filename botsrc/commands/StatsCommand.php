@@ -318,7 +318,7 @@
                     str_ireplace("%s", "<code>" . number_format($Results["official_channels"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Official Channels: %s", ['s'])) . "\n".
                     str_ireplace("%s", "<code>" . number_format($Results["spam_channels"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Spam Channels: %s", ['s'])) . "\n".
                     str_ireplace("%s", "<code>" . number_format($Results["verified_chats"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Verified Chats: %s", ['s'])) . "\n".
-                    str_ireplace("%s", "<code>" . number_format($Results["verified_accounts"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Verified Accounts: %s", ['s'])) . "\n"
+                    str_ireplace("%s", "<code>" . number_format($Results["verified_accounts"]) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Verified Accounts: %s", ['s'])) . "\n".
                     str_ireplace("%s", "<code>" . json_encode($Results["blacklist_flags"], JSON_PRETTY_PRINT) . "</code>", LanguageCommand::localizeChatText($this->WhoisCommand, "Blacklist Flags: %s", ['s'])) . "\n"
             ]);
         }
