@@ -114,7 +114,7 @@
         /**
          * Processes the final verdict and privately sends the dataset to the main operator
          *
-         * @return ServerResponse
+         * @return ServerResponse|null
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws InvalidSearchMethodException
@@ -132,6 +132,11 @@
             $FinalResults = SpamProtectionBot::getSpamProtection()->getVotesDueManager()->finalizeResults(
                 $VotesDueRecord, SpamProtectionBot::getTelegramClientManager()
             );
+
+            if($FinalResults == null)
+            {
+                return null;
+            }
 
             $ShowContributors = true;
             $TopContributors = "Top " . count($FinalResults->TopUsers) . " contributors\n\n";
