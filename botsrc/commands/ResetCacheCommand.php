@@ -74,7 +74,6 @@
         public function execute()
         {
             // Find clients
-            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
             $this->WhoisCommand->findClients();
 
@@ -174,6 +173,12 @@
         public function updateCache(WhoisCommand $whoisCommand)
         {
             $ChatClient = $whoisCommand->ChatClient;
+            if($ChatClient == null)
+                $ChatClient = $whoisCommand->CallbackQueryChatClient;
+
+            if($ChatClient == null)
+                return;
+
             $ChatSettings = SettingsManager::getChatSettings($ChatClient);
 
             try
@@ -226,6 +231,12 @@
             $this->updateCache($whoisCommand);
 
             $ChatClient = $whoisCommand->ChatClient;
+            if($ChatClient == null)
+                $ChatClient = $whoisCommand->CallbackQueryChatClient;
+
+            if($ChatClient == null)
+                return false;
+
             $ChatSettings = SettingsManager::getChatSettings($ChatClient);
 
             foreach($ChatSettings->Administrators as $chatMember)

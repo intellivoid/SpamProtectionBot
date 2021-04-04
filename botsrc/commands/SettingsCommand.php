@@ -140,7 +140,11 @@
 
             $ResetCacheCommand = new ResetCacheCommand($this->telegram, $this->update);
 
-            if($ResetCacheCommand->isAdmin($this->WhoisCommand, $this->WhoisCommand->CallbackQueryUserClient) == false)
+            $UserClient = $this->WhoisCommand->CallbackQueryUserClient;
+            if($UserClient == null)
+                $UserClient = $this->WhoisCommand->UserClient;
+
+            if($ResetCacheCommand->isAdmin($this->WhoisCommand, $UserClient) == false)
             {
                 return $callbackQuery->answer([
                     "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "You need to be a chat administrator to preform this action"),
