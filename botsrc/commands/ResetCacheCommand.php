@@ -1,5 +1,6 @@
 <?php
 
+    /** @noinspection PhpMissingFieldTypeInspection */
     /** @noinspection PhpUndefinedClassInspection */
     /** @noinspection PhpUnused */
     /** @noinspection PhpIllegalPsrClassPathInspection */
@@ -7,20 +8,18 @@
     namespace Longman\TelegramBot\Commands\UserCommands;
 
     use Longman\TelegramBot\Commands\UserCommand;
-    use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
-    use pop\pop;
+    use SpamProtection\Abstracts\TelegramUserStatus;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\TelegramObjects\ChatMember;
-    use SpamProtection\Utilities\Hashing;
     use SpamProtectionBot;
-    use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
     use TelegramClientManager\Exceptions\InvalidSearchMethod;
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
+    use TelegramClientManager\Objects\TelegramClient;
     use VerboseAdventure\Abstracts\EventType;
 
     /**
@@ -162,5 +161,95 @@
                 "parse_mode" => "html",
                 "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "There was an unknown issue while trying to update the admin cache.")
             ]);
+        }
+
+        /**
+         * Attempts to update the admin cache if it's outadted
+         *
+         * @param WhoisCommand $whoisCommand
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         */
+        public function updateCache(WhoisCommand $whoisCommand)
+        {
+            $ChatClient = $whoisCommand->ChatClient;
+            $ChatSettings = SettingsManager::getChatSettings($ChatClient);
+
+            try
+            {
+                // Update the admin cache if outdated
+                /** @noinspection DuplicatedCode */
+                if($ChatClient->Chat->Type == TelegramChatType::Group || $ChatClient->Chat->Type == TelegramChatType::SuperGroup)
+                {
+                    if(((int)time() - $ChatSettings->AdminCacheLastUpdated) > 120)
+                    {
+                        $Results = Request::getChatAdministrators(["chat_id" => $ChatClient->Chat->ID]);
+
+                        if($Results->isOk())
+                        {
+                            /** @var array $ChatMembersResponse */
+                            $ChatMembersResponse = $Results->getRawData()["result"];
+                            $ChatSettings->Administrators = array();
+                            $ChatSettings->AdminCacheLastUpdated = (int)time();
+
+                            foreach($ChatMembersResponse as $chatMember)
+                            {
+                                $ChatSettings->Administrators[] = ChatMember::fromArray($chatMember);
+                            }
+
+                            $whoisCommand->ChatClient = SettingsManager::updateChatSettings($ChatClient, $ChatSettings);
+                            SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->updateClient($ChatClient);
+                        }
+                    }
+                }
+            }
+            catch(Exception $e)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to process handleMessage (AdminCacheUpdate)", "handleMessage");
+                SpamProtectionBot::getLogHandler()->logException($e, "handleMessage");
+            }
+        }
+
+        /**
+         * Determines if the given client is an administrator or not
+         *
+         * @param WhoisCommand $whoisCommand
+         * @param TelegramClient $telegramClient
+         * @return bool
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
+         */
+        public function isAdmin(WhoisCommand $whoisCommand, TelegramClient $telegramClient): bool
+        {
+            $this->updateCache($whoisCommand);
+
+            $ChatClient = $whoisCommand->ChatClient;
+            $ChatSettings = SettingsManager::getChatSettings($ChatClient);
+
+            foreach($ChatSettings->Administrators as $chatMember)
+            {
+                if($chatMember->User->ID == $telegramClient->User->ID)
+                {
+                    if($chatMember->Status == TelegramUserStatus::Administrator)
+                    {
+                        return True;
+                    }
+
+                    if($chatMember->Status == TelegramUserStatus::Creator)
+                    {
+                        return True;
+                    }
+                }
+            }
+
+            // Anonymous bot.
+            if($telegramClient->User->ID == 1087968824)
+            {
+                return True;
+            }
+
+            return false;
         }
     }

@@ -99,28 +99,9 @@
                 }
             }
 
-            $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
+            $ResetCacheCommand = new ResetCacheCommand($this->telegram, $this->update);
 
-            // Determine if the user is an admin or creator
-            $IsAdmin = false;
-            foreach($ChatSettings->Administrators as $chatMember)
-            {
-                if($chatMember->User->ID == $this->WhoisCommand->UserClient->User->ID)
-                {
-                    if($chatMember->Status == TelegramUserStatus::Administrator || $chatMember->Status == TelegramUserStatus::Creator)
-                    {
-                        $IsAdmin = true;
-                    }
-
-                }
-            }
-
-            if($this->WhoisCommand->UserClient->User->Username == "GroupAnonymousBot" && $this->WhoisCommand->UserClient->User->IsBot)
-            {
-                $IsAdmin = true;
-            }
-
-            if($IsAdmin == false)
+            if($ResetCacheCommand->isAdmin($this->WhoisCommand, $this->WhoisCommand->UserClient) == false)
             {
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
@@ -150,27 +131,16 @@
                 $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
             }
 
+
             $this->WhoisCommand->findCallbackClients($callbackQuery);
 
             $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
             $DeepAnalytics->tally('tg_spam_protection', 'callback_settings_query', 0);
             $DeepAnalytics->tally('tg_spam_protection', 'callback_settings_query', (int)$this->WhoisCommand->CallbackQueryChatObject->ID);
 
-            // Verify if the user is an administrator
-            $UserChatMember = Request::getChatMember([
-                "user_id" => $this->WhoisCommand->CallbackQueryUserObject->ID,
-                "chat_id" => $this->WhoisCommand->CallbackQueryChatObject->ID
-            ]);
+            $ResetCacheCommand = new ResetCacheCommand($this->telegram, $this->update);
 
-            if($UserChatMember->isOk() == false)
-            {
-                return $callbackQuery->answer([
-                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "You need to be a chat administrator to preform this action"),
-                    "show_alert" => true
-                ]);
-            }
-
-            if($UserChatMember->getResult()->status !== "creator" && $UserChatMember->getResult()->status !== "administrator")
+            if($ResetCacheCommand->isAdmin($this->WhoisCommand, $this->WhoisCommand->CallbackQueryUserClient) == false)
             {
                 return $callbackQuery->answer([
                     "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "You need to be a chat administrator to preform this action"),
