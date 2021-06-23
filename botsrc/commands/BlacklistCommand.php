@@ -690,6 +690,17 @@
                     }
 
                 case TelegramChatType::Private:
+                    // Don't allow operators to blacklist the bot itself.
+                    if($targetClient->User->Username == TELEGRAM_BOT_NAME)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->DestinationChat->ID,
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "parse_mode" => "html",
+                            "text" => "You can't blacklist @" . TELEGRAM_BOT_NAME
+                        ]);
+                    }
+
                     return self::blacklistUser($targetClient, $operatorClient, $blacklistFlag, $originalPrivateID);
 
                 case TelegramChatType::Channel:
