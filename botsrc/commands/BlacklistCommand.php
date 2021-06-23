@@ -555,7 +555,7 @@
                     return "Scamming";
 
                 case BlacklistFlag::Special:
-                    return "Special Reason, consult @" . MAIN_OPERATOR_USERNAME;
+                    return "Special Reason, consult main operators in @SpamProtectionSupport";
 
                 case BlacklistFlag::MassAdding:
                     return "Mass adding users to groups/channels";
@@ -830,7 +830,7 @@
                 switch(str_ireplace('X', 'x', strtoupper($blacklistFlag)))
                 {
                     case BlacklistFlag::Special:
-                        if($operatorClient->User->Username !== MAIN_OPERATOR_USERNAME)
+                        if(!in_array($operatorClient->User->ID, MAIN_OPERATOR_IDS, true))
                         {
                             if($this->PrivateMode)
                             {
@@ -846,7 +846,7 @@
                                     "chat_id" => $this->DestinationChat->ID,
                                     "reply_to_message_id" => $this->ReplyToID,
                                     "parse_mode" => "html",
-                                    "text" => "Only " . MAIN_OPERATOR_USERNAME . " can blacklist using the flag 0xSP"
+                                    "text" => "Only main operators can blacklist using the flag 0xSP"
                                 ]);
                             }
                             else
@@ -1225,7 +1225,7 @@
                 switch(str_ireplace('X', 'x', strtoupper($blacklistFlag)))
                 {
                     case BlacklistFlag::Special:
-                        if($operatorClient->User->Username !== MAIN_OPERATOR_USERNAME)
+                        if(!in_array($operatorClient->User->ID, MAIN_OPERATOR_IDS, true))
                         {
                             if($this->PrivateMode)
                             {
@@ -1241,7 +1241,7 @@
                                     "chat_id" => $this->DestinationChat->ID,
                                     "reply_to_message_id" => $this->ReplyToID,
                                     "parse_mode" => "html",
-                                    "text" => "Only " . MAIN_OPERATOR_USERNAME . " can blacklist using the flag 0xSP"
+                                    "text" => "Only main operators can blacklist using the flag 0xSP"
                                 ]);
                             }
                             else

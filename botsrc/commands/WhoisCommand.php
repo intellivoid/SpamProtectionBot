@@ -1304,10 +1304,10 @@
             $RequiresExtraNewline = false;
             $Response = "<b>$title</b>\n\n";
 
-            if($user_client->User->Username == MAIN_OPERATOR_USERNAME)
+            if(in_array($user_client->User->ID, MAIN_OPERATOR_IDS, true))
             {
                 $RequiresExtraNewline = true;
-                $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This user is the main operator") . "\n";
+                $Response .= "\u{2705} " . LanguageCommand::localizeChatText($this, "This user is a main operator") . "\n";
             }
 
             if($user_client->AccountID !== null && $user_client->AccountID !== 0)

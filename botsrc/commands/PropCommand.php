@@ -90,7 +90,7 @@
             }
 
 
-            if($this->WhoisCommand->UserObject->Username !== MAIN_OPERATOR_USERNAME)
+            if(!in_array($this->WhoisCommand->UserObject->ID, MAIN_OPERATOR_IDS, true))
             {
                 return null;
             }

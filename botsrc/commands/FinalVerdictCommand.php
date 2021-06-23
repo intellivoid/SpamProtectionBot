@@ -91,7 +91,7 @@
                 return null;
             }
 
-            if($this->WhoisCommand->UserClient->User->Username !== MAIN_OPERATOR_USERNAME)
+            if(!in_array($this->WhoisCommand->UserClient->User->ID, MAIN_OPERATOR_IDS, true))
             {
                 return null;
             }
@@ -189,30 +189,39 @@
 
             try
             {
-                $MainOperator = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->getClient(
-                    TelegramClientSearchMethod::byUsername, MAIN_OPERATOR_USERNAME
-                );
-
-                if($FinalResults->HamDatasetPath !== null)
+                foreach (MAIN_OPERATOR_IDS as $MainOperatorID)
                 {
-                    Request::sendDocument([
-                        "chat_id" => $MainOperator->Chat->ID,
-                        "document" => $FinalResults->HamDatasetPath,
-                        "caption" => hash("crc32b", $VotesDueRecord->ID)
-                    ]);
+                    $MainOperator = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->getClient(
+                        TelegramClientSearchMethod::byUsername, $MainOperatorID
+                    );
 
-                    unlink($FinalResults->HamDatasetPath);
+                    if($FinalResults->HamDatasetPath !== null)
+                    {
+                        Request::sendDocument([
+                            "chat_id" => $MainOperator->Chat->ID,
+                            "document" => $FinalResults->HamDatasetPath,
+                            "caption" => hash("crc32b", $VotesDueRecord->ID)
+                        ]);
+                    }
+
+                    if($FinalResults->SpamDatasetPath !== null)
+                    {
+                        Request::sendDocument([
+                            "chat_id" => $MainOperator->Chat->ID,
+                            "document" => $FinalResults->SpamDatasetPath,
+                            "caption" => hash("crc32b", $VotesDueRecord->ID)
+                        ]);
+                    }
                 }
 
                 if($FinalResults->SpamDatasetPath !== null)
                 {
-                    Request::sendDocument([
-                        "chat_id" => $MainOperator->Chat->ID,
-                        "document" => $FinalResults->SpamDatasetPath,
-                        "caption" => hash("crc32b", $VotesDueRecord->ID)
-                    ]);
-
                     unlink($FinalResults->SpamDatasetPath);
+                }
+
+                if($FinalResults->HamDatasetPath !== null)
+                {
+                    unlink($FinalResults->HamDatasetPath);
                 }
             }
             catch(Exception $e)

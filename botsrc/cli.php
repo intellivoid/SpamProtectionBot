@@ -80,7 +80,11 @@
 
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName']);
     define("LOG_CHANNEL", "SpamProtectionLogs");
-    define("MAIN_OPERATOR_USERNAME", "IntellivoidSupport");
+    define("MAIN_OPERATOR_IDS", [
+        "991157148", // IntellivoidSupport
+        "860831767", // Justasic
+        "1067188884" // NotAditya
+    ]);
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
