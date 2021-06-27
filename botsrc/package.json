@@ -2,7 +2,7 @@
     "package": {
         "package_name": "net.intellivoid.spam_protection_bot",
         "name": "Telegram SpamProtectionBot",
-        "version": "2.0.2.9",
+        "version": "2.0.3.0",
         "author": "Zi Xing Narrakas",
         "organization": "Intellivoid",
         "description": "Protects your group from unwanted spam using machine learning from CoffeeHouse.",
@@ -97,11 +97,7 @@
         },
         {
             "required": true,
-            "file": "worker.php"
-        },
-        {
-            "required": true,
-            "file": "commands/CreateInviteCommand.php"
+            "file": "commands/BakaMitaiCommand.php"
         },
         {
             "required": true,
@@ -109,7 +105,15 @@
         },
         {
             "required": true,
-            "file": "commands/PropCommand.php"
+            "file": "commands/BlacklistCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/CallbackqueryCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/CreateInviteCommand.php"
         },
         {
             "required": true,
@@ -117,11 +121,15 @@
         },
         {
             "required": true,
+            "file": "commands/GenericmessageCommand.php"
+        },
+        {
+            "required": true,
             "file": "commands/HelpCommand.php"
         },
         {
             "required": true,
-            "file": "commands/GenericmessageCommand.php"
+            "file": "commands/LCommand.php"
         },
         {
             "required": true,
@@ -129,7 +137,11 @@
         },
         {
             "required": true,
-            "file": "commands/SettingsCommand.php"
+            "file": "commands/LogCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/MsgInfoCommand.php"
         },
         {
             "required": true,
@@ -137,23 +149,27 @@
         },
         {
             "required": true,
-            "file": "commands/ResetCacheCommand.php"
-        },
-        {
-            "required": true,
             "file": "commands/PredictionsCommand.php"
         },
         {
             "required": true,
-            "file": "commands/BakaMitaiCommand.php"
+            "file": "commands/PropCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/ResetCacheCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/ResetPredictionsCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/SettingsCommand.php"
         },
         {
             "required": true,
             "file": "commands/StartCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/LogCommand.php"
         },
         {
             "required": true,
@@ -165,38 +181,38 @@
         },
         {
             "required": true,
-            "file": "commands/MsgInfoCommand.php"
+            "file": "commands/OppromoteCommand.php"
         },
         {
             "required": true,
-            "file": "commands/CallbackqueryCommand.php"
+            "file": "commands/AgdemoteCommand.php"
         },
         {
             "required": true,
-            "file": "commands/BlacklistCommand.php"
+            "file": "commands/OpdemoteCommand.php"
         },
         {
             "required": true,
-            "file": "commands/LCommand.php"
+            "file": "commands/AgpromoteCommand.php"
         },
         {
             "required": true,
-            "file": "commands/ResetPredictionsCommand.php"
+            "file": "worker.php"
         }
     ],
     "files": [
-        "package.json",
         ".htaccess",
-        "commands/help_docs/language.html",
+        "commands/help_docs/blacklist_flags.html",
         "commands/help_docs/false_detections.html",
+        "commands/help_docs/help.html",
         "commands/help_docs/help.png",
-        "commands/help_docs/settings.html",
+        "commands/help_docs/language.html",
         "commands/help_docs/msginfo.html",
+        "commands/help_docs/settings.html",
+        "commands/help_docs/spam_protection.html",
+        "commands/help_docs/start.html",
         "commands/help_docs/unwanted_users.html",
         "commands/help_docs/whois.html",
-        "commands/help_docs/spam_protection.html",
-        "commands/help_docs/blacklist_flags.html",
-        "commands/help_docs/help.html",
-        "commands/help_docs/start.html"
+        "package.json"
     ]
 }
