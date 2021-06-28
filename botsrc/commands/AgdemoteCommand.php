@@ -192,7 +192,7 @@
              }
  
              $UserStatus->IsAgent = false;
-             SettingsManager::updateUserStatus($TargetTelegramClient, $UserStatus);
+             $TargetTelegramClient = SettingsManager::updateUserStatus($TargetTelegramClient, $UserStatus);
              $TelegramClientManager->getTelegramClientManager()->updateClient($TargetTelegramClient);
  
              return Request::sendMessage([
