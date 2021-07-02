@@ -192,8 +192,8 @@
                             }
                             else
                             {
-                                $Results[$pointer] = $set_value;
-                                $TargetUserStatus = UserStatus::fromArray($TargetClient->User, $Results);
+                                $Bytes[$pointer] = $set_value;
+                                $TargetUserStatus = UserStatus::fromArray($TargetClient->User, $Bytes);
                                 $TargetClient = SettingsManager::updateUserStatus($TargetClient, $TargetUserStatus);
                                 $TelegramClientManager->getTelegramClientManager()->updateClient($TargetClient);
 
