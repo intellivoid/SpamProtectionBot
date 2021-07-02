@@ -92,6 +92,7 @@
 
             // Check the permissions
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
+            $TargetTelegramClient = null;
 
             if($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
             {
@@ -115,7 +116,6 @@
                 }
 
                 $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetTelegramParameter, (int)$TargetTelegramParameter);
-                $TargetTelegramClient = null;
 
                 try
                 {
@@ -159,7 +159,15 @@
                         ))
                     ]);
                 }
+            }
+            
+            if($TargetTelegramClient === null && $this->getMessage()->getReplyToMessage() !== null)
+            {
+                $TargetTelegramClient = $this->WhoisCommand->findTarget();
+            }
 
+            if ($TargetTelegramClient !== null)
+            {
                 switch($TargetTelegramClient->Chat->Type)
                 {
                     case TelegramChatType::Private:
