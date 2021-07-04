@@ -192,7 +192,7 @@
                 foreach (MAIN_OPERATOR_IDS as $MainOperatorID)
                 {
                     $MainOperator = SpamProtectionBot::getTelegramClientManager()->getTelegramClientManager()->getClient(
-                        TelegramClientSearchMethod::byUsername, $MainOperatorID
+                        TelegramClientSearchMethod::byPublicId, $MainOperatorID
                     );
 
                     if($FinalResults->HamDatasetPath !== null)
