@@ -1,0 +1,37 @@
+name: PPM Compile Telegram SpamProtectionBot
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Add repoistory for PHP 8.0
+        run: sudo add-apt-repository ppa:ondrej/php
+      - name: Install PHP 8.0
+        run: sudo apt-get install php8.0 php8.0-curl php8.0-mbstring php8.0-tokenizer php8.0-fileinfo
+
+      - uses: actions/checkout@v2
+        with:
+          repository: intellivoid/ppm
+          ref: "production"
+          token: ${{ secrets.PPM_ACCESS_TOKEN }}
+      - name: Install PPM
+        run: sudo ./install
+      - name: Configuring PPM
+        run: sudo ppm --github-add-pat --alias="system" --token="${{ secrets.PPM_ACCESS_TOKEN }}"
+      - uses: actions/checkout@master
+      - name: Make build directory
+        run: mkdir build
+
+      - name: Prepare Telegram SpamProtectionBot
+        run: ppm --generate-package="botsrc"
+      - name: Compile Telegram SpamProtectionBot
+        run: ppm --no-intro --verbose --compile="botsrc" --directory="build"
+      - name: Install Telegram SpamProtectionBot
+        run: sudo -H ppm --no-prompt --fix-conflict --verbose --install="build/net.intellivoid.spam_protection_bot.ppm"
