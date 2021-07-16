@@ -48,8 +48,7 @@
         /**
          * @var string
          */
-        protected $usage = '/whois [None/Reply/ID/Private Telegram ID/Username/
-        ]';
+        protected $usage = '/whois [None/Reply/ID/Private Telegram ID/Username/]';
 
         /**
          * @var string
@@ -1010,7 +1009,131 @@
                 // NOTE: Argument parsing is done with pop now.
                 $options = pop::parse($this->getMessage()->getText(true));
 
-                if(isset($options["c"]) == true || isset($options["chat"]) == true)
+                // Set initial value to this user's ID.
+                $TargetTelegramParameter = $this->UserObject->ID;
+
+                // The next key for a chat/channel should be the chat/channel id, otherwise it's invalid.
+                if (array_key_exists("c", $options) == true)
+                {
+                    // If `c`/`chat` is true, then the next parameter is the ID.
+                    if (is_bool($options["c"]) == true)
+                    {
+                        $idx = array_search("c", array_keys($options));
+                        $idx += 1;
+                        if ($idx < sizeof($options))
+                        {
+                            $TargetTelegramParameter = "-" . array_keys($options)[$idx];
+                        }
+                        else
+                        {
+                            $TargetTelegramParameter = $this->ChatObject->ID;
+                        }
+                    }
+                    else
+                    {
+                        $TargetTelegramParameter = $options["c"];
+                    }
+                }
+
+                if (array_key_exists("chat", $options) == true)
+                {
+                    // If `c`/`chat` is true, then the next parameter is the ID.
+                    if (is_bool($options["chat"]) == true)
+                    {
+                        $idx = array_search("chat", array_keys($options));
+                        $idx += 1;
+                        if ($idx < sizeof($options))
+                        {
+                            $TargetTelegramParameter = "-" . array_keys($options)[$idx];
+                        }
+                        else
+                        {
+                            $TargetTelegramParameter = $this->ChatObject->ID;
+                        }
+                    }
+                    else
+                    {
+                        $TargetTelegramParameter = $options["chat"];
+                    }
+                }
+
+                $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetTelegramParameter, (int)$TargetTelegramParameter);
+
+                try
+                {
+                    $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
+
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" => self::resolveTarget($TargetTelegramClient, true, "ID")
+                    ]);
+                }
+                catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                {
+                    unset($telegramClientNotFoundException);
+                }
+
+                try
+                {
+                    $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetTelegramParameter);
+
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" => self::resolveTarget($TargetTelegramClient, true)
+                    ]);
+                }
+                catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                {
+                    unset($telegramClientNotFoundException);
+                }
+
+                try
+                {
+                    $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(
+                        TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetTelegramParameter)
+                    );
+
+                    if($this->PrivateMode)
+                    {
+                        Request::deleteMessage([
+                            "chat_id" => $this->ChatObject->ID,
+                            "message_id" => $this->getMessage()->getMessageId()
+                        ]);
+                    }
+
+                    return Request::sendMessage([
+                        "chat_id" => $this->DestinationChat->ID,
+                        "parse_mode" => "html",
+                        "reply_to_message_id" => $this->ReplyToID,
+                        "text" => self::resolveTarget($TargetTelegramClient, true, "Username")
+                    ]);
+                }
+                catch(TelegramClientNotFoundException $telegramClientNotFoundException)
+                {
+                    unset($telegramClientNotFoundException);
+                }
+
+                if(count($this->MentionUserClients) > 0)
                 {
                     if($this->PrivateMode)
                     {
@@ -1024,130 +1147,24 @@
                         "chat_id" => $this->DestinationChat->ID,
                         "parse_mode" => "html",
                         "reply_to_message_id" => $this->ReplyToID,
-                        "text" =>
-                            self::resolveTarget($this->ChatClient, false, "None")
+                        "text" => self::resolveTarget($this->MentionUserClients[array_keys($this->MentionUserClients)[0]], true, "Mention")
                     ]);
                 }
 
-                // If the last parameter is the option
-                if(count($options) > 0)
+                if($this->PrivateMode)
                 {
-                    $TargetTelegramParameter = array_values($options)[(count($options)-1)];
-
-                    if(is_bool($TargetTelegramParameter))
-                    {
-                        $TargetTelegramParameter = array_keys($options)[(count($options)-1)];
-                    }
-
-                    $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetTelegramParameter, (int)$TargetTelegramParameter);
-
-                    try
-                    {
-                        $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID);
-
-                        if($this->PrivateMode)
-                        {
-                            Request::deleteMessage([
-                                "chat_id" => $this->ChatObject->ID,
-                                "message_id" => $this->getMessage()->getMessageId()
-                            ]);
-                        }
-
-                        return Request::sendMessage([
-                            "chat_id" => $this->DestinationChat->ID,
-                            "parse_mode" => "html",
-                            "reply_to_message_id" => $this->ReplyToID,
-                            "text" => self::resolveTarget($TargetTelegramClient, true, "ID")
-                        ]);
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
-                    }
-
-                    try
-                    {
-                        $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(TelegramClientSearchMethod::byPublicId, $TargetTelegramParameter);
-
-                        if($this->PrivateMode)
-                        {
-                            Request::deleteMessage([
-                                "chat_id" => $this->ChatObject->ID,
-                                "message_id" => $this->getMessage()->getMessageId()
-                            ]);
-                        }
-
-                        return Request::sendMessage([
-                            "chat_id" => $this->DestinationChat->ID,
-                            "parse_mode" => "html",
-                            "reply_to_message_id" => $this->ReplyToID,
-                            "text" => self::resolveTarget($TargetTelegramClient, true)
-                        ]);
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
-                    }
-
-                    try
-                    {
-                        $TargetTelegramClient = $TelegramClientManager->getTelegramClientManager()->getClient(
-                            TelegramClientSearchMethod::byUsername, str_ireplace("@", "", $TargetTelegramParameter)
-                        );
-
-                        if($this->PrivateMode)
-                        {
-                            Request::deleteMessage([
-                                "chat_id" => $this->ChatObject->ID,
-                                "message_id" => $this->getMessage()->getMessageId()
-                            ]);
-                        }
-
-                        return Request::sendMessage([
-                            "chat_id" => $this->DestinationChat->ID,
-                            "parse_mode" => "html",
-                            "reply_to_message_id" => $this->ReplyToID,
-                            "text" => self::resolveTarget($TargetTelegramClient, true, "Username")
-                        ]);
-                    }
-                    catch(TelegramClientNotFoundException $telegramClientNotFoundException)
-                    {
-                        unset($telegramClientNotFoundException);
-                    }
-
-                    if(count($this->MentionUserClients) > 0)
-                    {
-                        if($this->PrivateMode)
-                        {
-                            Request::deleteMessage([
-                                "chat_id" => $this->ChatObject->ID,
-                                "message_id" => $this->getMessage()->getMessageId()
-                            ]);
-                        }
-
-                        return Request::sendMessage([
-                            "chat_id" => $this->DestinationChat->ID,
-                            "parse_mode" => "html",
-                            "reply_to_message_id" => $this->ReplyToID,
-                            "text" => self::resolveTarget($this->MentionUserClients[array_keys($this->MentionUserClients)[0]], true, "Mention")
-                        ]);
-                    }
-
-                    if($this->PrivateMode)
-                    {
-                        Request::deleteMessage([
-                            "chat_id" => $this->ChatObject->ID,
-                            "message_id" => $this->getMessage()->getMessageId()
-                        ]);
-                    }
-
-                    return Request::sendMessage([
-                        "chat_id" => $this->DestinationChat->ID,
-                        "reply_to_message_id" => $this->ReplyToID,
-                        "text" => str_ireplace('%s', $TargetTelegramParameter,
-                            LanguageCommand::localizeChatText($this, "Unable to resolve the query '%s'!", ['s']))
+                    Request::deleteMessage([
+                        "chat_id" => $this->ChatObject->ID,
+                        "message_id" => $this->getMessage()->getMessageId()
                     ]);
                 }
+
+                return Request::sendMessage([
+                    "chat_id" => $this->DestinationChat->ID,
+                    "reply_to_message_id" => $this->ReplyToID,
+                    "text" => str_ireplace('%s', $TargetTelegramParameter,
+                        LanguageCommand::localizeChatText($this, "Unable to resolve the query '%s'!", ['s']))
+                ]);
             }
 
             if($this->PrivateMode)
