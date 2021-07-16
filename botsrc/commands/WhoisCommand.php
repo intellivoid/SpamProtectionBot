@@ -1015,6 +1015,7 @@
                 // The next key for a chat/channel should be the chat/channel id, otherwise it's invalid.
                 if (array_key_exists("c", $options) == true)
                 {
+                    $TargetTelegramParameter = $this->ChatObject->ID;
                     // If `c`/`chat` is true, then the next parameter is the ID.
                     if (is_bool($options["c"]) == true)
                     {
@@ -1022,11 +1023,12 @@
                         $idx += 1;
                         if ($idx < sizeof($options))
                         {
-                            $TargetTelegramParameter = "-" . array_keys($options)[$idx];
-                        }
-                        else
-                        {
-                            $TargetTelegramParameter = $this->ChatObject->ID;
+                            // Ensure the argument is a number and not another flag
+                            $id = array_keys($options)[$idx];
+                            if (is_numeric($id) === true)
+                            {
+                                $TargetTelegramParameter = "-" . $id;
+                            }
                         }
                     }
                     else
@@ -1037,6 +1039,7 @@
 
                 if (array_key_exists("chat", $options) == true)
                 {
+                    $TargetTelegramParameter = $this->ChatObject->ID;
                     // If `c`/`chat` is true, then the next parameter is the ID.
                     if (is_bool($options["chat"]) == true)
                     {
@@ -1044,11 +1047,12 @@
                         $idx += 1;
                         if ($idx < sizeof($options))
                         {
-                            $TargetTelegramParameter = "-" . array_keys($options)[$idx];
-                        }
-                        else
-                        {
-                            $TargetTelegramParameter = $this->ChatObject->ID;
+                            // Ensure the argument is a number and not another flag
+                            $id = array_keys($options)[$idx];
+                            if (is_numeric($id) === true)
+                            {
+                                $TargetTelegramParameter = "-" . $id;
+                            }
                         }
                     }
                     else
