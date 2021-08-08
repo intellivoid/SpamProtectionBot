@@ -1009,8 +1009,11 @@
                 // NOTE: Argument parsing is done with pop now.
                 $options = pop::parse($this->getMessage()->getText(true));
 
-                // Set initial value to this user's ID.
-                $TargetTelegramParameter = $this->UserObject->ID;
+                $TargetTelegramParameter = array_values($options)[(count($options)-1)];
+                if(is_bool($TargetTelegramParameter))
+                {
+                    $TargetTelegramParameter = array_keys($options)[(count($options)-1)];
+                }
 
                 // The next key for a chat/channel should be the chat/channel id, otherwise it's invalid.
                 if (array_key_exists("c", $options) == true)
@@ -1059,6 +1062,12 @@
                     {
                         $TargetTelegramParameter = $options["chat"];
                     }
+                }
+
+                // Fallback
+                if ($TargetTelegramParameter == null)
+                {
+                    $TargetTelegramParameter = $this->UserObject->ID;
                 }
 
                 $EstimatedPrivateID = Hashing::telegramClientPublicID((int)$TargetTelegramParameter, (int)$TargetTelegramParameter);
