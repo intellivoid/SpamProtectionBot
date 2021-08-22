@@ -23,27 +23,7 @@
     require("ppm");
 
     /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.acm");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.background_worker");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.coffeehouse");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.deepanalytics");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.telegram_client_manager");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.spam_protection");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.pop");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.msqg");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.ziproto");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.verbose_adventure");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.tdlib");
+    ppm::import("net.intellivoid.spam_protection_bot");
 
     VerboseAdventure::setStdout(true); // Enable stdout
     ErrorHandler::registerHandlers(); // Register error handlers
@@ -119,11 +99,9 @@
     try
     {
         SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
-        SpamProtectionBot::getBackgroundWorker()->getClient()->addServer(
-            $BackgroundWorkerConfiguration["Host"],
-            (int)$BackgroundWorkerConfiguration["Port"]
-        );
-        SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
+        SpamProtectionBot::$BackgroundWorker->getSupervisor()->setDisplayOutput(TELEGRAM_BOT_NAME, true);
+        SpamProtectionBot::getBackgroundWorker()->getClient()->addServer($BackgroundWorkerConfiguration["Host"], (int)$BackgroundWorkerConfiguration["Port"]);
+        SpamProtectionBot::getBackgroundWorker()->getSupervisor()->startWorkers(
             $current_directory . DIRECTORY_SEPARATOR . 'worker', TELEGRAM_BOT_NAME,
             (int)$BackgroundWorkerConfiguration['MaxWorkers']
         );
@@ -137,6 +115,9 @@
     // Start listening to updates
     while(true)
     {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        SpamProtectionBot::$BackgroundWorker->getSupervisor()->monitor(TELEGRAM_BOT_NAME);
+
         try
         {
             //SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Listen for updates", "Main");
@@ -148,7 +129,6 @@
                 if($update_count > 0)
                 {
                     SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processed $update_count update(s)", "Main");
-
                 }
             }
             else

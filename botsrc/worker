@@ -21,36 +21,16 @@ use VerboseAdventure\Abstracts\EventType;
 use VerboseAdventure\Classes\ErrorHandler;
 use VerboseAdventure\VerboseAdventure;
 
-// Import all required auto loaders
+    // Import all required auto loaders
     /** @noinspection PhpIncludeInspection */
     require("ppm");
 
     /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.acm");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.background_worker");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.coffeehouse");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.deepanalytics");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.telegram_client_manager");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.spam_protection");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.pop");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.msqg");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.ziproto");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.verbose_adventure");
-    /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.tdlib");
-
+    ppm::import("net.intellivoid.spam_protection_bot");
 
     $current_directory = getcwd();
     VerboseAdventure::setStdout(true); // Enable stdout
+    VerboseAdventure::setSimpleStdout(true); // Simplified output
     ErrorHandler::registerHandlers(); // Register error handlers
 
     if(class_exists("SpamProtectionBot") == false)
