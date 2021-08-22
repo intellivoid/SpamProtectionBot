@@ -78,7 +78,7 @@
         "configuration": {
             "autoload_method": "generated_spl",
             "main": {
-                "execution_point": "cli.php",
+                "execution_point": "main",
                 "create_symlink": false,
                 "name": null
             },
@@ -93,11 +93,7 @@
         },
         {
             "required": true,
-            "file": "cli.php"
-        },
-        {
-            "required": true,
-            "file": "commands/BakaMitaiCommand.php"
+            "file": "commands/CreateInviteCommand.php"
         },
         {
             "required": true,
@@ -105,15 +101,15 @@
         },
         {
             "required": true,
-            "file": "commands/BlacklistCommand.php"
+            "file": "commands/PropCommand.php"
         },
         {
             "required": true,
-            "file": "commands/CallbackqueryCommand.php"
+            "file": "commands/OppromoteCommand.php"
         },
         {
             "required": true,
-            "file": "commands/CreateInviteCommand.php"
+            "file": "commands/OpdemoteCommand.php"
         },
         {
             "required": true,
@@ -121,15 +117,11 @@
         },
         {
             "required": true,
-            "file": "commands/GenericmessageCommand.php"
-        },
-        {
-            "required": true,
             "file": "commands/HelpCommand.php"
         },
         {
             "required": true,
-            "file": "commands/LCommand.php"
+            "file": "commands/GenericmessageCommand.php"
         },
         {
             "required": true,
@@ -137,11 +129,7 @@
         },
         {
             "required": true,
-            "file": "commands/LogCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/MsgInfoCommand.php"
+            "file": "commands/SettingsCommand.php"
         },
         {
             "required": true,
@@ -149,27 +137,31 @@
         },
         {
             "required": true,
-            "file": "commands/PredictionsCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/PropCommand.php"
-        },
-        {
-            "required": true,
             "file": "commands/ResetCacheCommand.php"
         },
         {
             "required": true,
-            "file": "commands/ResetPredictionsCommand.php"
+            "file": "commands/AgpromoteCommand.php"
         },
         {
             "required": true,
-            "file": "commands/SettingsCommand.php"
+            "file": "commands/PredictionsCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/AgdemoteCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/BakaMitaiCommand.php"
         },
         {
             "required": true,
             "file": "commands/StartCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/LogCommand.php"
         },
         {
             "required": true,
@@ -181,38 +173,40 @@
         },
         {
             "required": true,
-            "file": "commands/OppromoteCommand.php"
+            "file": "commands/MsgInfoCommand.php"
         },
         {
             "required": true,
-            "file": "commands/AgdemoteCommand.php"
+            "file": "commands/CallbackqueryCommand.php"
         },
         {
             "required": true,
-            "file": "commands/OpdemoteCommand.php"
+            "file": "commands/BlacklistCommand.php"
         },
         {
             "required": true,
-            "file": "commands/AgpromoteCommand.php"
+            "file": "commands/LCommand.php"
         },
         {
             "required": true,
-            "file": "worker.php"
+            "file": "commands/ResetPredictionsCommand.php"
         }
     ],
     "files": [
+        "package.json",
+        "worker",
         ".htaccess",
-        "commands/help_docs/blacklist_flags.html",
-        "commands/help_docs/false_detections.html",
-        "commands/help_docs/help.html",
-        "commands/help_docs/help.png",
+        "main",
         "commands/help_docs/language.html",
-        "commands/help_docs/msginfo.html",
+        "commands/help_docs/false_detections.html",
+        "commands/help_docs/help.png",
         "commands/help_docs/settings.html",
-        "commands/help_docs/spam_protection.html",
-        "commands/help_docs/start.html",
+        "commands/help_docs/msginfo.html",
         "commands/help_docs/unwanted_users.html",
         "commands/help_docs/whois.html",
-        "package.json"
+        "commands/help_docs/spam_protection.html",
+        "commands/help_docs/blacklist_flags.html",
+        "commands/help_docs/help.html",
+        "commands/help_docs/start.html"
     ]
 }

@@ -124,7 +124,7 @@
             (int)$BackgroundWorkerConfiguration["Port"]
         );
         SpamProtectionBot::getBackgroundWorker()->getSupervisor()->restartWorkers(
-            $current_directory . DIRECTORY_SEPARATOR . 'worker.php', TELEGRAM_BOT_NAME,
+            $current_directory . DIRECTORY_SEPARATOR . 'worker', TELEGRAM_BOT_NAME,
             (int)$BackgroundWorkerConfiguration['MaxWorkers']
         );
     }
