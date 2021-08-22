@@ -73,6 +73,12 @@
                 "version": "latest",
                 "source": "default@github/intellivoid/tdlib",
                 "required": true
+            },
+            {
+                "package": "net.intellivoid.tmpfile",
+                "version": "latest",
+                "source": "default@github/intellivoid/TmpFile",
+                "required": true
             }
         ],
         "configuration": {
