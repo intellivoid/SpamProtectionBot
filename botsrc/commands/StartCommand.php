@@ -10,6 +10,7 @@
     use Longman\TelegramBot\Commands\UserCommands\BlacklistCommand;
     use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
+    use Longman\TelegramBot\Commands\UserCommands\ResetCacheCommand;
     use Longman\TelegramBot\Entities\CallbackQuery;
     use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\Keyboard;
@@ -149,22 +150,31 @@
             {
                 case TelegramChatType::SuperGroup:
                 case TelegramChatType::Group:
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                        "reply_markup" => new InlineKeyboard([
-                            [
-                                "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Help"),
-                                "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=start"
-                            ]
-                        ]),
-                        "parse_mode" => "html",
-                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Hey there! Looking for help?")
-                    ]);
+                    $ResetCacheCommand = new ResetCacheCommand($this->telegram, $this->update);
+
+                    if ($ResetCacheCommand->isAdmin($this->WhoisCommand, $this->WhoisCommand->UserClient) == true)
+                    {
+                        return Request::sendMessage([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                            "reply_markup" => new InlineKeyboard([
+                                [
+                                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Help"),
+                                    "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=start"
+                                ]
+                            ]),
+                            "parse_mode" => "html",
+                            "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Hey there! Looking for help?")
+                        ]);
+                    }
+                    else
+                        return null;
+                        
 
                 case TelegramChatType::Private:
                     $AppealResponse = $this->processAppeal();
-                    if($AppealResponse !== null) return $AppealResponse;
+                    if ($AppealResponse !== null)
+                        return $AppealResponse;
 
                     return Request::sendVideo([
                         "chat_id" => $this->getMessage()->getChat()->getId(),

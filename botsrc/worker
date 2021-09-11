@@ -11,15 +11,15 @@
     use BackgroundWorker\BackgroundWorker;
     use CoffeeHouse\CoffeeHouse;
     use DeepAnalytics\DeepAnalytics;
-use Longman\TelegramBot\DB;
-use Longman\TelegramBot\Entities\ServerResponse;
+    use Longman\TelegramBot\DB;
+    use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Entities\Update;
-use ppm\ppm;
-use SpamProtection\SpamProtection;
+    use ppm\ppm;
+    use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
-use VerboseAdventure\Abstracts\EventType;
-use VerboseAdventure\Classes\ErrorHandler;
-use VerboseAdventure\VerboseAdventure;
+    use VerboseAdventure\Abstracts\EventType;
+    use VerboseAdventure\Classes\ErrorHandler;
+    use VerboseAdventure\VerboseAdventure;
 
     // Import all required auto loaders
     /** @noinspection PhpIncludeInspection */

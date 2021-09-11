@@ -9,6 +9,7 @@
     use Longman\TelegramBot\Commands\UserCommand;
     use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
+    use Longman\TelegramBot\Commands\UserCommands\ResetCacheCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
@@ -81,12 +82,19 @@
 
             if($this->getMessage()->getChat()->getType() !== TelegramChatType::Private)
             {
-                return Request::sendMessage([
-                    "chat_id" => $this->getMessage()->getChat()->getId(),
-                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                    "parse_mode" => "html",
-                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This command can only be used in private!")
-                ]);
+                $ResetCacheCommand = new ResetCacheCommand($this->telegram, $this->update);
+
+                if ($ResetCacheCommand->isAdmin($this->WhoisCommand, $this->WhoisCommand->UserClient) == true)
+                {
+                    return Request::sendMessage([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                        "parse_mode" => "html",
+                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This command can only be used in private!")
+                    ]);
+                }
+                else
+                    return null;
             }
 
 

@@ -7,8 +7,8 @@
     use DeepAnalytics\DeepAnalytics;
     use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
-use VerboseAdventure\Abstracts\EventType;
-use VerboseAdventure\VerboseAdventure;
+    use VerboseAdventure\Abstracts\EventType;
+    use VerboseAdventure\VerboseAdventure;
 
 /**
      * Class SpamProtectionBot
