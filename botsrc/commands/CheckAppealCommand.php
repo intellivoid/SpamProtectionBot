@@ -96,6 +96,13 @@
                 return null;
             }
 
+            // Check the permissions
+            $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
+            if($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
+            {
+                return null;
+            }
+
             $options = [];
 
             if($this->getMessage()->getText(true) !== null && strlen($this->getMessage()->getText(true)) > 0)

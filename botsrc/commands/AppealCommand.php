@@ -101,7 +101,7 @@
 
             // Check if permissions are applicable
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
-            if ($UserStatus->IsOperator == false)
+            if ($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
             {
                 return null;
             }
