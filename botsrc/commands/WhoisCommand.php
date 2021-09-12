@@ -1351,7 +1351,7 @@
                 if($UserStatus->GeneralizedSpamLabel == "spam")
                 {
                     $RequiresExtraNewline = true;
-                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This user may be an potential spammer (May not be accurate at this time)") . "</b>\n";
+                    $Response .= "\u{26A0} <b>" . LanguageCommand::localizeChatText($this, "This user may be a potential spammer (May not be accurate at this time)") . "</b>\n";
                 }
             }
 

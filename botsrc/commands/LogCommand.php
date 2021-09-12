@@ -830,7 +830,7 @@
 
                     return $callbackQuery->answer(
                         [
-                            "text" => LanguageCommand::localizeChatText($whoisCommand, "Vote successfully casted")
+                            "text" => LanguageCommand::localizeChatText($whoisCommand, "Vote successfully cast")
                         ]);
                 }
                 catch(Exception $e)

@@ -683,7 +683,7 @@
                             break;
 
                         case DetectionAction::Nothing:
-                            $Response .= "No action will be taken since the the current detection rule in this group is to do nothing";
+                            $Response .= "No action will be taken since the current detection rule in this group is to do nothing";
                             break;
                     }
 
@@ -1491,7 +1491,7 @@
                             "parse_mode" => "html",
                             "text" =>
                                 self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n" .
-                                LanguageCommand::localizeChatText($this->WhoisCommand, "No action will be taken since the the current detection rule in this group is to do nothing", [], true)
+                                LanguageCommand::localizeChatText($this->WhoisCommand, "No action will be taken since the current detection rule in this group is to do nothing", [], true)
                         ];
 
                         if($UseInlineKeyboard)
