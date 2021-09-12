@@ -311,12 +311,20 @@
                         ]
                     ]);
 
-
-                    return Request::sendMessage([
+                    Request::sendMessage([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "reply_to_message_id" => $this->ReplyToID,
                         "parse_mode" => "html",
                         "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Success, this user is no longer blacklisted")
+                    ]);
+
+                    return Request::sendMessage([
+                        "chat_id" => "@" . LOG_CHANNEL,
+                        "disable_web_page_preview" => true,
+                        "disable_notification" => true,
+                        "reply_markup" => $InlineKeyboard,
+                        "parse_mode" => "html",
+                        "text" => $LogMessage
                     ]);
                 }
                 else
