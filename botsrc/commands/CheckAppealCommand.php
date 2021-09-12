@@ -7,18 +7,16 @@
     namespace Longman\TelegramBot\Commands\SystemCommands;
 
     use Longman\TelegramBot\Commands\UserCommand;
-    use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
+    use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Entities\ServerResponse;
-    use Longman\TelegramBot\Entities\InlineKeyboard;
     use Longman\TelegramBot\Entities\Message;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
+    use SpamProtectionBot;
     use SpamProtection\Managers\SettingsManager;
-    use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Utilities\Hashing;
     use pop\pop;
-    use SpamProtectionBot;
     use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
     use TelegramClientManager\Abstracts\TelegramChatType;
     use TelegramClientManager\Exceptions\DatabaseException;
@@ -31,22 +29,22 @@
      *
      * Gets executed when a user first starts using the bot.
      */
-    class AppealCommand extends UserCommand
+    class CheckAppealCommand extends UserCommand
     {
         /**
          * @var string
          */
-        protected $name = 'Appeal';
+        protected $name = 'CheckAppeal';
 
         /**
          * @var string
          */
-        protected $description = 'Appeal a user\'s blacklist';
+        protected $description = 'Check if a user is eligible for an appeal';
 
         /**
          * @var string
          */
-        protected $usage = '/appeal [Reply/ID/Private Telegram ID/Username/Mention]';
+        protected $usage = '/checkappeal [Reply/ID/Private Telegram ID/Username/Mention]';
 
         /**
          * @var string
@@ -92,16 +90,8 @@
             $DeepAnalytics->tally('tg_spam_protection', 'messages', (int)$this->WhoisCommand->ChatObject->ID);
             $DeepAnalytics->tally('tg_spam_protection', 'friends_command', (int)$this->WhoisCommand->ChatObject->ID);
 
-
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
-            {
-                return null;
-            }
-
-            // Check if permissions are applicable
-            $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
-            if ($UserStatus->IsOperator == false)
             {
                 return null;
             }
@@ -115,7 +105,6 @@
             }
 
             $this->ReplyToID = $this->getMessage()->getMessageId();
-
             $TargetUserClient = null;
 
             if ($this->getMessage()->getReplyToMessage() !== null)
@@ -132,7 +121,7 @@
                     ]);
                 }
 
-                return self::appeal($TargetUser);
+                return self::checkAappeal($TargetUser);
             }
             else
             {
@@ -171,7 +160,7 @@
                         $TargetUserClient = $TelegramClientManager->getTelegramClientManager()->getClient(
                             TelegramClientSearchMethod::byPublicId, $EstimatedPrivateID
                         );
-                        return self::appeal($TargetUserClient);
+                        return self::checkAappeal($TargetUserClient);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
                     {
@@ -184,7 +173,7 @@
                             TelegramClientSearchMethod::byPublicId, $TargetUserParameter
                         );
 
-                        return self::appeal($TargetUserClient);
+                        return self::checkAappeal($TargetUserClient);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
                     {
@@ -199,7 +188,7 @@
                         );
 
 
-                        return self::appeal($TargetUserClient);
+                        return self::checkAappeal($TargetUserClient);
                     }
                     catch(TelegramClientNotFoundException $telegramClientNotFoundException)
                     {
@@ -219,7 +208,7 @@
                         if(count($this->WhoisCommand->MentionUserClients) > 0)
                         {
                             $TargetUserClient = $this->WhoisCommand->MentionUserClients[array_keys($this->WhoisCommand->MentionUserClients)[0]];
-                            return self::appeal($TargetUserClient);
+                            return self::checkAappeal($TargetUserClient);
                         }
                     }
                 }
@@ -241,16 +230,16 @@
             return Request::sendMessage([
                 "chat_id" => $message->getChat()->getId(),
                 "parse_mode" => "html",
-                "reply_to_message_id" => $this->ReplyToID,
+                "reply_to_message_id" => $message->getMessageId(),
                 "text" =>
                     "$error\n\n" .
                     "Usage:\n" .
-                    "   <b>/appeal</b> (In reply to target user)\n" .
-                    "   <b>/appeal</b> <code>-u=[Private Telegram ID]</code>\n" .
-                    "   <b>/appeal</b> <code>-u [User/Channel ID]</code>\n" .
-                    "   <b>/appeal</b> <code>-u [Username]</code>\n" .
-                    "   <b>/appeal</b> (Mention)\n\n" .
-                    "For further instructions, send /help appeal"
+                    "   <b>/checkappeal</b> (In reply to target user)\n" .
+                    "   <b>/checkappeal</b> <code>-u=[Private Telegram ID]</code>\n" .
+                    "   <b>/checkappeal</b> <code>-u [User/Channel ID]</code>\n" .
+                    "   <b>/checkappeal</b> <code>-u [Username]</code>\n" .
+                    "   <b>/checkappeal</b> (Mention)\n\n" .
+                    "For further instructions, send /help checkappeal"
             ]);
         }
 
@@ -261,77 +250,21 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public function appeal(TelegramClient $TargetUserClient)
+        public function checkAappeal(TelegramClient $TargetUserClient)
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $UserStatus = SettingsManager::getUserStatus($TargetUserClient);
             if ($UserStatus->CanAppeal == true)
             {
-                // Remove the blacklist, unset the CanAppeal flag.
-                if ($UserStatus->IsBlacklisted == true)
-                {
-                    $TargetOperatorClient = $this->WhoisCommand->UserClient;
-
-                    // Check main operators for this flag.
-                    if ($UserStatus->BlacklistFlag === BlacklistFlag::Special)
-                    {
-                        if (!in_array($this->WhoisCommand->UserObject->ID, MAIN_OPERATOR_IDS, true))
-                        {
-                            return Request::sendMessage([
-                                "chat_id" => $this->getMessage()->getChat()->getId(),
-                                "reply_to_message_id" => $this->ReplyToID,
-                                "parse_mode" => "html",
-                                "text" => "Only main operators can appeal the flag <code>0xSP</code>"
-                            ]);
-                        }
-                    }
-
-                    $previous_flag = $UserStatus->BlacklistFlag;
-                    // Remove the CanAppeal flag
-                    $UserStatus->CanAppeal = false;
-                    // Remove the blacklist.
-                    $UserStatus->updateBlacklist(BlacklistFlag::None);
-                    $TargetTelegramClient = SettingsManager::updateUserStatus($TargetUserClient, $UserStatus);
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($TargetTelegramClient);
-                    
-                    $LogMessage = "#manual_appeal\n\n";
-                    $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $TargetUserClient->PublicID . "</code>\n";
-                    $LogMessage .= "<b>Operator PTID:</b> <code>" . $TargetOperatorClient->PublicID . "</code>\n";
-                    $LogMessage .= "\n<i>The previous blacklist flag</i> <code>$previous_flag</code> <i>has been lifted through a manual appeal process</i>";
-
-
-                    $InlineKeyboard = new InlineKeyboard([
-                        [
-                            "text" => "View Target",
-                            "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $TargetUserClient->User->ID
-                        ],
-                        [
-                            "text" => "View Operator",
-                            "url" => "https://t.me/" . TELEGRAM_BOT_NAME . "?start=00_" . $TargetOperatorClient->User->ID
-                        ]
-                    ]);
-
-
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->ReplyToID,
-                        "parse_mode" => "html",
-                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Success, this user is no longer blacklisted")
-                    ]);
-                }
-                else
-                {
-                    return Request::sendMessage([
-                        "chat_id" => $this->getMessage()->getChat()->getId(),
-                        "reply_to_message_id" => $this->ReplyToID,
-                        "parse_mode" => "html",
-                        "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This user is eligible for an appeal but is not blacklisted.")
-                    ]);
-                }
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->ReplyToID,
+                    "parse_mode" => "html",
+                    "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "This user is eligible for an appeal.")
+                ]);
             }
             else
             {
-                // Not eligable for appeal.
                 return Request::sendMessage([
                     "chat_id" => $this->getMessage()->getChat()->getId(),
                     "reply_to_message_id" => $this->ReplyToID,
