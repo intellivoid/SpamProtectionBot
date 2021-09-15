@@ -60,6 +60,9 @@
     /** @noinspection PhpUnhandledExceptionInspection */
     $BackgroundWorkerConfiguration = SpamProtectionBot::getBackgroundWorkerConfiguration();
 
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $RedisConfiguration = SpamProtectionBot::getRedisConfiguration();
+
     // Define and create the Telegram Bot instance (SQL)
 
     define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName']);
@@ -120,6 +123,14 @@
             'password' => $DatabaseConfiguration['Password'],
             'database' => $DatabaseConfiguration['Database'],
         ));
+
+        $telegram->enableRedis(
+            $RedisConfiguration['Host'],
+            (int)$RedisConfiguration['Port'],
+            (int)$RedisConfiguration['Database'],
+            empty($RedisConfiguration['Username']) ? null : $RedisConfiguration['Username'],
+            empty($RedisConfiguration['Password']) ? null : $RedisConfiguration['Password']
+        );
     }
     catch(Exception $e)
     {
