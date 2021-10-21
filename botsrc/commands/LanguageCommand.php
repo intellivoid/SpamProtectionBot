@@ -214,7 +214,7 @@
                     "callback_data" => "010601"
                 ];
                 $CurrentLocalizationText = self::localizeChatText($whoisCommand, "Strict Localization: %s", ['s']);
-                $CurrentLocalizationValue = self::localizeChatText($whoisCommand, "Disabled");
+                $CurrentLocalizationValue = self::localizeChatText($whoisCommand, "Enabled");
             }
             else
             {
