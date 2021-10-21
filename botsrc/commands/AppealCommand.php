@@ -79,7 +79,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find all clients
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
@@ -96,14 +96,14 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             // Check if permissions are applicable
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
             if ($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $options = [];
@@ -261,7 +261,7 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public function appeal(TelegramClient $TargetUserClient)
+        public function appeal(TelegramClient $TargetUserClient): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $UserStatus = SettingsManager::getUserStatus($TargetUserClient);

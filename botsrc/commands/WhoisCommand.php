@@ -860,7 +860,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
 
@@ -895,7 +895,7 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             // Parse the options

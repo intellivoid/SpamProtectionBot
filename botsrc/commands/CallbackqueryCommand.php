@@ -40,7 +40,7 @@
          * @return ServerResponse
          * @throws \Exception
          */
-        public function execute(): ?ServerResponse
+        public function execute(): ServerResponse
         {
             // Callback query data can be fetched and handled accordingly.
             if($this->getCallbackQuery()->getMessage() == null)
@@ -96,5 +96,7 @@
                         "show_alert" => true
                     ]);
             }
+
+            return Request::emptyResponse();
         }
     }

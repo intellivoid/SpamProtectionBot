@@ -71,7 +71,7 @@
          * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
@@ -88,12 +88,12 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             if(!in_array($this->WhoisCommand->UserClient->User->ID, MAIN_OPERATOR_IDS, true))
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             Request::sendMessage([
@@ -114,7 +114,7 @@
         /**
          * Processes the final verdict and privately sends the dataset to the main operator
          *
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws InvalidSearchMethodException
@@ -124,7 +124,7 @@
          * @throws VotingPoolCurrentlyActiveException
          * @throws \SpamProtection\Exceptions\DatabaseException
          */
-        public function  processFinalVerdict()
+        public function processFinalVerdict(): ServerResponse
         {
             $VotesDueRecord = SpamProtectionBot::getSpamProtection()->getVotesDueManager()->getCurrentPool(false);
 
@@ -135,7 +135,7 @@
 
             if($FinalResults == null)
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $ShowContributors = true;

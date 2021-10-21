@@ -70,7 +70,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
              // Find all clients
              $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();

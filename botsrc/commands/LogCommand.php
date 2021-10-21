@@ -118,7 +118,7 @@
          * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find clients
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
@@ -136,14 +136,14 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             // Check the permissions
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
             if($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             // Parse the options
@@ -232,7 +232,7 @@
                             }
                             else
                             {
-                                return null;
+                                return Request::emptyResponse();
                             }
                         }
 
@@ -262,7 +262,7 @@
                                 }
                                 else
                                 {
-                                    return null;
+                                    return Request::emptyResponse();
                                 }
                             }
 
@@ -309,7 +309,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
 
@@ -326,10 +326,10 @@
          *
          * @param Message $message
          * @param string $error
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws TelegramException
          */
-        public function displayUsage(Message $message, string $error="Missing parameter")
+        public function displayUsage(Message $message, string $error="Missing parameter"): ServerResponse
         {
             if($this->CompleteSilentMode == false)
             {
@@ -347,7 +347,7 @@
             }
             else
             {
-                return null;
+                return Request::emptyResponse();
             }
         }
 
@@ -355,14 +355,14 @@
          * Processes a blacklist sub command
          *
          * @param TelegramClient $targetClient
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function processBlacklistSubCommand(TelegramClient $targetClient)
+        public function processBlacklistSubCommand(TelegramClient $targetClient): ServerResponse
         {
             $options = [];
 
@@ -401,7 +401,7 @@
             }
             else
             {
-                return null;
+                return Request::emptyResponse();
             }
 
 
@@ -445,7 +445,7 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public function logSpam(TelegramClient $targetUserClient, TelegramClient $operatorClient, \SpamProtection\Objects\TelegramObjects\Message $message)
+        public function logSpam(TelegramClient $targetUserClient, TelegramClient $operatorClient, \SpamProtection\Objects\TelegramObjects\Message $message): ServerResponse
         {
             $SpamProtection = SpamProtectionBot::getSpamProtection();
 
@@ -466,7 +466,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
 
@@ -483,7 +483,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
 
@@ -500,7 +500,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
             }
@@ -522,7 +522,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
 
@@ -555,7 +555,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
             }
@@ -598,7 +598,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
 
@@ -705,7 +705,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
             else
@@ -723,7 +723,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
 
@@ -734,9 +734,9 @@
          *
          * @param CallbackQuery|null $callbackQuery
          * @param WhoisCommand $whoisCommand
-         * @return ServerResponse|null
+         * @return ServerResponse
          */
-        public function handleVotingCallback(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand): ?ServerResponse
+        public function handleVotingCallback(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand): ServerResponse
         {
             $TargetClient = null;
 
@@ -847,7 +847,7 @@
             }
 
 
-            return null;
+            return Request::emptyResponse();
         }
 
         /**

@@ -113,7 +113,7 @@
          * @throws InvalidSearchMethod
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
@@ -129,14 +129,14 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             // Check if permissions are applicable
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
             if($UserStatus->IsOperator == false)
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $options = [];
@@ -235,7 +235,7 @@
                         }
                         else
                         {
-                            return null;
+                            return Request::emptyResponse();
                         }
                     }
 
@@ -275,7 +275,7 @@
                         }
                         else
                         {
-                            return null;
+                            return Request::emptyResponse();
                         }
 
                     }
@@ -383,7 +383,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
 
                 }
@@ -404,11 +404,11 @@
         }
 
         /**
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function subExecute()
+        public function subExecute(): ServerResponse
         {
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
             $this->WhoisCommand->findClients();
@@ -468,7 +468,7 @@
                 }
             }
 
-            return null;
+            return Request::emptyResponse();
         }
 
         /**
@@ -479,7 +479,7 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public function displayUsage(Message $message, string $error="Missing parameter")
+        public function displayUsage(Message $message, string $error="Missing parameter"): ServerResponse
         {
             if($this->PrivateMode)
             {
@@ -509,7 +509,7 @@
             }
             else
             {
-                return null;
+                return Request::emptyResponse();
             }
 
         }
@@ -579,7 +579,7 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public function logAction(TelegramClient $targetClient, TelegramClient $operatorUserClient, bool $removal=false, bool $update=false, string $previous_flag=null)
+        public function logAction(TelegramClient $targetClient, TelegramClient $operatorUserClient, bool $removal=false, bool $update=false, string $previous_flag=null): ServerResponse
         {
             switch($targetClient->Chat->Type)
             {
@@ -655,13 +655,13 @@
          * @param TelegramClient $operatorClient
          * @param string $blacklistFlag
          * @param string|null $originalPrivateID
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public function blacklistTarget(TelegramClient $targetClient, TelegramClient $operatorClient, string $blacklistFlag, string $originalPrivateID=null)
+        public function blacklistTarget(TelegramClient $targetClient, TelegramClient $operatorClient, string $blacklistFlag, string $originalPrivateID=null): ServerResponse
         {
             switch($targetClient->Chat->Type)
             {
@@ -686,7 +686,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
 
                 case TelegramChatType::Private:
@@ -726,7 +726,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
             }
         }
@@ -745,7 +745,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function blacklistUser(TelegramClient $targetUserClient, TelegramClient $operatorClient, string $blacklistFlag, string $originalPrivateID=null)
+        public function blacklistUser(TelegramClient $targetUserClient, TelegramClient $operatorClient, string $blacklistFlag, string $originalPrivateID=null): ServerResponse
         {
             if($targetUserClient->Chat->Type !== TelegramChatType::Private)
             {
@@ -768,7 +768,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
 
@@ -805,7 +805,7 @@
                             }
                             else
                             {
-                                return null;
+                                return Request::emptyResponse();
                             }
                         }
                     }
@@ -830,7 +830,7 @@
                         }
                         else
                         {
-                            return null;
+                            return Request::emptyResponse();
                         }
                     }
                 }
@@ -862,7 +862,7 @@
                             }
                             else
                             {
-                                return null;
+                                return Request::emptyResponse();
                             }
                         }
 
@@ -894,7 +894,7 @@
                             }
                             else
                             {
-                                return null;
+                                return Request::emptyResponse();
                             }
                         }
 
@@ -925,7 +925,7 @@
                             }
                             else
                             {
-                                return null;
+                                return Request::emptyResponse();
                             }
                         }
 
@@ -963,7 +963,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
             catch (MissingOriginalPrivateIdException $e)
@@ -987,7 +987,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
             catch (PropertyConflictedException $e)
@@ -1011,7 +1011,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
 
@@ -1038,7 +1038,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
 
@@ -1127,7 +1127,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function blacklistChannel(TelegramClient $targetChannelClient, TelegramClient $operatorClient, string $blacklistFlag)
+        public function blacklistChannel(TelegramClient $targetChannelClient, TelegramClient $operatorClient, string $blacklistFlag): ServerResponse
         {
             if($targetChannelClient->Chat->Type !== TelegramChatType::Channel)
             {
@@ -1150,7 +1150,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
 
@@ -1178,7 +1178,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
 
@@ -1226,7 +1226,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
             }
@@ -1257,7 +1257,7 @@
                             }
                             else
                             {
-                                return null;
+                                return Request::emptyResponse();
                             }
                         }
 
@@ -1286,7 +1286,7 @@
                         }
                         else
                         {
-                            return null;
+                            return Request::emptyResponse();
                         }
 
                     default:
@@ -1318,7 +1318,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
             catch (PropertyConflictedException $e)
@@ -1342,7 +1342,7 @@
                 }
                 else
                 {
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
 
@@ -1369,7 +1369,7 @@
                     }
                     else
                     {
-                        return null;
+                        return Request::emptyResponse();
                     }
                 }
 

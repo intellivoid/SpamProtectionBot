@@ -33,7 +33,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             $BlacklistCommand = new BlacklistCommand($this->telegram, $this->update);
             return $BlacklistCommand->execute();

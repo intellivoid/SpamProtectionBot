@@ -67,7 +67,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
@@ -83,7 +83,7 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             if($this->WhoisCommand->ChatObject->Type !== TelegramChatType::Group)
@@ -118,13 +118,13 @@
          * Handles the callback query
          *
          * @param CallbackQuery $callbackQuery
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public function handleCallbackQuery(CallbackQuery $callbackQuery): ?ServerResponse
+        public function handleCallbackQuery(CallbackQuery $callbackQuery): ServerResponse
         {
             if($this->WhoisCommand == null)
             {
@@ -199,10 +199,10 @@
          * Displays the settings menu
          *
          * @param CallbackQuery|null $callbackQuery
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws TelegramException
          */
-        public function handleSettingsManager(CallbackQuery  $callbackQuery=null): ?ServerResponse
+        public function handleSettingsManager(CallbackQuery  $callbackQuery=null): ServerResponse
         {
             $Text = LanguageCommand::localizeChatText($this->WhoisCommand,
                 "You can configure SpamProtectionBot's settings in this chat, just select the section you want to ".
@@ -277,13 +277,13 @@
          * Handles general alerts
          *
          * @param CallbackQuery $callbackQuery
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public function handleGeneralAlertsConfiguration(CallbackQuery $callbackQuery): ?ServerResponse
+        public function handleGeneralAlertsConfiguration(CallbackQuery $callbackQuery): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
@@ -425,13 +425,13 @@
          * Handles potential spammer configuration
          *
          * @param CallbackQuery $callbackQuery
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public function handlePotentialSpammersConfiguration(CallbackQuery $callbackQuery): ?ServerResponse
+        public function handlePotentialSpammersConfiguration(CallbackQuery $callbackQuery): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
@@ -516,13 +516,13 @@
          * Handles blacklist configuration
          *
          * @param CallbackQuery $callbackQuery
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public function handleBlacklistConfiguration(CallbackQuery  $callbackQuery): ?ServerResponse
+        public function handleBlacklistConfiguration(CallbackQuery  $callbackQuery): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
@@ -618,13 +618,13 @@
          * Handle NSFW Filter configuration
          *
          * @param CallbackQuery $callbackQuery
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public function handleNsfwDetectionConfiguration(CallbackQuery  $callbackQuery): ?ServerResponse
+        public function handleNsfwDetectionConfiguration(CallbackQuery  $callbackQuery): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
@@ -768,13 +768,13 @@
          * Handles the spam detection configuration
          *
          * @param CallbackQuery $callbackQuery
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public function handleSpamDetectionConfiguration(CallbackQuery $callbackQuery): ?ServerResponse
+        public function handleSpamDetectionConfiguration(CallbackQuery $callbackQuery): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);

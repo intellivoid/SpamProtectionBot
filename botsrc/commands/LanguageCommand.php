@@ -68,7 +68,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
@@ -84,7 +84,7 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             if($this->WhoisCommand->ChatObject->Type == TelegramChatType::Private)
@@ -93,7 +93,7 @@
                 return $LanguageCommand->handleUserLanguageChange(null, $this->WhoisCommand, false);
             }
 
-            return null;
+            return Request::emptyResponse();
         }
 
         /**
@@ -101,13 +101,13 @@
          *
          * @param CallbackQuery $callbackQuery
          * @param WhoisCommand $whoisCommand
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws TelegramException
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          */
-        public function handleChatLanguageChange(CallbackQuery $callbackQuery, WhoisCommand $whoisCommand): ?ServerResponse
+        public function handleChatLanguageChange(CallbackQuery $callbackQuery, WhoisCommand $whoisCommand): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $ChatSettings = SettingsManager::getChatSettings($whoisCommand->CallbackQueryChatClient);
@@ -288,13 +288,13 @@
          * @param CallbackQuery|null $callbackQuery
          * @param WhoisCommand $whoisCommand
          * @param bool $edit
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
          * @throws TelegramException
          */
-        public function handleUserLanguageChange(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand, bool $edit=True): ?ServerResponse
+        public function handleUserLanguageChange(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand, bool $edit=True): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
 

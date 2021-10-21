@@ -71,7 +71,7 @@
          * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find clients
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
@@ -87,7 +87,7 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $ChatClient = $this->WhoisCommand->ChatClient;

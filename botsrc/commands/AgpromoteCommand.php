@@ -70,7 +70,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find all clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
@@ -87,13 +87,13 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             // They must be a main operator
             if(in_array($this->WhoisCommand->UserObject->ID, MAIN_OPERATOR_IDS, true) !== true)
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $TargetTelegramClient = null;

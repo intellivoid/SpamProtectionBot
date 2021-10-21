@@ -59,7 +59,7 @@
          * @throws \TelegramClientManager\Exceptions\TelegramClientNotFoundException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find all clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
@@ -86,7 +86,7 @@
             }
             else
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             if($UserObject->Username == TELEGRAM_BOT_NAME)
@@ -130,25 +130,25 @@
                 $DeepAnalytics->tally('tg_spam_protection', 'banned_blacklisted', (int)$this->WhoisCommand->ChatObject->ID);
             }
 
-            return null;
+            return Request::emptyResponse();
         }
 
         /**
          * Handles a potential active spammer upon joining
          *
          * @param TelegramClient $userClient
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function handleActiveSpammer(TelegramClient $userClient): ?ServerResponse
+        public function handleActiveSpammer(TelegramClient $userClient): ServerResponse
         {
             // Disabled for now
-            return null;
+            return Request::emptyResponse();
 
             if($userClient->User->IsBot)
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
@@ -206,18 +206,18 @@
                 }
             }
 
-            return null;
+            return Request::emptyResponse();
         }
 
         /**
          * Handles a blacklisted user
          *
          * @param TelegramClient $userClient
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function handleBlacklist(TelegramClient $userClient)
+        public function handleBlacklist(TelegramClient $userClient): ServerResponse
         {
             $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
             $UserStatus = SettingsManager::getUserStatus($userClient);
@@ -286,6 +286,6 @@
                 }
             }
 
-            return null;
+            return Request::emptyResponse();
         }
     }

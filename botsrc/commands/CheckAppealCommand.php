@@ -77,7 +77,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find all clients
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
@@ -93,14 +93,14 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             // Check the permissions
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
             if($UserStatus->IsOperator == false && $UserStatus->IsAgent == false)
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $options = [];
@@ -232,7 +232,7 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public function displayUsage(Message $message, string $error="Missing parameter")
+        public function displayUsage(Message $message, string $error="Missing parameter"): ServerResponse
         {
             return Request::sendMessage([
                 "chat_id" => $message->getChat()->getId(),
@@ -257,7 +257,7 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public function checkAappeal(TelegramClient $TargetUserClient)
+        public function checkAappeal(TelegramClient $TargetUserClient): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $UserStatus = SettingsManager::getUserStatus($TargetUserClient);

@@ -78,7 +78,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find all clients
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
@@ -94,7 +94,7 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             if($this->getMessage()->getText(true) !== null)
@@ -168,7 +168,7 @@
                         ]);
                     }
                     else
-                        return null;
+                        return Request::emptyResponse();
                         
 
                 case TelegramChatType::Private:
@@ -209,7 +209,7 @@
                     break;
             }
 
-            return null;
+            return Request::emptyResponse();
         }
 
         /**
@@ -348,13 +348,13 @@
                 ]);
             }
 
-            return null;
+            return Request::emptyResponse();
         }
 
         /**
          * @param CallbackQuery|null $callbackQuery
          * @param WhoisCommand $whoisCommand
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
@@ -363,7 +363,7 @@
          * @throws MissingOriginalPrivateIdException
          * @throws PropertyConflictedException
          */
-        public function handleAppealCallback(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand): ?ServerResponse
+        public function handleAppealCallback(?CallbackQuery $callbackQuery, WhoisCommand $whoisCommand): ServerResponse
         {
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
             $TargetClient = null;
@@ -474,6 +474,6 @@
                 }
             }
 
-            return null;
+            return Request::emptyResponse();
         }
     }

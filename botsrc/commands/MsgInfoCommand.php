@@ -88,7 +88,7 @@
          * @throws DatabaseException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find all clients
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
@@ -106,7 +106,7 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             // Parse the options
@@ -193,11 +193,11 @@
          * Looks up a message hash and returns the service response if successful
          *
          * @param string $target
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws DatabaseException
          * @throws TelegramException
          */
-        public function lookupMessageInfo(string $target)
+        public function lookupMessageInfo(string $target): ServerResponse
         {
             try
             {
@@ -311,7 +311,7 @@
                 unset($messageLogNotFoundException);
             }
 
-            return null;
+            return Request::emptyResponse();
         }
 
         /**
@@ -321,7 +321,7 @@
          * @return ServerResponse
          * @throws TelegramException
          */
-        public function displayUsage(string $error="Missing parameter")
+        public function displayUsage(string $error="Missing parameter"): ServerResponse
         {
             if($this->PrivateMode)
             {

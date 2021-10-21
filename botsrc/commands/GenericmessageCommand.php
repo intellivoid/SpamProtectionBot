@@ -94,7 +94,7 @@
          * @noinspection DuplicatedCode
          * @noinspection PhpMissingReturnTypeInspection
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find all clients
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
@@ -109,7 +109,7 @@
             // If it's a private chat, ignore it.
             if($this->WhoisCommand->ChatObject->Type == TelegramChatType::Private)
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $this->handleMessageSpeed();
@@ -125,7 +125,7 @@
             {
                 // No need to continue any further if the user got banned
                 $this->handleLanguageDetection();
-                return null;
+                return Request::emptyResponse();
             }
 
             // Ban the user from the chat if the chat has potential spammer protection enabled
@@ -134,7 +134,7 @@
             //{
             //    // No need to continue any further if the user got banned
             //    $this->handleLanguageDetection();
-            //    return null;
+            //    return Request::emptyResponse();
             //}
 
             // Remove the message if it came from a blacklisted channel
@@ -146,7 +146,7 @@
                 {
                     // No need to continue any further if the channel message got deleted
                     $this->handleLanguageDetection();
-                    return null;
+                    return Request::emptyResponse();
                 }
             }
 
@@ -154,7 +154,7 @@
             $this->handleMessage($this->WhoisCommand->ChatClient, $this->WhoisCommand->UserClient, $this->WhoisCommand->DirectClient);
             $this->handleNsfwFilter($this->WhoisCommand->ChatClient, $this->WhoisCommand->UserClient);
             $this->handleLanguageDetection();
-            return null;
+            return Request::emptyResponse();
         }
 
         /**

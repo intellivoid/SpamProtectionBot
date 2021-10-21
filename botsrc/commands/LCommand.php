@@ -33,7 +33,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             $LogCommand = new LogCommand($this->telegram, $this->update);
             return $LogCommand->execute();

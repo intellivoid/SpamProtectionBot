@@ -66,7 +66,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
 
@@ -97,12 +97,12 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             if(!in_array($this->WhoisCommand->UserClient->User->ID, MAIN_OPERATOR_IDS, true))
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             $MessageResponse = Request::sendMessage([

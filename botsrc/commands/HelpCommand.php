@@ -62,7 +62,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find clients
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);

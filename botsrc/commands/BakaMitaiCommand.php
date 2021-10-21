@@ -38,7 +38,7 @@
         /**
          * @var string
          */
-        protected $version = '1.0.0';
+        protected $version = '1.1.0';
 
         /**
          * @var bool
@@ -59,7 +59,7 @@
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
-        public function execute()
+        public function execute(): ServerResponse
         {
             // Find all clients
             $this->WhoisCommand = new WhoisCommand($this->telegram, $this->update);
@@ -75,7 +75,7 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             return Request::sendMessage([
