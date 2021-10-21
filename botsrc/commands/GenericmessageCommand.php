@@ -43,6 +43,7 @@
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
     use VerboseAdventure\Abstracts\EventType;
+    use TmpFile\TmpFile;
 
     /**
      * Generic Command
@@ -70,7 +71,7 @@
         /**
          * @var string
          */
-        protected $version = '2.0.2';
+        protected $version = '2.0.3';
 
         /**
          * The whois command used for finding targets
@@ -1780,6 +1781,8 @@
                 SpamProtectionBot::getLogHandler()->logException($e, "logDetectedSpam");
             }
 
+            $TmpFile = null;
+
             $LogMessage = "#spam_prediction\n\n";
 
             $LogMessage .= "<b>Private Telegram ID:</b> <code>" . $userClient->PublicID . "</code>\n";
@@ -1795,7 +1798,9 @@
             $LogMessageWithContent = $LogMessage . "\n\n<i>===== CONTENT =====</i>\n\n" . self::escapeHTML($message->getText());
             if(strlen($LogMessageWithContent) > 4096)
             {
-                $LogMessage .= "\n\nThe content is too large to be shown\n";
+                $LogMessage .= "\n\nSee the attached file\n";
+                $TmpFile = new TmpFile($message->getText(), '.txt', 'msg_content_');
+                // $LogMessage .= "\n\nThe content is too large to be shown\n";
             }
             else
             {
@@ -1828,7 +1833,6 @@
                         ]
                     );
                 }
-
             }
             else
             {
@@ -1857,14 +1861,30 @@
 
             }
 
-            $Response = Request::sendMessage([
-                "chat_id" => "@" . LOG_CHANNEL,
-                "disable_web_page_preview" => true,
-                "disable_notification" => true,
-                "parse_mode" => "html",
-                "reply_markup" => $InlineKeyboard,
-                "text" => $LogMessage
-            ]);
+            $Response = null;
+
+            if ($TmpFile !== null)
+            {
+                $Response = Request::sendDocument([
+                    "chat_id" => "@" . LOG_CHANNEL,
+                    "disable_notification" => true,
+                    "reply_markup" => $InlineKeyboard,
+                    "parse_mode" => "html",
+                    "caption" => $LogMessage,
+                    "document" => Request::encodeFile($TmpFile->getFileName())
+                ]);
+            }
+            else
+            {
+                $Response = Request::sendMessage([
+                    "chat_id" => "@" . LOG_CHANNEL,
+                    "disable_web_page_preview" => true,
+                    "disable_notification" => true,
+                    "parse_mode" => "html",
+                    "reply_markup" => $InlineKeyboard,
+                    "text" => $LogMessage
+                ]);
+            }
 
             if($Response->isOk() == false)
             {
