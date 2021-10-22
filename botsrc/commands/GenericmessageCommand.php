@@ -83,7 +83,7 @@
         /**
          * Executes the generic message command
          *
-         * @return ServerResponse|null
+         * @return ServerResponse
          * @throws CoffeeHouseUtilsNotReadyException
          * @throws DatabaseException
          * @throws InvalidSearchMethod
@@ -917,7 +917,7 @@
                             try
                             {
                                 $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->get(
-                                    LargeGeneralizedClassificationSearchMethod::byPublicID, $TargetUserStatus->LargeSpamGeneralizedID
+                                    LargeGeneralizedClassificationSearchMethod::byID, $TargetUserStatus->LargeSpamGeneralizedID
                                 );
                             }
                             catch(NoResultsFoundException $e)
@@ -983,7 +983,7 @@
                                 try
                                 {
                                     $Generalized = $CoffeeHouse->getLargeGeneralizedClassificationManager()->get(
-                                        LargeGeneralizedClassificationSearchMethod::byPublicID, $TargetChannelStatus->LargeSpamGeneralizedID
+                                        LargeGeneralizedClassificationSearchMethod::byID, $TargetChannelStatus->LargeSpamGeneralizedID
                                     );
                                 }
                                 catch(NoResultsFoundException $e)
