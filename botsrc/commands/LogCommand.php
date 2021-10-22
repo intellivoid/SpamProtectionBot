@@ -760,14 +760,14 @@
                     ]);
             }
 
-            //if($UserStatus->getTrustPrediction() < 80)
-            //{
-            //    return $callbackQuery->answer(
-            //        [
-            //            "text" => LanguageCommand::localizeChatText($whoisCommand, "You must have a trust prediction over 80 in order to vote."),
-            //            "show_alert" => true
-            //        ]);
-            //}
+            if($UserStatus->getTrustPrediction() < 80)
+            {
+                return $callbackQuery->answer(
+                    [
+                        "text" => LanguageCommand::localizeChatText($whoisCommand, "You must have a trust prediction over 80 in order to vote."),
+                        "show_alert" => true
+                    ]);
+            }
 
             if($callbackQuery !== null)
             {
