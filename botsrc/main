@@ -82,7 +82,8 @@
     {
         $telegram = new Longman\TelegramBot\Telegram(
             $TelegramServiceConfiguration['BotToken'],
-            $TelegramServiceConfiguration['BotName']
+            $TelegramServiceConfiguration['BotName'],
+            true
         );
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)

@@ -269,10 +269,12 @@
                 $ConclusionText = LanguageCommand::localizeChatText($this->WhoisCommand,
                     "We try to provide as much transparency as possible so that's why we make all evidence ".
                     "(except for child abuse and porn) publicly accessible at %s, you can find proof to your blacklist reason ".
-                    "by searching your Private Telegram ID %b in the channel.",
-                    ['s', 'b']);
+                    "by searching your Private Telegram ID %b in the channel. Alternatively, you can %u and view the logs in your web browser.",
+                    ['s', 'b', 'u']);
                 $ConclusionText = str_ireplace("%s", "@" . LOG_CHANNEL, $ConclusionText);
                 $ConclusionText = str_ireplace("%b", "(<code>" . $this->WhoisCommand->UserClient->PublicID . "</code>)", $ConclusionText);
+                $url = "https://t.me/s/SpamProtectionLogs?q=" . $this->WhoisCommand->UserClient->PublicID;
+                $ConclusionText = str_ireplace("%b", "<a href=\"$url\">" . LanguageCommand::localizeChatText($this->WhoisCommand, "click here") . "</a>", $ConclusionText);
 
                 switch($UserStatus->BlacklistFlag)
                 {
