@@ -89,8 +89,7 @@
     {
         $telegram = new Longman\TelegramBot\Telegram(
             $TelegramServiceConfiguration['BotToken'],
-            $TelegramServiceConfiguration['BotName'],
-            true
+            $TelegramServiceConfiguration['BotName']
         );
 
         if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))

@@ -274,7 +274,7 @@
                 $ConclusionText = str_ireplace("%s", "@" . LOG_CHANNEL, $ConclusionText);
                 $ConclusionText = str_ireplace("%b", "(<code>" . $this->WhoisCommand->UserClient->PublicID . "</code>)", $ConclusionText);
                 $url = "https://t.me/s/SpamProtectionLogs?q=" . $this->WhoisCommand->UserClient->PublicID;
-                $ConclusionText = str_ireplace("%b", "<a href=\"$url\">" . LanguageCommand::localizeChatText($this->WhoisCommand, "click here") . "</a>", $ConclusionText);
+                $ConclusionText = str_ireplace("%u", "<a href=\"$url\">" . LanguageCommand::localizeChatText($this->WhoisCommand, "click here") . "</a>", $ConclusionText);
 
                 switch($UserStatus->BlacklistFlag)
                 {
