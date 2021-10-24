@@ -567,9 +567,12 @@
                     $photoSize = $message->Photo[(count($message->Photo) - 1)];
                     $File = Request::getFile(["file_id" => $photoSize->FileID]);
 
+                    # TODO: This will break on the self-hosted bot server!
+                    $TelegramServiceConfiguration = SpamProtectionBot::getTelegramConfiguration();
+
                     if($File->isOk())
                     {
-                        $photoSize->URL = Request::downloadFileLocation($File->getResult());
+                        $photoSize->URL = "https://api.telegram.org/file/bot" . $TelegramServiceConfiguration['BotToken'] . "/" . $File->getResult()->getFilePath();
                         $photoSize->HamPrediction = 0;
                         $photoSize->SpamPrediction = 0;
                         $message->Photo = [$photoSize];

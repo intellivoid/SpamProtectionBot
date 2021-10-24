@@ -536,7 +536,13 @@
                 $CoffeeHouse = SpamProtectionBot::getCoffeeHouse();
                 $DeepAnalytics = SpamProtectionBot::getDeepAnalytics();
 
-                $DownloadURI = Request::downloadFileLocation(Request::getFile(["file_id" => $LargestPhoto->FileID])->getResult());
+                // $DownloadURI = Request::downloadFileLocation(Request::getFile(["file_id" => $LargestPhoto->FileID])->getResult());
+                # TODO: This will break on the self-hosted bot server!
+                $File = Request::getFile(["file_id" => $LargestPhoto->FileID])->getResult();
+                $TelegramServiceConfiguration = SpamProtectionBot::getTelegramConfiguration();
+                $URL = "https://api.telegram.org/file/bot" . $TelegramServiceConfiguration['BotToken'] . "/" . $File->getFilePath();
+
+                $DownloadURI = $URL;
                 $ImageContent = file_get_contents($DownloadURI);
 
                 if($ImageContent == false) return false;
