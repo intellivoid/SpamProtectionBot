@@ -1,0 +1,203 @@
+<?php
+
+    /** @noinspection PhpDefineCanBeReplacedWithConstInspection */
+    /** @noinspection PhpUndefinedClassInspection */
+    /** @noinspection DuplicatedCode */
+
+    /**
+     * worker is the code that the worker will execute whenever a job passed on from the main
+     * bot. Starting the CLI will restart the workers that are already running in the background
+     */
+
+    use BackgroundWorker\BackgroundWorker;
+    use CoffeeHouse\CoffeeHouse;
+    use DeepAnalytics\DeepAnalytics;
+    use Longman\TelegramBot\Commands\UserCommands\FinalVerdictCommand;
+    use Longman\TelegramBot\TelegramLog;
+    use ppm\ppm;
+    use SpamProtection\Abstracts\VotesDueRecordStatus;
+    use SpamProtection\SpamProtection;
+    use TelegramClientManager\TelegramClientManager;
+    use VerboseAdventure\Abstracts\EventType;
+    use VerboseAdventure\Classes\ErrorHandler;
+    use VerboseAdventure\VerboseAdventure;
+
+    // Import all required auto loaders
+    /** @noinspection PhpIncludeInspection */
+    require('ppm');
+
+    /** @noinspection PhpUnhandledExceptionInspection */
+    ppm::import('net.intellivoid.spam_protection_bot');
+
+    $current_directory = getcwd();
+    VerboseAdventure::setStdout(true); // Enable stdout
+    VerboseAdventure::setSimpleStdout(true); // Simplified output
+    ErrorHandler::registerHandlers(); // Register error handlers
+
+    if(class_exists('SpamProtectionBot') == false)
+    {
+        if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            require_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        }
+        elseif(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            require_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
+        }
+        else
+        {
+            throw new RuntimeException('Cannot locate bot class');
+        }
+    }
+
+    // Load all required configurations
+
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $TelegramServiceConfiguration = SpamProtectionBot::getTelegramConfiguration();
+
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $DatabaseConfiguration = SpamProtectionBot::getDatabaseConfiguration();
+
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $BackgroundWorkerConfiguration = SpamProtectionBot::getBackgroundWorkerConfiguration();
+
+    /** @noinspection PhpUnhandledExceptionInspection */
+    $RedisConfiguration = SpamProtectionBot::getRedisConfiguration();
+
+    // Define and create the Telegram Bot instance (SQL)
+
+    define('TELEGRAM_BOT_NAME', $TelegramServiceConfiguration['BotName']);
+    define('LOG_CHANNEL', 'DebuggingChannel');
+    define('MAIN_OPERATOR_IDS', [
+        991157148, // IntellivoidSupport
+        860831767, // Justasic
+        1067188884, // NotAditya,
+        1087878371 // Naysukas
+    ]);
+
+    SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
+    SpamProtectionBot::setLastWorkerActivity(time());
+    SpamProtectionBot::setIsSleeping(false);
+
+    if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
+    {
+        define('TELEGRAM_BOT_ENABLED', true);
+    }
+    else
+    {
+        define('TELEGRAM_BOT_ENABLED', false);
+    }
+
+    try
+    {
+        $telegram = new Longman\TelegramBot\Telegram(
+            $TelegramServiceConfiguration['BotToken'],
+            $TelegramServiceConfiguration['BotName']
+        );
+
+        if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            $telegram->addCommandsPaths([$current_directory . DIRECTORY_SEPARATOR . 'commands']);
+        }
+        elseif(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
+        {
+            $telegram->addCommandsPaths([__DIR__ . DIRECTORY_SEPARATOR . 'commands']);
+        }
+        else
+        {
+            print('Cannot locate commands path');
+            exit(1);
+        }
+
+        TelegramLog::initialize();
+    }
+    catch (Longman\TelegramBot\Exception\TelegramException $e)
+    {
+        SpamProtectionBot::getLogHandler()->logException($e, 'Verdict Worker');
+        exit(255);
+    }
+
+    // Start the worker instance
+    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Starting Worker', 'Verdict Worker');
+    SpamProtectionBot::$DeepAnalytics = new DeepAnalytics();
+
+    // Create the database connections
+    SpamProtectionBot::$TelegramClientManager = new TelegramClientManager();
+    if(SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error)
+    {
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, 'Failed to initialize TelegramClientManager, ' . SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error, 'Verdict Worker');
+        exit(255);
+    }
+
+    SpamProtectionBot::$SpamProtection = new SpamProtection();
+    if(SpamProtectionBot::$SpamProtection->getDatabase()->connect_error)
+    {
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, 'Failed to initialize SpamProtection, ' . SpamProtectionBot::$SpamProtection->getDatabase()->connect_error, 'Verdict Worker');
+        exit(255);
+    }
+
+    SpamProtectionBot::$CoffeeHouse = new CoffeeHouse();
+    if(SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error)
+    {
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, 'Failed to initialize CoffeeHouse, ' . SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error, 'Verdict Worker');
+        exit(255);
+    }
+
+    try
+    {
+        $BackgroundWorker = new BackgroundWorker();
+        $BackgroundWorker->getWorker()->addServer(
+            $BackgroundWorkerConfiguration['Host'],
+            (int)$BackgroundWorkerConfiguration['Port']
+        );
+    }
+    catch(Exception $e)
+    {
+        SpamProtectionBot::getLogHandler()->logException($e, 'Worker');
+        exit(255);
+    }
+
+    // Start working
+    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Started successfully', 'Verdict Worker');
+
+    while(true)
+    {
+        try
+        {
+            SpamProtectionBot::getSpamProtection()->connectDatabase();
+            SpamProtectionBot::getCoffeeHouse()->connectDatabase();
+            SpamProtectionBot::getTelegramClientManager()->connectDatabase();
+            SpamProtectionBot::setIsSleeping(false);
+
+            $VotesDueRecord = SpamProtectionBot::getSpamProtection()->getVotesDueManager()->getCurrentPool(false);
+            if(time() >= $VotesDueRecord->DueTimestamp && $VotesDueRecord->Status == VotesDueRecordStatus::CollectingData)
+            {
+                SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Running final verdict event", "handleFinalVerdict");
+                $FinalVerdictCommand = new FinalVerdictCommand($telegram);
+
+                try
+                {
+                    $FinalVerdictCommand->processFinalVerdict();
+
+                    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Final Verdict processed!", "handleFinalVerdict");
+                }
+                catch(Exception $e)
+                {
+                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to handle the final verdict event", "handleFinalVerdict");
+                    SpamProtectionBot::getLogHandler()->logException($e, "handleFinalVerdict");
+                }
+            }
+        }
+        catch(Exception $e)
+        {
+            SpamProtectionBot::getLogHandler()->logException($e, 'Verdict Worker');
+        }
+
+        SpamProtectionBot::getSpamProtection()->disconnectDatabase();
+        SpamProtectionBot::getCoffeeHouse()->disconnectDatabase();
+        SpamProtectionBot::getTelegramClientManager()->disconnectDatabase();
+        SpamProtectionBot::setIsSleeping(true);
+        sleep(300);
+    }
+
+

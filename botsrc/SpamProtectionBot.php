@@ -75,7 +75,6 @@
             $TelegramSchema->setDefinition('BotName', '<BOT NAME HERE>');
             $TelegramSchema->setDefinition('BotToken', '<BOT TOKEN>');
             $TelegramSchema->setDefinition('BotEnabled', 'true');
-            $TelegramSchema->setDefinition('WebHook', 'http://localhost');
             $TelegramSchema->setDefinition('MaxConnections', '100');
             $acm->defineSchema($TelegramSchema);
 
@@ -104,6 +103,7 @@
             $RedisSchema->setDefinition('Database', '0');
             $acm->defineSchema($RedisSchema);
 
+            $acm->updateConfiguration();
             return $acm;
         }
 

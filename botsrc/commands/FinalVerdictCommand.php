@@ -11,9 +11,10 @@
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
-    use pop\pop;
     use SpamProtection\Exceptions\InvalidSearchMethodException;
     use SpamProtection\Exceptions\NoPoolCurrentlyActiveExceptions;
+    use SpamProtection\Exceptions\ReportBuildAlreadyInProgressException;
+    use SpamProtection\Exceptions\VotingPoolAlreadyCompletedException;
     use SpamProtection\Exceptions\VotingPoolCurrentlyActiveException;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\SearchMethods\TelegramClientSearchMethod;
@@ -67,8 +68,14 @@
          * @return ServerResponse
          * @throws DatabaseException
          * @throws InvalidSearchMethod
-         * @throws TelegramException
+         * @throws InvalidSearchMethodException
+         * @throws NoPoolCurrentlyActiveExceptions
          * @throws TelegramClientNotFoundException
+         * @throws TelegramException
+         * @throws VotingPoolCurrentlyActiveException
+         * @throws \SpamProtection\Exceptions\DatabaseException
+         * @throws ReportBuildAlreadyInProgressException
+         * @throws VotingPoolAlreadyCompletedException
          * @noinspection DuplicatedCode
          */
         public function execute(): ServerResponse
@@ -123,6 +130,8 @@
          * @throws TelegramException
          * @throws VotingPoolCurrentlyActiveException
          * @throws \SpamProtection\Exceptions\DatabaseException
+         * @throws ReportBuildAlreadyInProgressException
+         * @throws VotingPoolAlreadyCompletedException
          */
         public function processFinalVerdict(): ServerResponse
         {

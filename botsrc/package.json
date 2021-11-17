@@ -79,6 +79,12 @@
                 "version": "latest",
                 "source": "default@github/intellivoid/TmpFile",
                 "required": true
+            },
+            {
+                "package": "net.intellivoid.proclib",
+                "version": "latest",
+                "source": "default@github/intellivoid/ProcLib",
+                "required": true
             }
         ],
         "configuration": {
@@ -221,6 +227,7 @@
         "commands/help_docs/whois.html",
         "main",
         "package.json",
+        "verdict_worker",
         "worker"
     ]
 }
