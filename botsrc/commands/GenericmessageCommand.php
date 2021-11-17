@@ -870,10 +870,13 @@
                     try
                     {
                         // Predict the spam results
-                        $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), false);
+                        if($Message->getText() !== null && strlen($Message->getText()) > 0)
+                        {
+                            $Results = $CoffeeHouse->getSpamPrediction()->predict($Message->getText(), false);
+                            if($Results == null)
+                                return false;
+                        }
 
-                        if($Results == null)
-                            return false;
                     }
                     catch(Exception $e)
                     {
