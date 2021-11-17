@@ -157,10 +157,15 @@
                 {
                     if($UserStatus->GeneralizedSpamProbability > $UserStatus->GeneralizedHamProbability)
                     {
-                        $BanResponse = Request::kickChatMember([
+                        $BanResponse = Request::banChatMember([
+                            "chat_id" => $this->getMessage()->getChat()->getId(),
+                            "user_id" => $userClient->User->ID
+                        ]);
+
+                        Request::unbanChatMember([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
                             "user_id" => $userClient->User->ID,
-                            "until_date" => 0
+                            "only_if_banned" => true,
                         ]);
 
                         if($BanResponse->isOk())
@@ -223,10 +228,15 @@
             {
                 if($UserStatus->IsBlacklisted)
                 {
-                    $BanResponse = Request::kickChatMember([
+                    $BanResponse  = Request::banChatMember([
+                        "chat_id" => $this->getMessage()->getChat()->getId(),
+                        "user_id" => $userClient->User->ID
+                    ]);
+
+                    Request::unbanChatMember([
                         "chat_id" => $this->getMessage()->getChat()->getId(),
                         "user_id" => $userClient->User->ID,
-                        "until_date" => 0
+                        "only_if_banned" => true,
                     ]);
 
                     if($BanResponse->isOk())

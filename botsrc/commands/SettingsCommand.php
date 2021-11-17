@@ -185,7 +185,8 @@
                         "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
                         "message_id" => $callbackQuery->getMessage()->getReplyToMessage()->getMessageId()
                     ]);
-                    return null;
+
+                    return Request::emptyResponse();
 
                 default:
                     return $callbackQuery->answer([

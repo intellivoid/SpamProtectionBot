@@ -17,7 +17,6 @@
     use Exception;
     use Longman\TelegramBot\Commands\SystemCommand;
     use Longman\TelegramBot\Commands\UserCommands\BlacklistCommand;
-    use Longman\TelegramBot\Commands\UserCommands\FinalVerdictCommand;
     use Longman\TelegramBot\Commands\UserCommands\LanguageCommand;
     use Longman\TelegramBot\Commands\UserCommands\WhoisCommand;
     use Longman\TelegramBot\Entities\InlineKeyboard;
@@ -27,7 +26,6 @@
     use SpamProtection\Abstracts\BlacklistFlag;
     use SpamProtection\Abstracts\DetectionAction;
     use SpamProtection\Abstracts\TelegramUserStatus;
-    use SpamProtection\Abstracts\VotesDueRecordStatus;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtection\Objects\ChannelStatus;
     use SpamProtection\Objects\ChatSettings;
@@ -227,7 +225,6 @@
                     if($this->WhoisCommand->ChatClient !== null)
                     {
                         $TargetChatStatus = SettingsManager::getChatSettings($this->WhoisCommand->ChatClient);
-                        $GeneralizedChat = null;
 
                         if($TargetChatStatus->LargeLanguageGeneralizedID == null)
                         {
@@ -594,10 +591,15 @@
                                 "message_id" => $Message->MessageID
                             ]);
 
-                            $KickResponse = Request::kickChatMember([
+                            $KickResponse = Request::banChatMember([
+                                "chat_id" => $Message->Chat->ID,
+                                "user_id" => $userClient->User->ID
+                            ]);
+
+                            Request::unbanChatMember([
                                 "chat_id" => $Message->Chat->ID,
                                 "user_id" => $userClient->User->ID,
-                                "until_date" => (int)time() + 60
+                                "only_if_banned" => true,
                             ]);
 
                             if($DeleteResponse->isOk() == false)
@@ -637,10 +639,9 @@
                                 "message_id" => $Message->MessageID
                             ]);
 
-                            $BanResponse = Request::kickChatMember([
+                            $BanResponse = Request::banChatMember([
                                 "chat_id" => $Message->Chat->ID,
-                                "user_id" => $userClient->User->ID,
-                                "until_date" => 0
+                                "user_id" => $userClient->User->ID
                             ]);
 
                             if($DeleteResponse->isOk() == false)
@@ -1303,10 +1304,9 @@
 
                     if($IsAdmin == false)
                     {
-                        $BanResponse = Request::kickChatMember([
+                        $BanResponse =  Request::banChatMember([
                             "chat_id" => $this->getMessage()->getChat()->getId(),
-                            "user_id" => $userClient->User->ID,
-                            "until_date" => 0
+                            "user_id" => $userClient->User->ID
                         ]);
 
                         if($BanResponse->isOk())
@@ -1558,11 +1558,17 @@
                         "message_id" => $message->MessageID
                     ]);
 
-                    $KickResponse = Request::kickChatMember([
+                    $KickResponse = Request::banChatMember([
+                        "chat_id" => $message->Chat->ID,
+                        "user_id" => $userClient->User->ID
+                    ]);
+
+                    Request::unbanChatMember([
                         "chat_id" => $message->Chat->ID,
                         "user_id" => $userClient->User->ID,
-                        "until_date" => (int)time() + 60
+                        "only_if_banned" => true,
                     ]);
+
 
                     $Response = self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n";
 
@@ -1610,10 +1616,9 @@
                         "message_id" => $message->MessageID
                     ]);
 
-                    $BanResponse = Request::kickChatMember([
+                    $BanResponse = Request::banChatMember([
                         "chat_id" => $message->Chat->ID,
-                        "user_id" => $userClient->User->ID,
-                        "until_date" => 0
+                        "user_id" => $userClient->User->ID
                     ]);
 
                     $Response = self::generateDetectionMessage($this->WhoisCommand, $messageLog, $userClient, $spamPredictionResults) . "\n\n";
