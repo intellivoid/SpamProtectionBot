@@ -106,7 +106,7 @@
             Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "text" => "Processing final verdict, this may take a while."
+                "text" => "Processing final verdict, this may take a while. Warning! Running this command is dangerous because it can cause a thread lock."
             ]);
 
             $this->processFinalVerdict();
