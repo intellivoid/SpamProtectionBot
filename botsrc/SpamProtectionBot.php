@@ -1,7 +1,9 @@
 <?php
 
-    use acm\acm;
-    use acm\Objects\Schema;
+    /** @noinspection PhpMissingFieldTypeInspection */
+
+    use acm2\acm2;
+    use acm2\Objects\Schema;
     use BackgroundWorker\BackgroundWorker;
     use CoffeeHouse\CoffeeHouse;
     use DeepAnalytics\DeepAnalytics;
@@ -63,41 +65,45 @@
         /**
          * Auto configures ACM
          *
-         * @return acm
+         * @return acm2
          */
-        public static function autoConfig(): acm
+        public static function autoConfig(): acm2
         {
-            $acm = new acm(__DIR__, 'SpamProtectionBot');
+            $acm = new acm2('SpamProtectionBot');
 
             $TelegramSchema = new Schema();
+            $TelegramSchema->setName('TelegramService');
             $TelegramSchema->setDefinition('BotName', '<BOT NAME HERE>');
             $TelegramSchema->setDefinition('BotToken', '<BOT TOKEN>');
             $TelegramSchema->setDefinition('BotEnabled', 'true');
             $TelegramSchema->setDefinition('WebHook', 'http://localhost');
             $TelegramSchema->setDefinition('MaxConnections', '100');
-            $acm->defineSchema('TelegramService', $TelegramSchema);
+            $acm->defineSchema($TelegramSchema);
 
             $BackgroundWorkerSchema = new Schema();
+            $BackgroundWorkerSchema->setName('BackgroundWorker');
             $BackgroundWorkerSchema->setDefinition('Host', '127.0.0.1');
             $BackgroundWorkerSchema->setDefinition('Port', '4730');
             $BackgroundWorkerSchema->setDefinition('MaxWorkers', '5');
-            $acm->defineSchema('BackgroundWorker', $BackgroundWorkerSchema);
+            $acm->defineSchema($BackgroundWorkerSchema);
 
             $DatabaseSchema = new Schema();
+            $DatabaseSchema->setName('Database');
             $DatabaseSchema->setDefinition('Host', '127.0.0.1');
             $DatabaseSchema->setDefinition('Port', '3306');
             $DatabaseSchema->setDefinition('Username', 'root');
             $DatabaseSchema->setDefinition('Password', 'admin');
             $DatabaseSchema->setDefinition('Database', 'telegram');
-            $acm->defineSchema('Database', $DatabaseSchema);
+            $acm->defineSchema($DatabaseSchema);
 
             $RedisSchema = new Schema();
+            $RedisSchema->setName('Redis');
             $RedisSchema->setDefinition('Host', '127.0.0.1');
             $RedisSchema->setDefinition('Port', '6379');
             $RedisSchema->setDefinition('Username', '');
             $RedisSchema->setDefinition('Password', '');
             $RedisSchema->setDefinition('Database', '0');
-            $acm->defineSchema('Redis', $RedisSchema);
+            $acm->defineSchema($RedisSchema);
 
             return $acm;
         }
@@ -129,6 +135,7 @@
          *
          * @return mixed
          * @throws Exception
+         * @noinspection PhpUnused
          */
         public static function getRedisConfiguration()
         {
@@ -173,7 +180,7 @@
         /**
          * @return CoffeeHouse
          */
-        public static function getCoffeeHouse()
+        public static function getCoffeeHouse(): CoffeeHouse
         {
             return self::$CoffeeHouse;
         }
@@ -212,6 +219,7 @@
 
         /**
          * @param int $LastWorkerActivity
+         * @noinspection PhpUnused
          */
         public static function setLastWorkerActivity(int $LastWorkerActivity): void
         {
@@ -237,6 +245,7 @@
         /**
          * Determines if this current worker should save resources by going to sleep or wake up depending on the
          * last activity cycle
+         * @noinspection PhpUnused
          */
         public static function processSleepCycle()
         {
