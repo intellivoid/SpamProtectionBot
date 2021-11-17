@@ -53,11 +53,19 @@
     {
         if($TelegramServiceConfiguration['EnableCustomServer'])
         {
-            SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Using custom server ' . $TelegramServiceConfiguration['CustomEndpoint'], 'Main');
             Request::setCustomBotApiUri(
                 $TelegramServiceConfiguration['CustomEndpoint'],
                 $TelegramServiceConfiguration['CustomDownloadEndpoint']
             );
+
+            define('TELEGRAM_ENDPOINT', $TelegramServiceConfiguration['CustomEndpoint']);
+            define('TELEGRAM_DOWNLOAD_ENDPOINT',
+                str_ireplace('{API_KEY}', $TelegramServiceConfiguration['BotToken'], $TelegramServiceConfiguration['CustomDownloadEndpoint']));
+        }
+        else
+        {
+            define('TELEGRAM_ENDPOINT', 'https://api.telegram.org');
+            define('TELEGRAM_DOWNLOAD_ENDPOINT', '/file/bot' . $TelegramServiceConfiguration['BotToken']);
         }
 
         $telegram = new Longman\TelegramBot\Telegram(

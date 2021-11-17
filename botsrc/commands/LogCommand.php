@@ -572,7 +572,7 @@
 
                     if($File->isOk())
                     {
-                        $photoSize->URL = "https://api.telegram.org/file/bot" . $TelegramServiceConfiguration['BotToken'] . "/" . $File->getResult()->getFilePath();
+                        $photoSize->URL = TELEGRAM_ENDPOINT . TELEGRAM_DOWNLOAD_ENDPOINT . "/" . $File->getResult()->getFilePath();
                         $photoSize->HamPrediction = 0;
                         $photoSize->SpamPrediction = 0;
                         $message->Photo = [$photoSize];
