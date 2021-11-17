@@ -14,11 +14,12 @@
 
     use BackgroundWorker\BackgroundWorker;
     use Longman\TelegramBot\Exception\TelegramException;
+    use Longman\TelegramBot\Request;
     use ppm\ppm;
-use ProcLib\Abstracts\Types\StdType;
-use ProcLib\Process;
-use ProcLib\Utilities\PhpExecutableFinder;
-use VerboseAdventure\Abstracts\EventType;
+    use ProcLib\Abstracts\Types\StdType;
+    use ProcLib\Process;
+    use ProcLib\Utilities\PhpExecutableFinder;
+    use VerboseAdventure\Abstracts\EventType;
     use VerboseAdventure\Classes\ErrorHandler;
     use VerboseAdventure\VerboseAdventure;
 
@@ -46,24 +47,24 @@ use VerboseAdventure\Abstracts\EventType;
 
     define('TELEGRAM_BOT_NAME', $TelegramServiceConfiguration['BotName']);
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
-
-    if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
-    {
-        define('TELEGRAM_BOT_ENABLED', true);
-    }
-    else
-    {
-        define('TELEGRAM_BOT_ENABLED', false);
-    }
-
     SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Starting Service', 'Main');
     
     try
     {
+        if($TelegramServiceConfiguration['EnableCustomServer'])
+        {
+            SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Using custom server ' . $TelegramServiceConfiguration['CustomEndpoint'], 'Main');
+            Request::setCustomBotApiUri(
+                $TelegramServiceConfiguration['CustomEndpoint'],
+                $TelegramServiceConfiguration['CustomDownloadEndpoint']
+            );
+        }
+
         $telegram = new Longman\TelegramBot\Telegram(
             $TelegramServiceConfiguration['BotToken'],
             $TelegramServiceConfiguration['BotName']
         );
+        $telegram->setVerboseLogging(true);
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {

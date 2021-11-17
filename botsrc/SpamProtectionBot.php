@@ -74,21 +74,26 @@
             $TelegramSchema->setName('TelegramService');
             $TelegramSchema->setDefinition('BotName', '<BOT NAME HERE>');
             $TelegramSchema->setDefinition('BotToken', '<BOT TOKEN>');
-            $TelegramSchema->setDefinition('BotEnabled', 'true');
-            $TelegramSchema->setDefinition('MaxConnections', '100');
+            $TelegramSchema->setDefinition('BotEnabled', true);
+            $TelegramSchema->setDefinition('EnableCustomServer', true);
+            $TelegramSchema->setDefinition('CustomEndpoint', 'http://127.0.0.1:8081');
+            $TelegramSchema->setDefinition('CustomDownloadEndpoint', '/file/bot{API_KEY}');
+            $TelegramSchema->setDefinition('MainOperators', []);
+            $TelegramSchema->setDefinition('LoggingChannel', 'SpamProtectionLogs');
+
             $acm->defineSchema($TelegramSchema);
 
             $BackgroundWorkerSchema = new Schema();
             $BackgroundWorkerSchema->setName('BackgroundWorker');
             $BackgroundWorkerSchema->setDefinition('Host', '127.0.0.1');
-            $BackgroundWorkerSchema->setDefinition('Port', '4730');
-            $BackgroundWorkerSchema->setDefinition('MaxWorkers', '5');
+            $BackgroundWorkerSchema->setDefinition('Port', 4730);
+            $BackgroundWorkerSchema->setDefinition('MaxWorkers', 5);
             $acm->defineSchema($BackgroundWorkerSchema);
 
             $DatabaseSchema = new Schema();
             $DatabaseSchema->setName('Database');
             $DatabaseSchema->setDefinition('Host', '127.0.0.1');
-            $DatabaseSchema->setDefinition('Port', '3306');
+            $DatabaseSchema->setDefinition('Port', 3306);
             $DatabaseSchema->setDefinition('Username', 'root');
             $DatabaseSchema->setDefinition('Password', 'admin');
             $DatabaseSchema->setDefinition('Database', 'telegram');
@@ -97,10 +102,10 @@
             $RedisSchema = new Schema();
             $RedisSchema->setName('Redis');
             $RedisSchema->setDefinition('Host', '127.0.0.1');
-            $RedisSchema->setDefinition('Port', '6379');
+            $RedisSchema->setDefinition('Port', 6379);
             $RedisSchema->setDefinition('Username', '');
             $RedisSchema->setDefinition('Password', '');
-            $RedisSchema->setDefinition('Database', '0');
+            $RedisSchema->setDefinition('Database', 0);
             $acm->defineSchema($RedisSchema);
 
             $acm->updateConfiguration();

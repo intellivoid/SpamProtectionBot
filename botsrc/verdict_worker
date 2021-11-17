@@ -15,6 +15,7 @@
     use Longman\TelegramBot\Commands\UserCommands\FinalVerdictCommand;
     use Longman\TelegramBot\TelegramLog;
     use ppm\ppm;
+    use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\VotesDueRecordStatus;
     use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
@@ -67,33 +68,28 @@
     // Define and create the Telegram Bot instance (SQL)
 
     define('TELEGRAM_BOT_NAME', $TelegramServiceConfiguration['BotName']);
-    define('LOG_CHANNEL', 'DebuggingChannel');
-    define('MAIN_OPERATOR_IDS', [
-        991157148, // IntellivoidSupport
-        860831767, // Justasic
-        1067188884, // NotAditya,
-        1087878371 // Naysukas
-    ]);
+    define('LOG_CHANNEL', $TelegramServiceConfiguration['LoggingChannel']);
+    define('MAIN_OPERATOR_IDS', $TelegramServiceConfiguration['MainOperators']);
 
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
     SpamProtectionBot::setLastWorkerActivity(time());
     SpamProtectionBot::setIsSleeping(false);
 
-    if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
-    {
-        define('TELEGRAM_BOT_ENABLED', true);
-    }
-    else
-    {
-        define('TELEGRAM_BOT_ENABLED', false);
-    }
-
     try
     {
+        if($TelegramServiceConfiguration['EnableCustomServer'])
+        {
+            Request::setCustomBotApiUri(
+                $TelegramServiceConfiguration['CustomEndpoint'],
+                $TelegramServiceConfiguration['CustomDownloadEndpoint']
+            );
+        }
+
         $telegram = new Longman\TelegramBot\Telegram(
             $TelegramServiceConfiguration['BotToken'],
             $TelegramServiceConfiguration['BotName']
         );
+        $telegram->setVerboseLogging(true);
 
         if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
         {

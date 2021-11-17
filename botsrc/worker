@@ -14,8 +14,9 @@
     use DeepAnalytics\DeepAnalytics;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Entities\Update;
-use Longman\TelegramBot\TelegramLog;
-use ppm\ppm;
+    use Longman\TelegramBot\TelegramLog;
+    use Longman\TelegramBot\Request;
+    use ppm\ppm;
     use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
     use VerboseAdventure\Abstracts\EventType;
@@ -67,32 +68,27 @@ use ppm\ppm;
     // Define and create the Telegram Bot instance (SQL)
 
     define('TELEGRAM_BOT_NAME', $TelegramServiceConfiguration['BotName']);
-    define('LOG_CHANNEL', 'SpamProtectionLogs');
-    define('MAIN_OPERATOR_IDS', [
-        991157148, // IntellivoidSupport
-        860831767, // Justasic
-        1067188884, // NotAditya,
-        1087878371 // Naysukas
-    ]);
+    define('LOG_CHANNEL', $TelegramServiceConfiguration['LoggingChannel']);
+    define('MAIN_OPERATOR_IDS', $TelegramServiceConfiguration['MainOperators']);
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
     SpamProtectionBot::setLastWorkerActivity(time());
     SpamProtectionBot::setIsSleeping(false);
 
-    if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
-    {
-        define('TELEGRAM_BOT_ENABLED', true);
-    }
-    else
-    {
-        define('TELEGRAM_BOT_ENABLED', false);
-    }
-
     try
     {
+        if($TelegramServiceConfiguration['EnableCustomServer'])
+        {
+            Request::setCustomBotApiUri(
+                $TelegramServiceConfiguration['CustomEndpoint'],
+                $TelegramServiceConfiguration['CustomDownloadEndpoint']
+            );
+        }
+
         $telegram = new Longman\TelegramBot\Telegram(
             $TelegramServiceConfiguration['BotToken'],
             $TelegramServiceConfiguration['BotName']
         );
+        $telegram->setVerboseLogging(true);
 
         if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
         {
@@ -141,7 +137,6 @@ use ppm\ppm;
     }
 
     // Start the worker instance
-    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Starting Worker', 'Worker');
     SpamProtectionBot::$DeepAnalytics = new DeepAnalytics();
 
     // Create the database connections
@@ -221,10 +216,6 @@ use ppm\ppm;
         }
 
     });
-
-    // Start working
-    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Worker started successfully', 'Worker');
-
 
     // Set the timeout to 5 seconds
     $BackgroundWorker->getWorker()->getGearmanWorker()->setTimeout(500);
