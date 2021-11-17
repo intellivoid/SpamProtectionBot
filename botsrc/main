@@ -1,10 +1,11 @@
 <?php
 
+    /** @noinspection PhpDefineCanBeReplacedWithConstInspection */
     /** @noinspection DuplicatedCode */
 
 
     /**
-     * cli.php is the main execution point for the bot to start polling, this method uses BackgroundWorker to
+     * main is the main execution point for the bot to start polling, this method uses BackgroundWorker to
      * instantly process a batch of updates in the background without waiting for the updates to be completed.
      *
      * In exchange for this performance upgrade, each worker will use up database connections, make sure
@@ -85,7 +86,7 @@
         SpamProtectionBot::$BackgroundWorker->getSupervisor()->setDisplayOutput(TELEGRAM_BOT_NAME, true);
         SpamProtectionBot::getBackgroundWorker()->getClient()->addServer($BackgroundWorkerConfiguration["Host"], (int)$BackgroundWorkerConfiguration["Port"]);
         SpamProtectionBot::getBackgroundWorker()->getSupervisor()->startWorkers(
-            $current_directory . DIRECTORY_SEPARATOR . 'worker', TELEGRAM_BOT_NAME,
+            getcwd() . DIRECTORY_SEPARATOR . 'worker', TELEGRAM_BOT_NAME,
             (int)$BackgroundWorkerConfiguration['MaxWorkers']
         );
     }
@@ -94,6 +95,9 @@
         SpamProtectionBot::getLogHandler()->logException($e, "Main");
         exit(255);
     }
+
+    $next_event_update = time() + 60;
+    $total_update_count = 0;
 
     // Start listening to updates
     while(true)
@@ -111,7 +115,13 @@
                 $update_count = count($server_response->getResult());
                 if($update_count > 0)
                 {
-                    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processed $update_count update(s)", "Main");
+                    $total_update_count += $update_count;
+                    if(time() >= $next_event_update)
+                    {
+                        SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processed $total_update_count update(s)", "Main");
+                        $total_update_count = 0;
+                        $next_event_update = time() + 60;
+                    }
                 }
             }
             else
