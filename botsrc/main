@@ -28,24 +28,6 @@
     VerboseAdventure::setStdout(true); // Enable stdout
     ErrorHandler::registerHandlers(); // Register error handlers
 
-    $current_directory = getcwd();
-
-    if(class_exists("SpamProtectionBot") == false)
-    {
-        if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
-        {
-            require_once($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
-        }
-        elseif(file_exists(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
-        {
-            require_once(__DIR__ . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php');
-        }
-        else
-        {
-            throw new RuntimeException("Cannot locate bot class");
-        }
-    }
-
     // Load all configurations
     /** @noinspection PhpUnhandledExceptionInspection */
     $TelegramServiceConfiguration = SpamProtectionBot::getTelegramConfiguration();
