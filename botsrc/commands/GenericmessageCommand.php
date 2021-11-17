@@ -114,7 +114,6 @@
             }
 
             $this->handleMessageSpeed();
-            $this->handleFinalVerdict();
 
             // Obtain the User Stats and Chat Settings
             $UserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
@@ -156,31 +155,6 @@
             $this->handleNsfwFilter($this->WhoisCommand->ChatClient, $this->WhoisCommand->UserClient);
             $this->handleLanguageDetection();
             return Request::emptyResponse();
-        }
-
-        /**
-         * Handles the final verdict
-         */
-        public function handleFinalVerdict()
-        {
-            $VotesDueRecord = SpamProtectionBot::getSpamProtection()->getVotesDueManager()->getCurrentPool(false);
-            if(time() >= $VotesDueRecord->DueTimestamp && $VotesDueRecord->Status == VotesDueRecordStatus::CollectingData)
-            {
-                SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Running final verdict event", "handleFinalVerdict");
-                $FinalVerdictCommand = new FinalVerdictCommand($this->telegram, $this->update);
-
-                try
-                {
-                    $FinalVerdictCommand->processFinalVerdict();
-
-                    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Final Verdict processed!", "handleFinalVerdict");
-                }
-                catch(Exception $e)
-                {
-                    SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "There was an error while trying to handle the final verdict event", "handleFinalVerdict");
-                    SpamProtectionBot::getLogHandler()->logException($e, "handleFinalVerdict");
-                }
-            }
         }
 
         /**
