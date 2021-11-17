@@ -1015,16 +1015,6 @@
 
                     $SpamProtection = SpamProtectionBot::getSpamProtection();
 
-                    try
-                    {
-                        $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage($MessageObject, $Results->SpamPrediction, $Results->HamPrediction);
-                    }
-                    catch(Exception $exception)
-                    {
-                        unset($exception);
-                        return false;
-                    }
-
                     // Update the target user's trust prediction
                     // WARNING: This action was already performed above, omitting the functionality.
                     /**
@@ -1063,6 +1053,16 @@
 
                             if($ChatSettings->LogSpamPredictions)
                             {
+                                try
+                                {
+                                    $MessageLogObject = $SpamProtection->getMessageLogManager()->registerMessage($MessageObject, $Results->SpamPrediction, $Results->HamPrediction);
+                                }
+                                catch(Exception $exception)
+                                {
+                                    unset($exception);
+                                    return false;
+                                }
+
                                 $LoggedReferenceLink = self::logDetectedSpam($MessageObject, $MessageLogObject, $TargetUserClient, $TargetChannelClient);
                             }
 
