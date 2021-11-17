@@ -15,6 +15,9 @@
     use Longman\TelegramBot\Request;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
+    use TelegramClientManager\Exceptions\DatabaseException;
+    use TelegramClientManager\Exceptions\InvalidSearchMethod;
+    use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
 
     /**
      * Help command
@@ -60,7 +63,11 @@
          *
          * @return ServerResponse
          * @throws TelegramException
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          * @noinspection DuplicatedCode
+         * @noinspection PhpCastIsUnnecessaryInspection
          */
         public function execute(): ServerResponse
         {
@@ -77,7 +84,7 @@
             // Ignore forwarded commands
             if($this->getMessage()->getForwardFrom() !== null || $this->getMessage()->getForwardFromChat())
             {
-                return null;
+                return Request::emptyResponse();
             }
 
             if($this->getMessage()->getChat()->getType() !== TelegramChatType::Private)
@@ -94,7 +101,9 @@
                     ]);
                 }
                 else
-                    return null;
+                {
+                    return Request::emptyResponse();
+                }
             }
 
 
