@@ -63,7 +63,8 @@
     define("MAIN_OPERATOR_IDS", [
         "991157148", // IntellivoidSupport
         "860831767", // Justasic
-        "1067188884" // NotAditya
+        "1067188884", // NotAditya
+        "1087878371" // Naysukas
     ]);
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
 
