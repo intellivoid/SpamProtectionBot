@@ -95,7 +95,15 @@
     "components": [
         {
             "required": true,
-            "file": "SpamProtectionBot.php"
+            "file": "commands/AgdemoteCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/AgpromoteCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/AppealCommand.php"
         },
         {
             "required": true,
@@ -103,15 +111,19 @@
         },
         {
             "required": true,
-            "file": "commands/BlCommand.php"
-        },
-        {
-            "required": true,
             "file": "commands/BlacklistCommand.php"
         },
         {
             "required": true,
+            "file": "commands/BlCommand.php"
+        },
+        {
+            "required": true,
             "file": "commands/CallbackqueryCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/CheckAppealCommand.php"
         },
         {
             "required": true,
@@ -131,11 +143,11 @@
         },
         {
             "required": true,
-            "file": "commands/LCommand.php"
+            "file": "commands/LanguageCommand.php"
         },
         {
             "required": true,
-            "file": "commands/LanguageCommand.php"
+            "file": "commands/LCommand.php"
         },
         {
             "required": true,
@@ -148,6 +160,14 @@
         {
             "required": true,
             "file": "commands/NewchatmembersCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/OpdemoteCommand.php"
+        },
+        {
+            "required": true,
+            "file": "commands/OppromoteCommand.php"
         },
         {
             "required": true,
@@ -183,32 +203,11 @@
         },
         {
             "required": true,
-            "file": "commands/AgdemoteCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/AgpromoteCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/OpdemoteCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/OppromoteCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/AppealCommand.php"
-        },
-        {
-            "required": true,
-            "file": "commands/CheckAppealCommand.php"
+            "file": "SpamProtectionBot.php"
         }
     ],
     "files": [
         ".htaccess",
-        "main",
         "commands/help_docs/blacklist_flags.html",
         "commands/help_docs/false_detections.html",
         "commands/help_docs/help.html",
@@ -220,6 +219,7 @@
         "commands/help_docs/start.html",
         "commands/help_docs/unwanted_users.html",
         "commands/help_docs/whois.html",
+        "main",
         "package.json",
         "worker"
     ]
