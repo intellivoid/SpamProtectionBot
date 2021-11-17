@@ -75,6 +75,7 @@
             $TelegramSchema->setDefinition('BotName', '<BOT NAME HERE>');
             $TelegramSchema->setDefinition('BotToken', '<BOT TOKEN>');
             $TelegramSchema->setDefinition('BotEnabled', true);
+            $TelegramSchema->setDefinition('UseTestServers', false);
             $TelegramSchema->setDefinition('EnableCustomServer', true);
             $TelegramSchema->setDefinition('CustomEndpoint', 'http://127.0.0.1:8081');
             $TelegramSchema->setDefinition('CustomDownloadEndpoint', '/file/bot{API_KEY}');

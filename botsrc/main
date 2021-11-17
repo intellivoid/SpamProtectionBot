@@ -62,7 +62,8 @@
 
         $telegram = new Longman\TelegramBot\Telegram(
             $TelegramServiceConfiguration['BotToken'],
-            $TelegramServiceConfiguration['BotName']
+            $TelegramServiceConfiguration['BotName'],
+            $TelegramServiceConfiguration['UseTestServers']
         );
         $telegram->setVerboseLogging(true);
     }
