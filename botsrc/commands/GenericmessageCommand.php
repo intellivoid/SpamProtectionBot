@@ -91,7 +91,6 @@
          * @throws TelegramException
          * @throws \CoffeeHouse\Exceptions\DatabaseException
          * @noinspection DuplicatedCode
-         * @noinspection PhpMissingReturnTypeInspection
          */
         public function execute(): ServerResponse
         {
@@ -128,12 +127,12 @@
 
             // Ban the user from the chat if the chat has potential spammer protection enabled
             // and the user is a potential spammer.
-            if($this->handlePotentialSpammer($ChatSettings, $UserStatus, $this->WhoisCommand->UserClient, $this->WhoisCommand->ChatClient))
-            {
+            //if($this->handlePotentialSpammer($ChatSettings, $UserStatus, $this->WhoisCommand->UserClient, $this->WhoisCommand->ChatClient))
+            //{
                 // No need to continue any further if the user got banned
-                $this->handleLanguageDetection();
-                return Request::emptyResponse();
-            }
+            //    $this->handleLanguageDetection();
+            //    return Request::emptyResponse();
+            //}
 
             // Remove the message if it came from a blacklisted channel
             if($this->getMessage()->getForwardFromChat() !== null)
@@ -267,7 +266,6 @@
                     if($this->WhoisCommand->ForwardUserClient !== null)
                     {
                         $TargetForwardUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->ForwardUserClient);
-                        $GeneralizedForward = null;
 
                         if($TargetForwardUserStatus->LargeLanguageGeneralizedID == null)
                         {
@@ -310,7 +308,6 @@
                     if($this->WhoisCommand->ForwardChannelClient !== null)
                     {
                         $TargetForwardChannelStatus = SettingsManager::getChannelStatus($this->WhoisCommand->ForwardChannelClient);
-                        $GeneralizedChannelForward = null;
 
                         if($TargetForwardChannelStatus->LargeLanguageGeneralizedID == null)
                         {
@@ -352,7 +349,6 @@
                     if($this->WhoisCommand->ForwardUserClient !== null && $this->WhoisCommand->ForwardChannelClient !== null)
                     {
                         $TargetUserStatus = SettingsManager::getUserStatus($this->WhoisCommand->UserClient);
-                        $Generalized = null;
 
                         if($TargetUserStatus->LargeLanguageGeneralizedID == null)
                         {
@@ -446,6 +442,7 @@
          * @throws TelegramException
          * @throws \CoffeeHouse\Exceptions\DatabaseException
          * @noinspection DuplicatedCode
+         * @noinspection PhpCastIsUnnecessaryInspection
          */
         public function handleNsfwFilter(TelegramCLient $chatClient, TelegramClient $userClient): bool
         {
@@ -717,6 +714,7 @@
          * @throws TelegramException
          * @throws DatabaseException
          * @noinspection DuplicatedCode
+         * @noinspection PhpCastIsUnnecessaryInspection
          */
         public function handleMessage(TelegramClient $chatClient, TelegramClient $userClient, TelegramClient $telegramClient): bool
         {
@@ -923,6 +921,7 @@
                         }
 
                         /** @noinspection DuplicatedCode */
+                        /** @noinspection PhpUndefinedVariableInspection */
                         $Generalized = $CoffeeHouse->getSpamPrediction()->largeGeneralize($Generalized, $Results);
 
                         $TargetUserStatus->LargeSpamGeneralizedID = $Generalized->ID;
@@ -1050,8 +1049,6 @@
                     {
                         if($Results->SpamPrediction > $Results->HamPrediction)
                         {
-                            $LoggedReferenceLink = null;
-
                             if($ChatSettings->LogSpamPredictions)
                             {
                                 try
@@ -1065,22 +1062,21 @@
                                 }
 
                                 $LoggedReferenceLink = self::logDetectedSpam($MessageObject, $MessageLogObject, $TargetUserClient, $TargetChannelClient);
+                                self::handleSpam($MessageObject, $MessageLogObject, $TargetUserClient, $TargetUserStatus, $ChatSettings, $Results, $chatClient, $LoggedReferenceLink);
+
+                                SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', 0);
+                                SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getChatId());
+                                SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getUserId());
+                                return true;
                             }
-
-                            self::handleSpam($MessageObject, $MessageLogObject, $TargetUserClient, $TargetUserStatus, $ChatSettings, $Results, $chatClient, $LoggedReferenceLink);
-
-                            SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', 0);
-                            SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getChatId());
-                            SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_spam', (int)$telegramClient->getUserId());
-                            return true;
                         }
                         else
                         {
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_ham', 0);
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_ham', (int)$telegramClient->getChatId());
                             SpamProtectionBot::getDeepAnalytics()->tally('tg_spam_protection', 'detected_ham', (int)$telegramClient->getUserId());
-                            return false;
                         }
+                        return false;
                     }
                 }
             }
@@ -1102,6 +1098,7 @@
          * @throws TelegramException
          * @throws DatabaseException
          * @noinspection DuplicatedCode
+         * @noinspection PhpCastIsUnnecessaryInspection
          */
         public function handleBlacklistedChannel(ChatSettings $chatSettings, ChannelStatus $channelStatus, TelegramClient $channelClient, TelegramClient $userClient, TelegramClient $chatClient): bool
         {
@@ -1246,6 +1243,7 @@
          * @throws TelegramException
          * @throws DatabaseException
          * @noinspection DuplicatedCode
+         * @noinspection PhpCastIsUnnecessaryInspection
          */
         public function handleBlacklistedUser(ChatSettings $chatSettings, UserStatus $userStatus, TelegramClient $userClient, TelegramClient $chatClient): bool
         {
@@ -1399,9 +1397,9 @@
             ?string $logLink
         ): bool
         {
+            $UseInlineKeyboard = true;
             if($logLink !== null)
             {
-                $UseInlineKeyboard = true;
                 $InlineKeyboard = new InlineKeyboard([
                     [
                         "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "View Message", [], true),
@@ -1415,7 +1413,6 @@
             }
             else
             {
-                $UseInlineKeyboard = true;
                 $InlineKeyboard = new InlineKeyboard([
                     [
                         "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "User Info", [], true),
@@ -1441,6 +1438,7 @@
                                     LanguageCommand::localizeChatText($this->WhoisCommand, "No action will be taken since this group has Forward Protection Enabled", [], true)
                             ];
 
+                            /** @noinspection PhpConditionAlreadyCheckedInspection */
                             if($UseInlineKeyboard)
                             {
                                 $ResponseMessage["reply_markup"] = $InlineKeyboard;
@@ -1478,6 +1476,7 @@
                                 LanguageCommand::localizeChatText($this->WhoisCommand, "No action will be taken since the current detection rule in this group is to do nothing", [], true)
                         ];
 
+                        /** @noinspection PhpConditionAlreadyCheckedInspection */
                         if($UseInlineKeyboard)
                         {
                             $ResponseMessage["reply_markup"] = $InlineKeyboard;
@@ -1509,6 +1508,7 @@
                                     LanguageCommand::localizeChatText($this->WhoisCommand, "The message has been deleted", [], true)
                             ];
 
+                            /** @noinspection PhpConditionAlreadyCheckedInspection */
                             if($UseInlineKeyboard)
                             {
                                 $ResponseMessage["reply_markup"] = $InlineKeyboard;
@@ -1536,6 +1536,8 @@
                             ];
 
                             /** @noinspection PhpExpressionAlwaysConstantInspection */
+                            /** @noinspection RedundantSuppression */
+                            /** @noinspection PhpConditionAlreadyCheckedInspection */
                             if($UseInlineKeyboard)
                             {
                                 $ResponseMessage["reply_markup"] = $InlineKeyboard;
@@ -1595,6 +1597,7 @@
                             "text" => $Response
                         ];
 
+                        /** @noinspection PhpConditionAlreadyCheckedInspection */
                         if($UseInlineKeyboard)
                         {
                             $ResponseMessage["reply_markup"] = $InlineKeyboard;
@@ -1646,6 +1649,7 @@
                             "text" => $Response
                         ];
 
+                        /** @noinspection PhpConditionAlreadyCheckedInspection */
                         if($UseInlineKeyboard)
                         {
                             $ResponseMessage["reply_markup"] = $InlineKeyboard;
@@ -1673,6 +1677,7 @@
                                 LanguageCommand::localizeChatText($this->WhoisCommand, "No action was taken because the detection action is not recognized", [], true)
                         ];
 
+                        /** @noinspection PhpConditionAlreadyCheckedInspection */
                         if($UseInlineKeyboard)
                         {
                             $ResponseMessage["reply_markup"] = $InlineKeyboard;
@@ -1751,7 +1756,6 @@
         private static function logDetectedSpam(Message $message,  MessageLog $messageLog, TelegramClient $userClient, $channelClient=null): ?string
         {
             // Attempt to create a voting pool
-            $VotingPool = null;
             $VotingPoll = null;
 
             try
