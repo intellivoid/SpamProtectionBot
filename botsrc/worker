@@ -1,20 +1,21 @@
 <?php
 
+    /** @noinspection PhpDefineCanBeReplacedWithConstInspection */
     /** @noinspection PhpUndefinedClassInspection */
     /** @noinspection DuplicatedCode */
 
     /**
-     * worker.php is the code that the worker will execute whenever a job passed on from the main
+     * worker is the code that the worker will execute whenever a job passed on from the main
      * bot. Starting the CLI will restart the workers that are already running in the background
      */
 
     use BackgroundWorker\BackgroundWorker;
     use CoffeeHouse\CoffeeHouse;
     use DeepAnalytics\DeepAnalytics;
-    use Longman\TelegramBot\DB;
     use Longman\TelegramBot\Entities\ServerResponse;
     use Longman\TelegramBot\Entities\Update;
-    use ppm\ppm;
+use Longman\TelegramBot\TelegramLog;
+use ppm\ppm;
     use SpamProtection\SpamProtection;
     use TelegramClientManager\TelegramClientManager;
     use VerboseAdventure\Abstracts\EventType;
@@ -23,17 +24,17 @@
 
     // Import all required auto loaders
     /** @noinspection PhpIncludeInspection */
-    require("ppm");
+    require('ppm');
 
     /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.spam_protection_bot");
+    ppm::import('net.intellivoid.spam_protection_bot');
 
     $current_directory = getcwd();
     VerboseAdventure::setStdout(true); // Enable stdout
     VerboseAdventure::setSimpleStdout(true); // Simplified output
     ErrorHandler::registerHandlers(); // Register error handlers
 
-    if(class_exists("SpamProtectionBot") == false)
+    if(class_exists('SpamProtectionBot') == false)
     {
         if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
         {
@@ -45,7 +46,7 @@
         }
         else
         {
-            throw new RuntimeException("Cannot locate bot class");
+            throw new RuntimeException('Cannot locate bot class');
         }
     }
 
@@ -65,24 +66,25 @@
 
     // Define and create the Telegram Bot instance (SQL)
 
-    define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName']);
-    define("LOG_CHANNEL", "SpamProtectionLogs");
-    define("MAIN_OPERATOR_IDS", [
+    define('TELEGRAM_BOT_NAME', $TelegramServiceConfiguration['BotName']);
+    define('LOG_CHANNEL', 'SpamProtectionLogs');
+    define('MAIN_OPERATOR_IDS', [
         991157148, // IntellivoidSupport
         860831767, // Justasic
-        1067188884 // NotAditya
+        1067188884, // NotAditya,
+        1087878371 // Naysukas
     ]);
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
-    SpamProtectionBot::setLastWorkerActivity((int)time());
+    SpamProtectionBot::setLastWorkerActivity(time());
     SpamProtectionBot::setIsSleeping(false);
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
     {
-        define("TELEGRAM_BOT_ENABLED", true);
+        define('TELEGRAM_BOT_ENABLED', true);
     }
     else
     {
-        define("TELEGRAM_BOT_ENABLED", false);
+        define('TELEGRAM_BOT_ENABLED', false);
     }
 
     try
@@ -102,15 +104,15 @@
         }
         else
         {
-            print("Cannot locate commands path");
+            print('Cannot locate commands path');
             exit(1);
         }
 
-        \Longman\TelegramBot\TelegramLog::initialize();
+        TelegramLog::initialize();
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {
-        SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+        SpamProtectionBot::getLogHandler()->logException($e, 'Worker');
         exit(255);
     }
 
@@ -134,33 +136,33 @@
     }
     catch(Exception $e)
     {
-        SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+        SpamProtectionBot::getLogHandler()->logException($e, 'Worker');
         exit(255);
     }
 
     // Start the worker instance
-    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Starting Worker", "Worker");
+    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Starting Worker', 'Worker');
     SpamProtectionBot::$DeepAnalytics = new DeepAnalytics();
 
     // Create the database connections
     SpamProtectionBot::$TelegramClientManager = new TelegramClientManager();
     if(SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error)
     {
-        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, "Failed to initialize TelegramClientManager, " . SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error, "Worker");
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, 'Failed to initialize TelegramClientManager, ' . SpamProtectionBot::$TelegramClientManager->getDatabase()->connect_error, 'Worker');
         exit(255);
     }
 
     SpamProtectionBot::$SpamProtection = new SpamProtection();
     if(SpamProtectionBot::$SpamProtection->getDatabase()->connect_error)
     {
-        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, "Failed to initialize SpamProtection, " . SpamProtectionBot::$SpamProtection->getDatabase()->connect_error, "Worker");
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, 'Failed to initialize SpamProtection, ' . SpamProtectionBot::$SpamProtection->getDatabase()->connect_error, 'Worker');
         exit(255);
     }
 
     SpamProtectionBot::$CoffeeHouse = new CoffeeHouse();
     if(SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error)
     {
-        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, "Failed to initialize CoffeeHouse, " . SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error, "Worker");
+        SpamProtectionBot::getLogHandler()->log(EventType::ERROR, 'Failed to initialize CoffeeHouse, ' . SpamProtectionBot::$CoffeeHouse->getDatabase()->connect_error, 'Worker');
         exit(255);
     }
 
@@ -168,21 +170,22 @@
     {
         $BackgroundWorker = new BackgroundWorker();
         $BackgroundWorker->getWorker()->addServer(
-            $BackgroundWorkerConfiguration["Host"],
-            (int)$BackgroundWorkerConfiguration["Port"]
+            $BackgroundWorkerConfiguration['Host'],
+            (int)$BackgroundWorkerConfiguration['Port']
         );
     }
     catch(Exception $e)
     {
-        SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+        SpamProtectionBot::getLogHandler()->logException($e, 'Worker');
         exit(255);
     }
 
-    // Define the function "process_batch" to process a batch of Updates from Telegram in the background
-    $BackgroundWorker->getWorker()->getGearmanWorker()->addFunction($telegram->getBotUsername() . "_updates", function(GearmanJob $job) use ($telegram)
+    // Define the function 'process_batch' to process a batch of Updates from Telegram in the background
+    $BackgroundWorker->getWorker()->addFunction($telegram->getBotUsername() . '_updates', function(GearmanJob $job) use ($telegram)
     {
         try
         {
+            /** @noinspection PhpCastIsUnnecessaryInspection */
             SpamProtectionBot::setLastWorkerActivity((int)time()); // Set the last activity timestamp
             SpamProtectionBot::processSleepCycle(); // Wake worker if it's sleeping
 
@@ -193,19 +196,19 @@
 
                 if($UpdateCount > 0)
                 {
-                    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processing $UpdateCount update(s)", "Worker");
+                    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Processing ' . $UpdateCount . ' update(s)', 'Worker');
 
                     /** @var Update $result */
                     foreach ($ServerResponse->getResult() as $result)
                     {
                         try
                         {
-                            SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processing update ID " . $result->getUpdateId(), "Worker");
+                            SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Processing update ID ' . $result->getUpdateId(), 'Worker');
                             $telegram->processUpdate($result);
                         }
                         catch(Exception $e)
                         {
-                            SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+                            SpamProtectionBot::getLogHandler()->logException($e, 'Worker');
                         }
                     }
                 }
@@ -214,36 +217,33 @@
         }
         catch(Exception $e)
         {
-            SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+            SpamProtectionBot::getLogHandler()->logException($e, 'Worker');
         }
 
     });
 
     // Start working
-    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Worker started successfully", "Worker");
+    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Worker started successfully', 'Worker');
+
 
     // Set the timeout to 5 seconds
     $BackgroundWorker->getWorker()->getGearmanWorker()->setTimeout(500);
 
     while(true)
     {
-        while(
-            @$BackgroundWorker->getWorker()->getGearmanWorker()->work() ||
-            $BackgroundWorker->getWorker()->getGearmanWorker()->returnCode() == GEARMAN_TIMEOUT
-        )
+        try
         {
+            $BackgroundWorker->getWorker()->work(false);
 
-            if ($BackgroundWorker->getWorker()->getGearmanWorker()->returnCode() == GEARMAN_TIMEOUT)
+            if($BackgroundWorker->getWorker()->getGearmanWorker()->returnCode() == GEARMAN_TIMEOUT)
             {
-                SpamProtectionBot::processSleepCycle(); // Go to sleep if there's no activity
-                continue;
+                SpamProtectionBot::processSleepCycle();
             }
-
-            if ($BackgroundWorker->getWorker()->getGearmanWorker()->returnCode() != GEARMAN_SUCCESS)
-            {
-                SpamProtectionBot::getLogHandler()->log(EventType::WARNING, "Gearman returned error code " . $BackgroundWorker->getWorker()->getGearmanWorker()->returnCode(), "Worker");
-                break;
-            }
+        }
+        catch(Exception $e)
+        {
+            SpamProtectionBot::getLogHandler()->logException($e, 'Worker');
+            exit(255);
         }
     }
 

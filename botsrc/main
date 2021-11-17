@@ -21,10 +21,10 @@
 
     // Import all required auto loaders
     /** @noinspection PhpIncludeInspection */
-    require("ppm");
+    require('ppm');
 
     /** @noinspection PhpUnhandledExceptionInspection */
-    ppm::import("net.intellivoid.spam_protection_bot");
+    ppm::import('net.intellivoid.spam_protection_bot');
 
     VerboseAdventure::setStdout(true); // Enable stdout
     ErrorHandler::registerHandlers(); // Register error handlers
@@ -41,26 +41,19 @@
 
     // Create the Telegram Bot instance (NO SQL)
 
-    define("TELEGRAM_BOT_NAME", $TelegramServiceConfiguration['BotName']);
-    define("LOG_CHANNEL", "SpamProtectionLogs");
-    define("MAIN_OPERATOR_IDS", [
-        "991157148", // IntellivoidSupport
-        "860831767", // Justasic
-        "1067188884", // NotAditya
-        "1087878371" // Naysukas
-    ]);
+    define('TELEGRAM_BOT_NAME', $TelegramServiceConfiguration['BotName']);
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
 
     if(strtolower($TelegramServiceConfiguration['BotName']) == 'true')
     {
-        define("TELEGRAM_BOT_ENABLED", true);
+        define('TELEGRAM_BOT_ENABLED', true);
     }
     else
     {
-        define("TELEGRAM_BOT_ENABLED", false);
+        define('TELEGRAM_BOT_ENABLED', false);
     }
 
-    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Starting Service", "Main");
+    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Starting Service', 'Main');
     
     try
     {
@@ -71,20 +64,20 @@
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {
-        SpamProtectionBot::getLogHandler()->logException($e, "Main");
+        SpamProtectionBot::getLogHandler()->logException($e, 'Main');
         exit(255);
     }
 
     $telegram->useGetUpdatesWithoutDatabase();
 
     // Start the workers using the supervisor
-    SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Starting Supervisor", "Main");
+    SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Starting Supervisor', 'Main');
 
     try
     {
         SpamProtectionBot::$BackgroundWorker = new BackgroundWorker();
         SpamProtectionBot::$BackgroundWorker->getSupervisor()->setDisplayOutput(TELEGRAM_BOT_NAME, true);
-        SpamProtectionBot::getBackgroundWorker()->getClient()->addServer($BackgroundWorkerConfiguration["Host"], (int)$BackgroundWorkerConfiguration["Port"]);
+        SpamProtectionBot::getBackgroundWorker()->getClient()->addServer($BackgroundWorkerConfiguration['Host'], (int)$BackgroundWorkerConfiguration['Port']);
         SpamProtectionBot::getBackgroundWorker()->getSupervisor()->startWorkers(
             getcwd() . DIRECTORY_SEPARATOR . 'worker', TELEGRAM_BOT_NAME,
             (int)$BackgroundWorkerConfiguration['MaxWorkers']
@@ -92,7 +85,7 @@
     }
     catch(Exception $e)
     {
-        SpamProtectionBot::getLogHandler()->logException($e, "Main");
+        SpamProtectionBot::getLogHandler()->logException($e, 'Main');
         exit(255);
     }
 
@@ -107,7 +100,6 @@
 
         try
         {
-            //SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Listen for updates", "Main");
             $server_response = $telegram->handleBackgroundUpdates(SpamProtectionBot::getBackgroundWorker());
 
             if ($server_response->isOk())
@@ -118,7 +110,7 @@
                     $total_update_count += $update_count;
                     if(time() >= $next_event_update)
                     {
-                        SpamProtectionBot::getLogHandler()->log(EventType::INFO, "Processed $total_update_count update(s)", "Main");
+                        SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Processed $total_update_count update(s)', 'Main');
                         $total_update_count = 0;
                         $next_event_update = time() + 60;
                     }
@@ -126,12 +118,12 @@
             }
             else
             {
-                SpamProtectionBot::getLogHandler()->log(EventType::ERROR, "Failed to fetch updates: " . $server_response->printError(true), "Main");
+                SpamProtectionBot::getLogHandler()->log(EventType::ERROR, 'Failed to fetch updates: ' . $server_response->printError(true), 'Main');
 
             }
         }
         catch (TelegramException $e)
         {
-            SpamProtectionBot::getLogHandler()->logException($e, "Main");
+            SpamProtectionBot::getLogHandler()->logException($e, 'Main');
         }
     }
