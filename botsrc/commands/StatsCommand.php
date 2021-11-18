@@ -108,28 +108,17 @@
             $MessageResponse = Request::sendMessage([
                 "chat_id" => $this->getMessage()->getChat()->getId(),
                 "reply_to_message_id" => $this->getMessage()->getMessageId(),
-                "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Loading results")
+                "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Calculating buffer size")
             ]);
 
             /** @var Message $Message */
             $Message = $MessageResponse->getResult();
 
-            $Query = QueryBuilder::select("telegram_clients", array(
-                'account_id',
-                'user',
-                'chat',
-                'session_data',
-                'chat_id',
-                'user_id'
-            ));
+            $Query = "SELECT COUNT(id) AS total FROM telegram_clients;";
             $QueryResults = SpamProtectionBot::getTelegramClientManager()->getDatabase()->query($Query);
-
-            Request::editMessageText([
-                "chat_id" => $Message->getChat()->getId(),
-                "message_id" => $Message->getMessageId(),
-                "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "Calculating results")
-            ]);
-
+            $TotalRows = $QueryResults->fetch_assoc()['total'];
+            $CurrentProcessed = 0;
+            $LastUpdate = 0;
 
             $Results = array(
                 "chats" => 0,
@@ -154,101 +143,134 @@
                 $Results["blacklist_flags"][$item] = 0;
             }
 
-            while($row = $QueryResults->fetch_assoc())
+            while(true)
             {
-                $row['session_data'] = ZiProto::decode($row['session_data']);
-                $row['user'] = ZiProto::decode($row['user']);
-                $row['chat'] = ZiProto::decode($row['chat']);
-                $CurrentClient = TelegramClient::fromArray($row);
+                $Query = QueryBuilder::select("telegram_clients", array(
+                    'account_id',
+                    'user',
+                    'chat',
+                    'session_data',
+                    'chat_id',
+                    'user_id'
+                ), null, null, null, null, 500000, $CurrentProcessed);
+                print('Querying');
+                $QueryResults = SpamProtectionBot::getTelegramClientManager()->getDatabase()->query($Query);
+                print('Query done, ' . $CurrentProcessed);
 
-                if($CurrentClient->User->ID == $CurrentClient->Chat->ID)
+                while($row = $QueryResults->fetch_assoc())
                 {
-                    if($CurrentClient->Chat->Type == TelegramChatType::Group || $CurrentClient->Chat->Type == TelegramChatType::SuperGroup)
+                    $CurrentProcessed += 1;
+
+                    if((time() - $LastUpdate) > 15)
                     {
-                        $Results["chats"] += 1;
-
-                        $ChatSettings = SettingsManager::getChatSettings($CurrentClient);
-
-                        if($ChatSettings->IsVerified)
-                        {
-                            $Results["verified_chats"] += 1;
-                        }
+                        $LastUpdate = time();
+                        $Percentage = ($CurrentProcessed / $TotalRows) * 100;
+                        Request::editMessageText([
+                            "chat_id" => $Message->getChat()->getId(),
+                            "message_id" => $Message->getMessageId(),
+                            "text" => LanguageCommand::localizeChatText($this->WhoisCommand,
+                                (int)$Percentage . "% completed\n" .
+                                $CurrentProcessed . '/' . $TotalRows . ' processed'
+                            )
+                        ]);
                     }
 
+                    $row['session_data'] = ZiProto::decode($row['session_data']);
+                    $row['user'] = ZiProto::decode($row['user']);
+                    $row['chat'] = ZiProto::decode($row['chat']);
+                    $CurrentClient = TelegramClient::fromArray($row);
 
-                    if($CurrentClient->Chat->Type == TelegramChatType::Private)
+                    if($CurrentClient->User->ID == $CurrentClient->Chat->ID)
                     {
-                        $Results["users"] += 1;
-
-                        $UserStatus = SettingsManager::getUserStatus($CurrentClient);
-                        if($UserStatus->IsOperator)
+                        if($CurrentClient->Chat->Type == TelegramChatType::Group || $CurrentClient->Chat->Type == TelegramChatType::SuperGroup)
                         {
-                            $Results["operators"] += 1;
-                        }
+                            $Results["chats"] += 1;
 
-                        if($UserStatus->IsAgent)
-                        {
-                            $Results["agents"] += 1;
-                        }
+                            $ChatSettings = SettingsManager::getChatSettings($CurrentClient);
 
-                        if($UserStatus->IsWhitelisted)
-                        {
-                            $Results["whitelisted_users"] += 1;
-                        }
-
-                        if($UserStatus->IsBlacklisted)
-                        {
-                            $Results["blacklisted_users"] += 1;
-                            $Results["blacklist_flags"][$UserStatus->BlacklistFlag] += 1;
-                        }
-
-                        if($CurrentClient->AccountID > 0)
-                        {
-                            $Results["verified_accounts"] += 1;
-                        }
-
-                        if($UserStatus->GeneralizedSpamProbability > 0)
-                        {
-                            if($UserStatus->GeneralizedSpamProbability > $UserStatus->GeneralizedHamProbability)
+                            if($ChatSettings->IsVerified)
                             {
-                                $Results["potential_spammers"] += 1;
+                                $Results["verified_chats"] += 1;
                             }
                         }
-                    }
 
-                    if($CurrentClient->Chat->Type == TelegramChatType::Channel)
-                    {
-                        $Results["channels"] += 1;
 
-                        $ChannelStatus = SettingsManager::getChannelStatus($CurrentClient);
-
-                        if($ChannelStatus->IsBlacklisted)
+                        if($CurrentClient->Chat->Type == TelegramChatType::Private)
                         {
-                            $Results["blacklisted_channels"] += 1;
-                        }
+                            $Results["users"] += 1;
 
-                        if($ChannelStatus->IsWhitelisted)
-                        {
-                            $Results["whitelisted_channels"] += 1;
-                        }
-
-                        if($ChannelStatus->IsOfficial)
-                        {
-                            $Results["official_channels"] += 1;
-                        }
-
-                        if($ChannelStatus->GeneralizedSpamProbability > 0)
-                        {
-                            if($ChannelStatus->GeneralizedSpamProbability > $ChannelStatus->GeneralizedHamProbability)
+                            $UserStatus = SettingsManager::getUserStatus($CurrentClient);
+                            if($UserStatus->IsOperator)
                             {
-                                $Results["spam_channels"] += 1;
+                                $Results["operators"] += 1;
+                            }
+
+                            if($UserStatus->IsAgent)
+                            {
+                                $Results["agents"] += 1;
+                            }
+
+                            if($UserStatus->IsWhitelisted)
+                            {
+                                $Results["whitelisted_users"] += 1;
+                            }
+
+                            if($UserStatus->IsBlacklisted)
+                            {
+                                $Results["blacklisted_users"] += 1;
+                                $Results["blacklist_flags"][$UserStatus->BlacklistFlag] += 1;
+                            }
+
+                            if($CurrentClient->AccountID > 0)
+                            {
+                                $Results["verified_accounts"] += 1;
+                            }
+
+                            if($UserStatus->GeneralizedSpamProbability > 0)
+                            {
+                                if($UserStatus->GeneralizedSpamProbability > $UserStatus->GeneralizedHamProbability)
+                                {
+                                    $Results["potential_spammers"] += 1;
+                                }
+                            }
+                        }
+
+                        if($CurrentClient->Chat->Type == TelegramChatType::Channel)
+                        {
+                            $Results["channels"] += 1;
+
+                            $ChannelStatus = SettingsManager::getChannelStatus($CurrentClient);
+
+                            if($ChannelStatus->IsBlacklisted)
+                            {
+                                $Results["blacklisted_channels"] += 1;
+                            }
+
+                            if($ChannelStatus->IsWhitelisted)
+                            {
+                                $Results["whitelisted_channels"] += 1;
+                            }
+
+                            if($ChannelStatus->IsOfficial)
+                            {
+                                $Results["official_channels"] += 1;
+                            }
+
+                            if($ChannelStatus->GeneralizedSpamProbability > 0)
+                            {
+                                if($ChannelStatus->GeneralizedSpamProbability > $ChannelStatus->GeneralizedHamProbability)
+                                {
+                                    $Results["spam_channels"] += 1;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            $QueryResults->free();
+                $QueryResults->free();
+                if($CurrentProcessed >= $TotalRows)
+                    break;
+            }
 
             str_ireplace("%s",
                 "<code>" . number_format($Results["users"]) . "</code>",
