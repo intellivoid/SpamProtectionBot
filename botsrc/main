@@ -48,7 +48,7 @@
     define('TELEGRAM_BOT_NAME', $TelegramServiceConfiguration['BotName']);
     SpamProtectionBot::setLogHandler(new VerboseAdventure(TELEGRAM_BOT_NAME));
     SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Starting Service', 'Main');
-    
+
     try
     {
         if($TelegramServiceConfiguration['EnableCustomServer'])
@@ -73,7 +73,7 @@
             $TelegramServiceConfiguration['BotName'],
             $TelegramServiceConfiguration['UseTestServers']
         );
-        $telegram->setVerboseLogging(true);
+        $telegram->setVerboseLogging($TelegramServiceConfiguration['VerboseLogging']);
     }
     catch (Longman\TelegramBot\Exception\TelegramException $e)
     {
@@ -158,7 +158,7 @@
                     $total_update_count += $update_count;
                     if(time() >= $next_event_update)
                     {
-                        SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Processed $total_update_count update(s)', 'Main');
+                        SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Processed ' . $total_update_count . ' update(s)', 'Main');
                         $total_update_count = 0;
                         $next_event_update = time() + 60;
                     }

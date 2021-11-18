@@ -81,6 +81,7 @@
             $TelegramSchema->setDefinition('CustomDownloadEndpoint', '/file/bot{API_KEY}');
             $TelegramSchema->setDefinition('MainOperators', []);
             $TelegramSchema->setDefinition('LoggingChannel', 'SpamProtectionLogs');
+            $TelegramSchema->setDefinition('VerboseLogging', false);
 
             $acm->defineSchema($TelegramSchema);
 

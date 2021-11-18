@@ -98,7 +98,7 @@
             $TelegramServiceConfiguration['BotName'],
             $TelegramServiceConfiguration['UseTestServers']
         );
-        $telegram->setVerboseLogging(true);
+        $telegram->setVerboseLogging($TelegramServiceConfiguration['VerboseLogging']);
 
         if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
         {
@@ -208,7 +208,8 @@
                     {
                         try
                         {
-                            SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Processing update ID ' . $result->getUpdateId(), 'Worker');
+                            if(TelegramLog::isVerboseLogging())
+                                SpamProtectionBot::getLogHandler()->log(EventType::INFO, 'Processing update ID ' . $result->getUpdateId(), 'Worker');
                             $telegram->processUpdate($result);
                         }
                         catch(Exception $e)
