@@ -13,7 +13,6 @@
     use Longman\TelegramBot\Exception\TelegramException;
     use Longman\TelegramBot\Request;
     use SpamProtection\Abstracts\DetectionAction;
-    use SpamProtection\Abstracts\TelegramUserStatus;
     use SpamProtection\Managers\SettingsManager;
     use SpamProtectionBot;
     use TelegramClientManager\Abstracts\TelegramChatType;
