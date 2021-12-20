@@ -146,6 +146,7 @@
                 }
             }
 
+            var_dump($this->WhoisCommand->ChatObject->Type);
             switch($this->WhoisCommand->ChatObject->Type)
             {
                 case TelegramChatType::SuperGroup:
@@ -350,7 +351,7 @@
                 ]);
             }
 
-            return Request::emptyResponse();
+            return null;
         }
 
         /**
