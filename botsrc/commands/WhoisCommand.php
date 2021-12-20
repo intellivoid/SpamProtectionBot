@@ -266,6 +266,21 @@
         public $SenderChatClient = null;
 
         /**
+         * The new sender chat object for users sending as a channel
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $ReplyToSenderChatObject = null;
+
+        /**
+         * The new sender chat object for users sending as a channel
+         *
+         * @var TelegramClient|null
+         */
+        public $ReplyToSenderChatClient = null;
+
+
+        /**
          * Finds the callback clients
          *
          * @param CallbackQuery $callbackQuery
@@ -537,6 +552,23 @@
                             $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToUserClient);
                         }
                     }
+
+                    if($this->getMessage()->getReplyToMessage()->getSenderChat() !== null)
+                    {
+                        $this->ReplyToSenderChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getReplyToMessage()->getSenderChat()->getRawData());
+                        $this->ReplyToSenderChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->ReplyToSenderChatObject);
+
+                        if($this->getMessage()->getReplyToMessage()->getSenderChat()->getType() == 'channel')
+                        {
+                            if(isset($this->ReplyToSenderChatClient->SessionData->Data["channel_status"]) == false)
+                            {
+                                $ReplyToSenderChatStatus = SettingsManager::getChannelStatus($this->ReplyToSenderChatClient);
+                                $this->ReplyToSenderChatClient = SettingsManager::updateChannelStatus($this->ReplyToSenderChatClient, $ReplyToSenderChatStatus);
+                                $TelegramClientManager->getTelegramClientManager()->updateClient($this->ReplyToSenderChatClient);
+                            }
+                        }
+
+                    }
                 }
             }
             catch(Exception $e)
@@ -751,23 +783,25 @@
         {
             if($this->ReplyToUserClient !== null)
             {
+                if($this->ReplyToSenderChatClient !== null)
+                    return $this->ReplyToSenderChatClient;
+
                 return $this->ReplyToUserClient;
             }
 
             if($this->MentionUserClients !== null)
             {
                 if(count($this->MentionUserClients) > 0)
-                {
                     return $this->MentionUserClients[array_keys($this->MentionUserClients)[0]];
-                }
             }
 
             if($reply_only == false)
             {
+                if($this->SenderChatClient !== null)
+                    return $this->SenderChatClient;
+
                 if($this->UserClient !== null)
-                {
                     return $this->UserClient;
-                }
             }
 
             return null;
@@ -866,7 +900,6 @@
          * uniquely identify a user.
          *
          * @param TelegramClient $client
-         * @param bool $include_username
          * @return string
          */
         public static function generatePrivateMention(TelegramClient $client)
@@ -913,7 +946,6 @@
          */
         public function execute(): ServerResponse
         {
-            var_dump($this->update);
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
 
             try
@@ -1013,9 +1045,9 @@
                             "parse_mode" => "html",
                             "reply_to_message_id" => $this->ReplyToID,
                             "text" =>
-                                self::resolveTarget($this->findForwardedTarget(), false, "None", true) .
+                                self::resolveTarget($this->findForwardedTarget(), false, "None", true, ($this->ReplyToSenderChatClient !== null)) .
                                 "\n\n" .
-                                self::resolveTarget($this->findTarget(), false, "None")
+                                self::resolveTarget($this->findTarget(), false, "None", false, ($this->ReplyToSenderChatClient !== null))
                         ]);
                     }
 
@@ -1031,7 +1063,7 @@
                         "chat_id" => $this->DestinationChat->ID,
                         "parse_mode" => "html",
                         "reply_to_message_id" => $this->ReplyToID,
-                        "text" => self::resolveTarget($this->findForwardedTarget(), false, "None", true)
+                        "text" => self::resolveTarget($this->findForwardedTarget(), false, "None", true, ($this->ReplyToSenderChatClient !== null))
                     ]);
                 }
 
@@ -1050,7 +1082,7 @@
                         "chat_id" => $this->DestinationChat->ID,
                         "parse_mode" => "html",
                         "reply_to_message_id" => $this->ReplyToID,
-                        "text" => self::resolveTarget($this->findTarget(), false, "None")
+                        "text" => self::resolveTarget($this->findTarget(), false, "None", false, ($this->ReplyToSenderChatClient !== null))
                     ]);
                 }
             }
@@ -1240,6 +1272,14 @@
                 ]);
             }
 
+            if($this->SenderChatClient !== null)
+                return Request::sendMessage([
+                    "chat_id" => $this->DestinationChat->ID,
+                    "parse_mode" => "html",
+                    "reply_to_message_id" => $this->ReplyToID,
+                    "text" => self::resolveTarget($this->SenderChatClient, false, "None", false, true)
+                ]);
+
             return Request::sendMessage([
                 "chat_id" => $this->DestinationChat->ID,
                 "parse_mode" => "html",
@@ -1257,7 +1297,7 @@
          * @param bool $is_forwarded
          * @return string
          */
-        public function resolveTarget(TelegramClient $target_client, bool $is_resolved=false, string $resolved_type="Private ID", bool $is_forwarded=false): string
+        public function resolveTarget(TelegramClient $target_client, bool $is_resolved=false, string $resolved_type="Private ID", bool $is_forwarded=false, bool $is_retarded=false): string
         {
             switch($target_client->Chat->Type)
             {
@@ -1276,6 +1316,11 @@
                     return $this->generateChatInfoString($target_client, LanguageCommand::localizeChatText($this, "Chat Information"));
 
                 case TelegramChatType::Channel:
+                    if($is_retarded)
+                    {
+                        return $this->generateChannelInfoString($target_client, LanguageCommand::localizeChatText($this, "Resolved Sender Channel (Really stupid feature) "));
+                    }
+
                     if($is_resolved)
                     {
                         return $this->generateChannelInfoString($target_client, LanguageCommand::localizeChatText($this, "Resolved Channel " . $resolved_type));
