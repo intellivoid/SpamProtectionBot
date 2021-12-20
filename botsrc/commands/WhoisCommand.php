@@ -26,6 +26,7 @@
     use TelegramClientManager\Exceptions\TelegramClientNotFoundException;
     use TelegramClientManager\Objects\TelegramClient;
     use TgFileLogging;
+    use VerboseAdventure\Abstracts\EventType;
 
     /**
      * Info command
@@ -251,6 +252,20 @@
         public $CallbackQueryClient = null;
 
         /**
+         * The new sender chat object for users sending as a channel
+         *
+         * @var TelegramClient\Chat|null
+         */
+        public $SenderChatObject = null;
+
+        /**
+         * The new sender chat object for users sending as a channel
+         *
+         * @var TelegramClient|null
+         */
+        public $SenderChatClient = null;
+
+        /**
          * Finds the callback clients
          *
          * @param CallbackQuery $callbackQuery
@@ -469,6 +484,42 @@
                         "Object: <code>Events/generic_request::forward_from_channel.bin</code>"
                 ]);
             }
+
+            // Define and update sender chat if available
+            try
+            {
+                if($this->getMessage()->getSenderChat() !== null)
+                {
+                    $this->SenderChatObject = TelegramClient\Chat::fromArray($this->getMessage()->getSenderChat()->getRawData());
+                    $this->SenderChatClient = $TelegramClientManager->getTelegramClientManager()->registerChat($this->SenderChatObject);
+
+                    if($this->getMessage()->getSenderChat()->getType() == 'channel')
+                    {
+                        if(isset($this->SenderChatClient->SessionData->Data["channel_status"]) == false)
+                        {
+                            $SenderChatStatus = SettingsManager::getChannelStatus($this->SenderChatClient);
+                            $this->SenderChatClient = SettingsManager::updateChannelStatus($this->SenderChatClient, $SenderChatStatus);
+                            $TelegramClientManager->getTelegramClientManager()->updateClient($this->SenderChatClient);
+                        }
+                    }
+
+                }
+            }
+            catch(Exception $e)
+            {
+                $ReferenceID = SpamProtectionBot::getLogHandler()->logException($e, "Worker");
+                /** @noinspection PhpUnhandledExceptionInspection */
+                return Request::sendMessage([
+                    "chat_id" => $this->getMessage()->getChat()->getId(),
+                    "reply_to_message_id" => $this->getMessage()->getMessageId(),
+                    "parse_mode" => "html",
+                    "text" =>
+                        "Oops! Something went wrong! contact someone in @IntellivoidDiscussions\n\n" .
+                        "Error Code: <code>" . $ReferenceID . "</code>\n" .
+                        "Object: <code>Events/generic_request::sender_chat.bin</code>"
+                ]);
+            }
+
 
             try
             {
@@ -862,6 +913,7 @@
          */
         public function execute(): ServerResponse
         {
+            var_dump($this->update);
             $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
 
             try
