@@ -746,8 +746,8 @@
                     "\u{1F51E} <b>" . LanguageCommand::localizeChatText($this->WhoisCommand, "NSFW Filter Settings") . "</b>\n\n".
                     LanguageCommand::localizeChatText($this->WhoisCommand,
                         "Using Machine Learning SpamProtectionBot will check images for NSFW content and protect your group ".
-                        "from content that can get your group flagged for hosting pornographic content") . "
-                        \n" . $StatusResponse,
+                        "from content that can get your group flagged for hosting pornographic content") .
+                        "\n\n" . 'This feature will be deprecated soon!' . "\n\n" . $StatusResponse,
                 "reply_markup" => new InlineKeyboard(
                     [
                         $NsfwDetectionButton,
