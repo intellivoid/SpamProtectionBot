@@ -99,6 +99,7 @@
             $TelegramServiceConfiguration['UseTestServers']
         );
         $telegram->setVerboseLogging($TelegramServiceConfiguration['VerboseLogging']);
+        $telegram->setCommandPrefix(['/', '!']);
 
         if(file_exists($current_directory . DIRECTORY_SEPARATOR . 'SpamProtectionBot.php'))
         {
