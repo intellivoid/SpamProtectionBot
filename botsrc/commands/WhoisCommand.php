@@ -399,6 +399,13 @@
                 $this->DirectClient = $TelegramClientManager->getTelegramClientManager()->registerClient(
                     $this->ChatObject, $this->UserObject
                 );
+
+                if(isset($this->DirectClient->SessionData->Data['direct_client_status']) == false)
+                {
+                    $DirectClientStatus = SettingsManager::getDirectClientStatus($this->DirectClient);
+                    $this->DirectClient = SettingsManager::updateDirectClientStatus($this->DirectClient, $DirectClientStatus);
+                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->DirectClient);
+                }
             }
             catch(Exception $e)
             {
