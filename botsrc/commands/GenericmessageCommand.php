@@ -151,7 +151,7 @@
             $DirectClientStatus = SettingsManager::getDirectClientStatus($this->WhoisCommand->DirectClient);
             if($DirectClientStatus->FirstSeenTimestamp == null)
             {
-                $DirectClient->FirstSeenTimestamp = time();
+                $DirectClientStatus->FirstSeenTimestamp = time();
                 $this->WhoisCommand->DirectClient = SettingsManager::updateDirectClientStatus($this->WhoisCommand->DirectClient, $DirectClientStatus);
                 $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->DirectClient);
             }
