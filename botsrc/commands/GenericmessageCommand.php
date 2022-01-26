@@ -147,6 +147,15 @@
             // Handles the message to detect if it's spam or not
             $this->handleMessage($this->WhoisCommand->ChatClient, $this->WhoisCommand->UserClient, $this->WhoisCommand->DirectClient);
             $this->handleLanguageDetection();
+
+            $DirectClientStatus = SettingsManager::getDirectClientStatus($this->WhoisCommand->DirectClient);
+            if($DirectClientStatus->FirstSeenTimestamp == null)
+            {
+                $DirectClient->FirstSeenTimestamp = time();
+                $this->WhoisCommand->DirectClient = SettingsManager::updateDirectClientStatus($this->WhoisCommand->DirectClient, $DirectClientStatus);
+                $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->DirectClient);
+            }
+
             return Request::emptyResponse();
         }
 
