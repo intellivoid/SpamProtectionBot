@@ -63,6 +63,9 @@
          * Command execute method
          *
          * @return ServerResponse
+         * @throws DatabaseException
+         * @throws InvalidSearchMethod
+         * @throws TelegramClientNotFoundException
          * @throws TelegramException
          * @noinspection DuplicatedCode
          */
@@ -159,9 +162,6 @@
                 case "0101": // Spam Detection
                     return $this->handleSpamDetectionConfiguration($callbackQuery);
 
-                case "0102": // NSFW Detection
-                    return $this->handleNsfwDetectionConfiguration($callbackQuery);
-
                 case "0103": // Blacklist Protection
                     return $this->handleBlacklistConfiguration($callbackQuery);
 
@@ -218,10 +218,6 @@
                         [
                             "text" => "\u{1F4E8} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Spam Detection"),
                             "callback_data" => "0101"
-                        ],
-                        [
-                            "text" => "\u{1F51E} " . LanguageCommand::localizeChatText($this->WhoisCommand, "NSFW Filter"),
-                            "callback_data" => "0102"
                         ]
                     ],
                     [
@@ -281,7 +277,6 @@
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
-         * @throws TelegramException
          */
         public function handleGeneralAlertsConfiguration(CallbackQuery $callbackQuery): ServerResponse
         {
@@ -429,7 +424,6 @@
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
-         * @throws TelegramException
          */
         public function handlePotentialSpammersConfiguration(CallbackQuery $callbackQuery): ServerResponse
         {
@@ -520,7 +514,6 @@
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
-         * @throws TelegramException
          */
         public function handleBlacklistConfiguration(CallbackQuery  $callbackQuery): ServerResponse
         {
@@ -615,156 +608,6 @@
         }
 
         /**
-         * Handle NSFW Filter configuration
-         *
-         * @param CallbackQuery $callbackQuery
-         * @return ServerResponse
-         * @throws DatabaseException
-         * @throws InvalidSearchMethod
-         * @throws TelegramClientNotFoundException
-         * @throws TelegramException
-         */
-        public function handleNsfwDetectionConfiguration(CallbackQuery  $callbackQuery): ServerResponse
-        {
-            $TelegramClientManager = SpamProtectionBot::getTelegramClientManager();
-            $ChatSettings = SettingsManager::getChatSettings($this->WhoisCommand->CallbackQueryChatClient);
-
-            $StatusResponse = (string)null;
-
-            switch($callbackQuery->getData())
-            {
-                case "010201":
-                    if($ChatSettings->NsfwFilterEnabled)
-                    {
-                        $ChatSettings->NsfwFilterEnabled = false;
-                        $callbackQuery->answer(["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "NSFW Filter has been disabled successfully")]);
-                    }
-                    else
-                    {
-                        $ChatSettings->NsfwFilterEnabled = true;
-                        $callbackQuery->answer(["text" => LanguageCommand::localizeChatText($this->WhoisCommand, "NSFW Filter has been enabled successfully")]);
-                    }
-
-                    $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
-                        $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
-                    );
-                    $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
-
-                    break;
-
-
-                case "010202":
-                    if($ChatSettings->NsfwFilterEnabled == false)
-                    {
-                        $callbackQuery->answer(
-                            [
-                                "text" => LanguageCommand::localizeChatText($this->WhoisCommand, "You must enable NSFW Filter before changing the detection action"),
-                                "show_alert" => true
-                            ]
-                        );
-                    }
-                    else
-                    {
-                        $ChatSettings->NsfwDetectionAction = self::cycleAction($ChatSettings->NsfwDetectionAction);
-                        $this->WhoisCommand->CallbackQueryChatClient = SettingsManager::updateChatSettings(
-                            $this->WhoisCommand->CallbackQueryChatClient, $ChatSettings
-                        );
-                        $TelegramClientManager->getTelegramClientManager()->updateClient($this->WhoisCommand->CallbackQueryChatClient);
-                    }
-                    break;
-            }
-
-            $DetectionActionButton = [];
-
-            if($ChatSettings->NsfwFilterEnabled)
-            {
-                $NsfwDetectionButton = [
-                    "text" => "\u{274C} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Disable"),
-                    "callback_data" => "010201"
-                ];
-                $StatusValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Currently detecting NSFW content");
-                $StatusText = LanguageCommand::localizeChatText($this->WhoisCommand, "Status: %s", ['s']);
-            }
-            else
-            {
-                $NsfwDetectionButton = [
-                    "text" => "\u{2714} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Enable"),
-                    "callback_data" => "010201"
-                ];
-                $StatusValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Not detecting NSFW content (Disabled)");
-                $StatusText = LanguageCommand::localizeChatText($this->WhoisCommand, "Status: %s", ['s']);
-            }
-
-            $StatusResponse .= "<b>" . str_ireplace("%s", $StatusValue, $StatusText) . "</b>\n";
-
-            $DetectionActionText = LanguageCommand::localizeChatText($this->WhoisCommand, "Detection Action: %s", ['s']);
-            $DetectionActionValue = (string)null;
-
-            switch($ChatSettings->NsfwDetectionAction)
-            {
-                case DetectionAction::Nothing:
-                    $DetectionActionButton = [
-                        "text" => "\u{26AA} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Do Nothing"),
-                        "callback_data" => "010202"
-                    ];
-                    if($ChatSettings->NsfwFilterEnabled) $DetectionActionValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Show NSFW detection alerts only");
-                    break;
-
-                case DetectionAction::BanOffender:
-                    $DetectionActionButton = [
-                        "text" => "\u{1F534} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Delete & Ban Offender"),
-                        "callback_data" => "010202"
-                    ];
-                    if($ChatSettings->NsfwFilterEnabled) $DetectionActionValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Delete NSFW content and ban offender");
-                    break;
-
-                case DetectionAction::KickOffender:
-                    $DetectionActionButton = [
-                        "text" => "\u{1F7E0} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Delete & Kick Offender"),
-                        "callback_data" => "010202"
-                    ];
-                    if($ChatSettings->NsfwFilterEnabled) $DetectionActionValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Delete NSFW content and kick offender");
-                    break;
-                case DetectionAction::DeleteMessage:
-                    $DetectionActionButton = [
-                        "text" => "\u{1F535} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Delete Message"),
-                        "callback_data" => "010202"
-                    ];
-                    if($ChatSettings->NsfwFilterEnabled) $DetectionActionValue = LanguageCommand::localizeChatText($this->WhoisCommand, "Delete NSFW content only");
-                    break;
-            }
-
-            if($ChatSettings->NsfwFilterEnabled) $StatusResponse .= "<b>" . str_ireplace("%s", $DetectionActionValue, $DetectionActionText) . "</b>";
-
-            $ResponseMessage = [
-                "chat_id" => $callbackQuery->getMessage()->getChat()->getId(),
-                "message_id" => $callbackQuery->getMessage()->getMessageId(),
-                "parse_mode" => "html",
-                "disable_web_page_preview" => true,
-                "text" =>
-                    "\u{1F51E} <b>" . LanguageCommand::localizeChatText($this->WhoisCommand, "NSFW Filter Settings") . "</b>\n\n".
-                    LanguageCommand::localizeChatText($this->WhoisCommand,
-                        "Using Machine Learning SpamProtectionBot will check images for NSFW content and protect your group ".
-                        "from content that can get your group flagged for hosting pornographic content") .
-                        "\n\n" . 'This feature will be deprecated soon!' . "\n\n" . $StatusResponse,
-                "reply_markup" => new InlineKeyboard(
-                    [
-                        $NsfwDetectionButton,
-                        $DetectionActionButton
-                    ],
-                    [
-                        [
-                            "text" => "\u{1F519} " . LanguageCommand::localizeChatText($this->WhoisCommand, "Go back"),
-                            "callback_data" => "0100"
-                        ]
-                    ]
-                )
-            ];
-
-            return Request::editMessageText($ResponseMessage);
-        }
-
-        /**
          * Handles the spam detection configuration
          *
          * @param CallbackQuery $callbackQuery
@@ -772,7 +615,6 @@
          * @throws DatabaseException
          * @throws InvalidSearchMethod
          * @throws TelegramClientNotFoundException
-         * @throws TelegramException
          */
         public function handleSpamDetectionConfiguration(CallbackQuery $callbackQuery): ServerResponse
         {
