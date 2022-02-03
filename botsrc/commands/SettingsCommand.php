@@ -146,6 +146,12 @@
             if($UserClient == null)
                 $UserClient = $this->WhoisCommand->UserClient;
 
+            if($callbackQuery->getMessage() == null)
+                return Request::emptyResponse();
+
+            if($callbackQuery->getMessage()->getReplyToMessage() == null)
+                return Request::emptyResponse();
+
             if($ResetCacheCommand->isAdmin($this->WhoisCommand, $UserClient) == false)
             {
                 return $callbackQuery->answer([
