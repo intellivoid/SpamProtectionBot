@@ -1488,6 +1488,9 @@
             // Attempt to create a voting pool
             $VotingPoll = null;
 
+            if($message->Text == null)
+                return null;
+
             try
             {
                 $VotingPool = SpamProtectionBot::getSpamProtection()->getVotesDueManager()->getCurrentPool(false);
